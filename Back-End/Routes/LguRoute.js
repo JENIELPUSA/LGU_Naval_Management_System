@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();//express router
-const LguController=require('../Controller/LguController')
+const LguController=require('../Controller/LGUController')
 const authController = require('../Controller/authController')
 const upload = require("../middleware/imageUploader");
 router.route('/')
