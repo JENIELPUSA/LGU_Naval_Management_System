@@ -21,6 +21,7 @@ export const ResourcesDisplayProvider = ({ children }) => {
     const [search, setSearch] = useState("");
     const [dateFrom, setDateFrom] = useState("");
     const [dateTo, setDateTo] = useState("");
+    const [isResourcesDropdown, setResourcesDropdown] = useState("");
     const limit = 5;
     const FetchResourcesData = async (page = 1, limit, searchTerm = "", fromDate = "", toDate = "") => {
         if (!authToken) return;
@@ -71,7 +72,7 @@ export const ResourcesDisplayProvider = ({ children }) => {
         if (!authToken) return;
         setLoading(true);
         try {
-            const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/Admin/Profile`, {
+            const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/Resources/DisplayResourcesDropdown`, {
                 withCredentials: true,
                 headers: {
                     Authorization: `Bearer ${authToken}`,
@@ -92,7 +93,13 @@ export const ResourcesDisplayProvider = ({ children }) => {
     useEffect(() => {
         if (!authToken) return;
         FetchResourcesData(1, search, dateFrom, dateTo);
+        FetchProfileOfficer();
     }, [authToken, search, dateFrom, dateTo]);
+
+    useEffect(() => {
+        if (!authToken) return;
+        FetchResourcesDropdownData();
+    }, [authToken]);
 
     const AddResources = async (values) => {
         try {
@@ -152,6 +159,7 @@ export const ResourcesDisplayProvider = ({ children }) => {
     const UpdateResources = async (dataID, values) => {
         try {
             const payload = {
+                availability: values.availability,
                 resource_name: values.resource_name,
                 resource_type: values.resource_type,
                 resources: values.resources,
@@ -181,6 +189,34 @@ export const ResourcesDisplayProvider = ({ children }) => {
         }
     };
 
+    const FetchResourcesDropdownData = async (showAll = false) => {
+        if (!authToken) return;
+
+        try {
+            setIsLoading(true);
+
+            // Build URL with optional showAll query
+            const url = `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/Resources/DisplayResourcesDropdown${showAll ? "?showAll=true" : ""}`;
+
+            const res = await axios.get(url, {
+                withCredentials: true,
+                headers: {
+                    Authorization: `Bearer ${authToken}`,
+                    "Cache-Control": "no-cache",
+                },
+            });
+
+            // Response fields
+            const { data, totalItems } = res.data;
+
+            setResourcesDropdown(data || []);
+        } catch (error) {
+            console.error("Error fetching resources data:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <ResourcesDisplayContext.Provider
             value={{
@@ -204,6 +240,8 @@ export const ResourcesDisplayProvider = ({ children }) => {
                 setDateFrom,
                 dateTo,
                 setDateTo,
+                isResourcesDropdown,
+                FetchResourcesDropdownData,
             }}
         >
             {children}

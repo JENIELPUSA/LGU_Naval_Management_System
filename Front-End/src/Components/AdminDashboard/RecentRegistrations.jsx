@@ -16,8 +16,6 @@ const RecentRegistrations = () => {
             return participantDate === todayStr;
         });
     }, [isParticipant]);
-
-    console.log("Today Participants:", todayParticipants);
     return (
         <div className="card col-span-1 border border-pink-300/50 bg-gradient-to-br from-pink-50/30 to-blue-50/30 dark:border-pink-700/50 dark:from-pink-900/20 dark:to-blue-900/20 md:col-span-2 lg:col-span-3">
             <div className="card-header flex items-center justify-between">

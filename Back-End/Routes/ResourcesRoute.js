@@ -11,5 +11,8 @@ router.route('/:id')
     .patch(authController.protect,Resources.UpdateResources)
     .delete(authController.protect,Resources.deleteResources)
 
+router.route('/DisplayResourcesDropdown')
+    .get(authController.protect,Resources.DisplayResourcesDropdown)
+
 
 module.exports=router

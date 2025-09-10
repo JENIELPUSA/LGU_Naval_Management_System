@@ -5,6 +5,7 @@ import LoadingOverlay from "../../../ReusableFolder/LoadingOverlay";
 import SuccessFailed from "../../../ReusableFolder/SuccessandField";
 import StatusVerification from "../../../ReusableFolder/StatusModal";
 import AddFormModal from "./ResourcesAddForm";
+import { AuthContext } from "../../../contexts/AuthContext";
 
 const ResourcesTable = () => {
     const {
@@ -21,7 +22,7 @@ const ResourcesTable = () => {
         limit,
         isTotalresources,
     } = useContext(ResourcesDisplayContext);
-
+    const { role } = useContext(AuthContext);
     const [isDeleteID, setDeleteID] = useState(null);
     const [tempSearchTerm, setTempSearchTerm] = useState("");
     const [searchTerm, setSearchTerm] = useState("");
@@ -287,13 +288,38 @@ const ResourcesTable = () => {
                                                 <td className="max-w-xs truncate px-4 py-2">{resource.description}</td>
                                                 <td className="max-w-xs truncate px-4 py-2">{resource.resource_type}</td>
                                                 <td className="px-4 py-2 capitalize">
-                                                    {resource.availability ? (
-                                                        <span className="inline-block rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">
-                                                            Available
-                                                        </span>
+                                                    {role === "admin" ? (
+                                                        <select
+                                                            value={resource.availability ? "Available" : "Not Available"}
+                                                            onChange={async (e) => {
+                                                                const newAvailability = e.target.value === "Available"; // convert to boolean
+                                                                setIsLoading(true);
+                                                                const result = await UpdateResources(resource._id, {
+                                                                    ...resource,
+                                                                    availability: newAvailability,
+                                                                });
+                                                                setIsLoading(false);
+
+                                                                if (result?.success) {
+                                                                    setModalStatus("success");
+                                                                } else {
+                                                                    setModalStatus("failed");
+                                                                }
+                                                                setShowModal(true);
+                                                                FetchResourcesData(currentPage, limit, searchTerm, dateFrom, dateTo);
+                                                            }}
+                                                            className="rounded border border-slate-300 px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                                                        >
+                                                            <option value="Available">Available</option>
+                                                            <option value="Not Available">Not Available</option>
+                                                        </select>
                                                     ) : (
-                                                        <span className="inline-block rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-800">
-                                                            Not Available
+                                                        <span
+                                                            className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${
+                                                                resource.availability ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                                                            }`}
+                                                        >
+                                                            {resource.availability ? "Available" : "Not Available"}
                                                         </span>
                                                     )}
                                                 </td>
@@ -306,12 +332,14 @@ const ResourcesTable = () => {
                                                         >
                                                             <PencilLine size={20} />
                                                         </button>
-                                                        <button
-                                                            onClick={() => handleDeleteAdmin(resource._id)} // Changed from proposal to resource
-                                                            className="rounded p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900"
-                                                        >
-                                                            <Trash size={20} />
-                                                        </button>
+                                                        {role === "admin" && (
+                                                            <button
+                                                                onClick={() => handleDeleteAdmin(resource._id)}
+                                                                className="rounded p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900"
+                                                            >
+                                                                <Trash size={20} />
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>

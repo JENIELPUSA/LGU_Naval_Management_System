@@ -87,6 +87,7 @@ export const ReportDisplayProvider = ({ children }) => {
                 },
             );
             if (res.data.status === "success") {
+                FetchReportDisplay();
                 setModalStatus("success");
                 setShowModal(true);
             } else {

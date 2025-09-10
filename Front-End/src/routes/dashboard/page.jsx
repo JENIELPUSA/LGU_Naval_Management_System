@@ -11,7 +11,7 @@ import { useContext } from "react";
 import CountDownEvent from "../../Components/OrganizerDashboard/CountDownEvent";
 import RecentRegistrations from "../../Components/AdminDashboard/RecentRegistrations";
 import RecentandOrganizedLayout from "../../Components/OrganizerDashboard/RecentandOrganizedLayout";
-import LguCard from "../../Components/LGUDashboard/LGUCard"
+import LguCard from "../../Components/LGUDashboard/LGUCard";
 const DashboardPage = () => {
     const { role } = useContext(AuthContext);
     const { theme } = useTheme();
@@ -29,12 +29,12 @@ const DashboardPage = () => {
             ) : role === "organizer" ? (
                 <>
                     <OrganizerCard />
-                    <RecentandOrganizedLayout />
+                    <AnalyticsSection theme={theme} />
                     <UpcomingEventsTable />
                 </>
             ) : role === "lgu" ? (
                 <>
-                    <LguCard/>
+                    <LguCard />
                     <UpcomingEventsTable />
                 </>
             ) : null}

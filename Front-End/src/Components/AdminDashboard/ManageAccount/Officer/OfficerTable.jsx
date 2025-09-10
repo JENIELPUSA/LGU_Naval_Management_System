@@ -5,7 +5,8 @@ import OfficerFormModal from "./AddOfficerForm";
 import LoadingOverlay from "../../../../ReusableFolder/LoadingOverlay";
 import SuccessFailed from "../../../../ReusableFolder/SuccessandField";
 import StatusVerification from "../../../../ReusableFolder/StatusModal";
-import { Database } from 'lucide-react';
+import { Database } from "lucide-react";
+import { AuthContext } from "../../../../contexts/AuthContext";
 
 const OfficerTable = ({ data }) => {
     const {
@@ -22,6 +23,7 @@ const OfficerTable = ({ data }) => {
         limit,
         isTotalOfficer,
     } = useContext(OfficerDisplayContext);
+    const { role } = useContext(AuthContext);
     const [isDeleteID, setDeleteID] = useState(null);
     const [tempSearchTerm, setTempSearchTerm] = useState("");
     const [searchTerm, setSearchTerm] = useState("");
@@ -313,12 +315,14 @@ const OfficerTable = ({ data }) => {
                                                     >
                                                         <PencilLine size={20} />
                                                     </button>
-                                                    <button
-                                                        onClick={() => handleDeleteOfficer(admin._id)}
-                                                        className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                                                    >
-                                                        <Trash size={20} />
-                                                    </button>
+                                                    {role === "admin" && (
+                                                        <button
+                                                            onClick={() => handleDeleteOfficer(admin._id)}
+                                                            className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                                                        >
+                                                            <Trash size={20} />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>

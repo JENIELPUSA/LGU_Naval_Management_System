@@ -225,19 +225,27 @@ export const ProposalDisplayProvider = ({ children }) => {
         }
     };
 
-    const DropdownProposal = async () => {
+    const DropdownProposal = async (showAll = false) => {
         if (!authToken) return;
 
         try {
             setIsLoading(true);
 
-            const res = await axios.post(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/Proposal/DisplayDropdownProposal`, {
-                withCredentials: true,
-                headers: {
-                    Authorization: `Bearer ${authToken}`,
-                    "Cache-Control": "no-cache",
+            const url =
+                `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/Proposal/DisplayDropdownProposal` + (showAll ? "?showAll=true" : "");
+
+            const res = await axios.post(
+                url,
+                {},
+                {
+                    withCredentials: true,
+                    headers: {
+                        Authorization: `Bearer ${authToken}`,
+                        "Cache-Control": "no-cache",
+                    },
                 },
-            });
+            );
+
             setDropdownProposal(res.data.data);
         } catch (error) {
             console.error("Error fetching admin data:", error);
@@ -272,7 +280,8 @@ export const ProposalDisplayProvider = ({ children }) => {
                 UpdateStatus,
                 UpdateProposalMetaData,
                 ProposalStatusCount,
-                isDropdownProposal
+                isDropdownProposal,
+                DropdownProposal,
             }}
         >
             {children}

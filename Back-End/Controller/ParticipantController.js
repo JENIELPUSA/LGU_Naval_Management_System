@@ -632,7 +632,7 @@ exports.getParticipantsCountPerEvent = async (req, res) => {
         },
       },
       {
-        $sort: { eventDate: 1 } // pinaka-latest muna
+        $sort: { eventDate: -1 } // pinaka-latest muna
       }
     ];
 

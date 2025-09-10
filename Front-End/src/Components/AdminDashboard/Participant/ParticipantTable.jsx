@@ -5,6 +5,7 @@ import LoadingOverlay from "../../../ReusableFolder/LoadingOverlay";
 import SuccessFailed from "../../../ReusableFolder/SuccessandField";
 import StatusVerification from "../../../ReusableFolder/StatusModal";
 import { Database } from "lucide-react";
+import { AuthContext } from "../../../contexts/AuthContext";
 
 const ParticipantTable = () => {
     const {
@@ -22,6 +23,7 @@ const ParticipantTable = () => {
         limit,
         isTotalParticipant,
     } = useContext(ParticipantDisplayContext);
+    const { role } = useContext(AuthContext);
     const [isDeleteID, setDeleteID] = useState(null);
     const [tempSearchTerm, setTempSearchTerm] = useState("");
     const [searchTerm, setSearchTerm] = useState("");
@@ -264,12 +266,11 @@ const ParticipantTable = () => {
                                                                
                                 <tr className="table-row">
                                                                         <th className="table-head text-slate-800 dark:text-slate-100">#</th>         
-                                                              <th className="table-head text-slate-800 dark:text-slate-100">Full Name</th>           
-                                                            <th className="table-head text-slate-800 dark:text-slate-100">Gender</th>                 
+                                                              <th className="table-head text-slate-800 dark:text-slate-100">Full Name</th>                         
                                                       <th className="table-head text-slate-800 dark:text-slate-100">Check-In</th>                     
-                                                  <th className="table-head text-slate-800 dark:text-slate-100">Check-Out</th>                       
-                                                <th className="table-head text-slate-800 dark:text-slate-100">Actions</th>                           
-                                       
+                                                  <th className="table-head text-slate-800 dark:text-slate-100">Check-Out</th>
+                                    {role === "admin" && <th className="table-head text-slate-800 dark:text-slate-100">Actions</th>}                 
+                                                                     
                                 </tr>
                                                            
                             </thead>
@@ -288,8 +289,7 @@ const ParticipantTable = () => {
                                             <td className="table-cell text-slate-800 dark:text-slate-200">{(currentPage - 1) * limit + index + 1}</td>
                                                                                        
                                             <td className="table-cell text-slate-800 dark:text-slate-200">{formatFullName(admin)}</td>               
-                                                                       
-                                            <td className="table-cell text-slate-800 dark:text-slate-200">{admin.gender}</td>                         
+                                                                                              
                                                              
                                             <td className="table-cell text-slate-800 dark:text-slate-200">{formatDate(admin.check_in)}</td>           
                                                                            
@@ -299,13 +299,14 @@ const ParticipantTable = () => {
                                                                                                
                                                 <div className="flex items-center gap-x-4">
                                                                                                        
-                                                    <button
-                                                        onClick={() => handleDeleteParticipant(admin._id)}
-                                                        className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                                                    >
-                                                                                                                <Trash size={20} />                   
-                                                                                       
-                                                    </button>
+                                                    {role === "admin" && (
+                                                        <button
+                                                            onClick={() => handleDeleteParticipant(admin._id)}
+                                                            className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                                                        >
+                                                            <Trash size={20} />
+                                                        </button>
+                                                    )}
                                                                                                    
                                                 </div>
                                                                                            
@@ -353,7 +354,8 @@ const ParticipantTable = () => {
                                 <span className="font-medium">
                                                                         {showingStart}-{showingEnd}                               
                                 </span>
-                                                                of <span className="font-medium">{isTotalParticipant}</span>                           
+                                                                of <span className="font-medium">{isTotalParticipant}</span>                         
+                                 
                             </div>
                                                    
                         </div>

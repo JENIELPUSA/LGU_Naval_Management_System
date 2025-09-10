@@ -562,6 +562,7 @@ exports.UpdateCloudinaryFile = AsyncErrorHandler(async (req, res) => {
 exports.DisplayDropdownProposal = AsyncErrorHandler(async (req, res) => {
   const role = req.user.role;
   const userId = req.user.linkId;
+  const { showAll } = req.query; // add showAll param
 
   console.log("role:", role);
   console.log("userId:", userId);
@@ -572,28 +573,37 @@ exports.DisplayDropdownProposal = AsyncErrorHandler(async (req, res) => {
     matchStage.submitted_by = userId;
   }
 
-  const result = await ProposalModel.aggregate([
+  let pipeline = [
     { $match: matchStage },
-    { $sort: { createdAt: -1 } }, 
+    { $sort: { created_at: -1 } },
     {
       $lookup: {
-        from: "organizers", 
+        from: "organizers",
         localField: "submitted_by",
         foreignField: "_id",
         as: "organizerInfo",
       },
     },
     { $unwind: { path: "$organizerInfo", preserveNullAndEmptyArrays: true } },
-    {
-      $project: {
-        _id: 1,
-        title: 1,
-        description: 1,
-        status: 1,
-        organizerName: "$organizerInfo.name",
-      },
+  ];
+
+  // --- Apply default limit 5 unless showAll=true ---
+  const defaultLimit = 5;
+  if (!showAll || showAll.toLowerCase() !== "true") {
+    pipeline.push({ $limit: defaultLimit });
+  }
+
+  pipeline.push({
+    $project: {
+      _id: 1,
+      title: 1,
+      description: 1,
+      status: 1,
+      organizerName: "$organizerInfo.name",
     },
-  ]);
+  });
+
+  const result = await ProposalModel.aggregate(pipeline);
 
   res.status(200).json({
     status: "success",
@@ -601,3 +611,4 @@ exports.DisplayDropdownProposal = AsyncErrorHandler(async (req, res) => {
     data: result,
   });
 });
+

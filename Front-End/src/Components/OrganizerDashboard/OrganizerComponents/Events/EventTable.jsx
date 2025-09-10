@@ -6,6 +6,7 @@ import SuccessFailed from "../../../../ReusableFolder/SuccessandField";
 import StatusVerification from "../../../../ReusableFolder/StatusModal";
 import { ResourcesDisplayContext } from "../../../../contexts/ResourcesContext/ResourcesContext";
 import AddFormModal from "./EventAddForm";
+import { AuthContext } from "../../../../contexts/AuthContext";
 
 const EvenTable = () => {
     const {
@@ -21,7 +22,8 @@ const EvenTable = () => {
         limit,
         isTotalEvent,
     } = useContext(EventDisplayContext);
-    const { isResources } = useContext(ResourcesDisplayContext);
+    const { isResourcesDropdown } = useContext(ResourcesDisplayContext);
+    const { role } = useContext(AuthContext);
 
     const [isDeleteID, setDeleteID] = useState(null);
     const [tempSearchTerm, setTempSearchTerm] = useState("");
@@ -180,7 +182,7 @@ const EvenTable = () => {
         setDeleteID(null);
     };
     const handleRefresh = () => {
-        setSearchTerm(""); 
+        setSearchTerm("");
         setTempSearchTerm("");
         setCurrentPage(1);
         FetchProposalDisplay(1, limit, "", dateFrom, dateTo); // fetch lahat ng data ulit
@@ -512,14 +514,16 @@ const EvenTable = () => {
                                                     <PencilLine size={16} />
                                                     Edit
                                                 </button>
-                                                <button
-                                                    onClick={() => handleDeleteEvent(event._id)}
-                                                    className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
-                                                    title="Delete Event"
-                                                >
-                                                    <Trash size={16} />
-                                                    Delete
-                                                </button>
+                                                {role === "admin" && (
+                                                    <button
+                                                        onClick={() => handleDeleteEvent(event._id)}
+                                                        className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+                                                        title="Delete Event"
+                                                    >
+                                                        <Trash size={16} />
+                                                        Delete
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -584,7 +588,7 @@ const EvenTable = () => {
                 <AddFormModal
                     isOpen={isFormModalOpen}
                     onClose={closeFormModal}
-                    Resources={isResources}
+                    Resources={isResourcesDropdown}
                     formData={formData}
                     setFormData={setFormData}
                     isEditing={isEditing}

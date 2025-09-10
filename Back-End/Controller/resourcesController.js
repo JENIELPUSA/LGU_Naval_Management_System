@@ -62,12 +62,12 @@ exports.DisplayResources = AsyncErrorHandler(async (req, res) => {
 
 
 exports.UpdateResources =AsyncErrorHandler(async (req,res,next) =>{
+console.log(req.body)
     const updateResources=await Resources.findByIdAndUpdate(req.params.id,req.body,{new: true});
      res.status(200).json({
         status:'success',
         data:
             updateResources
-        
      }); 
   })
 
@@ -90,3 +90,29 @@ exports.UpdateResources =AsyncErrorHandler(async (req,res,next) =>{
         
      });
   })
+
+
+exports.DisplayResourcesDropdown = AsyncErrorHandler(async (req, res) => {
+    const { showAll } = req.query; // kunin ang query param
+
+    const filter = { availability: true }; // only available resources
+
+    let query = Resources.find(filter).sort({ createdAt: -1 });
+
+    // --- Apply default limit 5 unless showAll=true ---
+    const defaultLimit = 5;
+    if (!showAll || showAll.toLowerCase() !== "true") {
+        query = query.limit(defaultLimit);
+    }
+
+    const resources = await query;
+    const total = await Resources.countDocuments(filter);
+
+    res.status(200).json({
+        status: 'success',
+        totalItems: total,
+        data: resources
+    });
+});
+
+

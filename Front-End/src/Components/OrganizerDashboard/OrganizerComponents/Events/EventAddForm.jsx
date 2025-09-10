@@ -4,17 +4,19 @@ import { EventDisplayContext } from "../../../../contexts/EventContext/EventCont
 import { ProposalDisplayContext } from "../../../../contexts/ProposalContext/ProposalContext";
 import { AuthContext } from "../../../../contexts/AuthContext";
 import { LguDisplayContext } from "../../../../contexts/LguContext/LguContext";
+import { ResourcesDisplayContext } from "../../../../contexts/ResourcesContext/ResourcesContext";
 
-const AddEventModal = ({ isOpen, onClose, Resources, isEditing, editingData }) => {
+const AddEventModal = ({ isOpen, onClose, isEditing, editingData }) => {
     const { AddEvent, UpdateEvent } = useContext(EventDisplayContext);
     const { linkId } = useContext(AuthContext);
     const { isLgu } = useContext(LguDisplayContext);
-    const { isDropdownProposal } = useContext(ProposalDisplayContext);
-
+    const { isDropdownProposal, DropdownProposal } = useContext(ProposalDisplayContext);
+    const { isResourcesDropdown, FetchResourcesDropdownData } = useContext(ResourcesDisplayContext);
+    
     const lguDropdownRef = useRef(null);
     const proposalDropdownRef = useRef(null);
     const resourcesDropdownRef = useRef(null);
-
+    
     const generateTimeOptions = () => {
         const times = [];
         const startHour = 8;
@@ -41,6 +43,8 @@ const AddEventModal = ({ isOpen, onClose, Resources, isEditing, editingData }) =
         lguId: "",
         resources: [],
     });
+    const [showAllProposals, setShowAllProposals] = useState(false);
+    const [showAllResources, setShowAllResources] = useState(false);
 
     const [isModalOpen, setIsModalOpen] = useState(true);
     const [isResourcesDropdownOpen, setIsResourcesDropdownOpen] = useState(false);
@@ -58,6 +62,13 @@ const AddEventModal = ({ isOpen, onClose, Resources, isEditing, editingData }) =
         const date = new Date(isoDateString);
         return date.toISOString().split("T")[0];
     };
+    
+    useEffect(() => {
+        if (isOpen) {
+            DropdownProposal(showAllProposals); // initially false = default 5
+            FetchResourcesDropdownData(showAllResources); // fetch resources based on showAllResources state
+        }
+    }, [isOpen, showAllProposals, showAllResources]);
 
     useEffect(() => {
         if (isEditing && editingData) {
@@ -159,14 +170,16 @@ const AddEventModal = ({ isOpen, onClose, Resources, isEditing, editingData }) =
         }, 1000);
     };
 
-    const filteredResources = Resources.filter((res) => {
-        const matchesText = res.resource_name.toLowerCase().includes(resourceFilter.toLowerCase());
-        let matchesDate = true;
-        if (dateFilter.start && dateFilter.end) {
-            matchesDate = res.availability === true;
-        }
-        return matchesText && matchesDate && res.availability === true;
-    });
+    const filteredResources = Array.isArray(isResourcesDropdown)
+        ? isResourcesDropdown.filter((res) => {
+              const matchesText = res.resource_name.toLowerCase().includes(resourceFilter.toLowerCase());
+              let matchesDate = true;
+              if (dateFilter.start && dateFilter.end) {
+                  matchesDate = res.availability === true;
+              }
+              return matchesText && matchesDate && res.availability === true;
+          })
+        : [];
 
     const filteredProposals = Array.isArray(isDropdownProposal)
         ? isDropdownProposal.filter((prop) => prop.title.toLowerCase().includes(proposalFilter.toLowerCase()) && !prop.assigned)
@@ -457,6 +470,16 @@ const AddEventModal = ({ isOpen, onClose, Resources, isEditing, editingData }) =
                             <div className="mt-2 text-xs text-gray-500">
                                 {filteredProposals.length} of {isDropdownProposal.length} proposals
                             </div>
+                            {/* Show All Checkbox */}
+                            <label className="mt-2 flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    checked={showAllProposals}
+                                    onChange={() => setShowAllProposals(!showAllProposals)}
+                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <span className="text-sm text-gray-700">Show all proposals</span>
+                            </label>
                         </div>
 
                         <div className="max-h-60 overflow-y-auto">
@@ -507,6 +530,19 @@ const AddEventModal = ({ isOpen, onClose, Resources, isEditing, editingData }) =
                                     className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
+                            <div className="mt-2 text-xs text-gray-500">
+                                {filteredResources.length} of {isResourcesDropdown.length} resources
+                            </div>
+                            {/* Show All Checkbox for Resources */}
+                            <label className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    checked={showAllResources}
+                                    onChange={() => setShowAllResources(!showAllResources)}
+                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <span className="text-sm text-gray-700">Show all resources</span>
+                            </label>
                         </div>
 
                         <div className="max-h-60 overflow-y-auto p-4">

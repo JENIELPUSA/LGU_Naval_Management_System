@@ -43,15 +43,15 @@ const EventStatusChart = ({ theme }) => {
                 <div className="flex flex-wrap items-center gap-2">
                     {/* Legend for Approved, Rejected, Pending */}
                     <div className="flex flex-col gap-1 sm:flex-row sm:gap-2">
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 dark:text-stone-50">
                             <div className="h-3 w-3 rounded-full bg-green-500"></div>
                             <span className="text-xs">Approved</span>
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 dark:text-stone-50">
                             <div className="h-3 w-3 rounded-full bg-red-500"></div>
                             <span className="text-xs">Rejected</span>
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 dark:text-stone-50">
                             <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
                             <span className="text-xs">Pending</span>
                         </div>

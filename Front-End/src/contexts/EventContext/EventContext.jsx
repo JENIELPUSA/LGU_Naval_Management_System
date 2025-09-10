@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect,useCallback } from "react";
+import React, { createContext, useState, useContext, useEffect, useCallback } from "react";
 import axios from "axios";
 import { AuthContext } from "../AuthContext";
 import SuccessFailed from "../../ReusableFolder/SuccessandField";
@@ -72,37 +72,58 @@ export const EventDisplayProvider = ({ children }) => {
         }
     };
 
-  const FetchUpcomingEvent = useCallback(async () => {
-    try {
-      setIsLoading(true);
+    const FetchUpcomingEvent = useCallback(async () => {
+        try {
+            setIsLoading(true);
 
-      const res = await axios.get(
-        `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/Event/DisplayUpcomingEvent`,
-        {
-          withCredentials: true,
-          headers: { "Cache-Control": "no-cache" },
+            const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/Event/DisplayUpcomingEvent`, {
+                withCredentials: true,
+                headers: { "Cache-Control": "no-cache" },
+            });
+            setEventUpcoming(res.data.data || []);
+        } catch (error) {
+            console.error("Error fetching upcoming events:", error);
+        } finally {
+            setIsLoading(false);
         }
-      );
-      setEventUpcoming(res.data.data || []);
-    } catch (error) {
-      console.error("Error fetching upcoming events:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    }, []);
 
-  useEffect(() => {
-    FetchUpcomingEvent();
-  }, [FetchUpcomingEvent]); 
+    useEffect(() => {
+        FetchUpcomingEvent();
+    }, [FetchUpcomingEvent]);
 
     useEffect(() => {
         if (!authToken) return;
         FetchProposalDisplay(1, search, dateFrom, dateTo);
-        DropdownEvent();
     }, [authToken, search, dateFrom, dateTo]);
 
+    useEffect(() => {
+        if (!authToken) return;
+        DropdownEvent();
+    }, [authToken]);
 
+    const DropdownEvent = async () => {
+        if (!authToken) return;
 
+        try {
+            setIsLoading(true);
+            const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/Event/EventDropdown`, {
+                withCredentials: true,
+                headers: {
+                    Authorization: `Bearer ${authToken}`,
+                    "Cache-Control": "no-cache",
+                },
+            });
+
+            const { data, totalPages, currentPage, totalAdmin } = res.data;
+
+            setDropdownEvent(data || []);
+        } catch (error) {
+            console.error("Error fetching admin data:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const AddEvent = async (values) => {
         try {
@@ -190,29 +211,6 @@ export const EventDisplayProvider = ({ children }) => {
             setShowModal(true);
 
             return { success: false, error: message };
-        }
-    };
-
-    const DropdownEvent = async () => {
-        if (!authToken) return;
-
-        try {
-            setIsLoading(true);
-            const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/Event/EventDropdown`, {
-                withCredentials: true,
-                headers: {
-                    Authorization: `Bearer ${authToken}`,
-                    "Cache-Control": "no-cache",
-                },
-            });
-
-            const { data, totalPages, currentPage, totalAdmin } = res.data;
-
-            setDropdownEvent(data || []);
-        } catch (error) {
-            console.error("Error fetching admin data:", error);
-        } finally {
-            setIsLoading(false);
         }
     };
 

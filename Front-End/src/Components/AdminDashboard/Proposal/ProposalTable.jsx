@@ -8,6 +8,7 @@ import AddFormModal from "./AddFormMOdal";
 import { AuthContext } from "../../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
+
 const ProposalTable = () => {
     const {
         AddProposal,
@@ -26,7 +27,6 @@ const ProposalTable = () => {
         UpdateStatus,
         isTotalProposal,
     } = useContext(ProposalDisplayContext);
-
     const navigate = useNavigate();
     const { role } = useContext(AuthContext);
     const [isDeleteID, setDeleteID] = useState(null);
@@ -476,14 +476,16 @@ const ProposalTable = () => {
                                                         <PencilLine size={16} />
                                                         Edit
                                                     </button>
-                                                    <button
-                                                        onClick={() => handleDeleteProposal(proposal._id)}
-                                                        className="inline-flex items-center gap-1.5 rounded-lg bg-gray-50 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
-                                                        title="Delete Proposal"
-                                                    >
-                                                        <Trash size={16} />
-                                                        Delete
-                                                    </button>
+                                                    {role === "admin" && (
+                                                        <button
+                                                            onClick={() => handleDeleteProposal(proposal._id)}
+                                                            className="inline-flex items-center gap-1.5 rounded-lg bg-gray-50 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+                                                            title="Delete Proposal"
+                                                        >
+                                                            <Trash size={16} />
+                                                            Delete
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
