@@ -4,7 +4,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { PDFDocument, rgb, StandardFonts, degrees } from "pdf-lib";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.min?worker";
-import Sidebar from "./SidebarPDF";
+import Sidebar from "./Sidebar";
 import { AuthContext } from "../../../contexts/AuthContext";
 import Notes from "./notecomponents";
 import LoadingOverlay from "../../../ReusableFolder/LoadingOverlay";
