@@ -6,7 +6,7 @@ import ManageTeam from "./Components/OrganizerDashboard/TeamManage/ManageTeam";
 import Layout from "@/routes/layout";
 import DashboardPage from "@/routes/dashboard/page";
 import Login from "./Components/Participant/ParticipantDashboard";
-import PdfViewer from "./components/AdminDashboard/Proposal/PdfViewer.jsx";
+import PdfViewerModel from "./components/AdminDashboard/Proposal/PdfViewer.jsx";
 import ResetPassword from "./Components/Login/ResetPassword";
 import AdminLayout from "./Components/AdminDashboard/ManageAccount/Admin/AdminLayout";
 import OrganizerLayout from "./Components/AdminDashboard/ManageAccount/Organizer/OrganizerLayout";
@@ -75,7 +75,7 @@ function App() {
                         },
                         {
                             path: "pdf-viewer/:fileId",
-                            element: <PdfViewer />,
+                            element: <PdfViewerModel />,
                         },
                         {
                             path: "/dashboard/proposal",
