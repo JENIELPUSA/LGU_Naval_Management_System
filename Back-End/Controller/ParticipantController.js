@@ -289,10 +289,10 @@ exports.participantCreate = AsyncErrorHandler(async (req, res) => {
 
     await sendEmail({
       email: participant.email,
-      subject: `Event Registration Confirmation - ${participant.event.event_name}`,
-      message: `Dear ${participant.first_name},
+      subject: `Event Registration Confirmation - ${participant.proposalInfo.title}`,
+      text: `Dear ${participant.first_name},
 
-Thank you for registering for "${participant.event.event_name}".
+Thank you for registering for "${participant.proposalInfo.title}".
 
 Your registration has been confirmed and your official event pass is attached to this email. Please:
 
@@ -301,7 +301,7 @@ Your registration has been confirmed and your official event pass is attached to
 ✓ Present it at the event entrance for check-in
 
 Event Details:
-• Event: ${participant.event.event_name}
+• Event: ${participant.proposalInfo.title}
 • Venue: ${participant.event.venue || "Venue TBA"}
 • Registration ID: ${participant._id}
 
