@@ -273,8 +273,9 @@ exports.DisplayDropdownEvent = AsyncErrorHandler(async (req, res) => {
   const userId = req.user.linkId;
   const { event_name, status, dateFrom, dateTo } = req.query;
 
+  // fetch only upcoming events (eventDate >= now)
   const matchStage = {
-    eventDate: { $lte: new Date() },
+    eventDate: { $gte: new Date() },
   };
 
   if (role === "organizer") {
@@ -312,11 +313,11 @@ exports.DisplayDropdownEvent = AsyncErrorHandler(async (req, res) => {
       },
     },
     { $unwind: { path: "$proposal", preserveNullAndEmptyArrays: true } },
-    { $sort: { eventDate: -1 } },
+    { $sort: { eventDate: 1 } }, // pinakamalapit sa current date ang unahin
   ];
 
   if (role === "organizer") {
-    pipeline.push({ $limit: 1 });
+    pipeline.push({ $limit: 1 }); // kukunin lang yung pinaka-malapit
   }
 
   pipeline.push({
@@ -334,6 +335,7 @@ exports.DisplayDropdownEvent = AsyncErrorHandler(async (req, res) => {
     data: role === "organizer" ? result[0] || null : result,
   });
 });
+
 
 exports.UpdateEvent = AsyncErrorHandler(async (req, res, next) => {
   console.log("Request body:", req.body);

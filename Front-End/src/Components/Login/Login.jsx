@@ -46,7 +46,7 @@ export default function AuthFormModal({ isOpen, onClose }) {
         onClose();
     };
 
-    if (!isOpen) return null; // Hide modal when not open
+    if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
@@ -59,41 +59,41 @@ export default function AuthFormModal({ isOpen, onClose }) {
 
             <motion.div
                 className="relative w-full max-w-md p-4"
-                initial={{ opacity: 0, y: -50 }} 
-                animate={{ opacity: 1, y: 0 }} 
-                exit={{ opacity: 0, y: -50 }} 
+                initial={{ opacity: 0, y: -50 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -50 }}
                 transition={{ type: "spring", stiffness: 300, damping: 25 }}
             >
-                <div className="relative rounded-3xl bg-white p-8 shadow-xl dark:bg-slate-800/70 dark:backdrop-blur-lg">
+                <div className="relative rounded-3xl bg-white p-8 shadow-xl">
                     {/* Close Button */}
                     <button
                         onClick={onClose}
-                        className="absolute right-4 top-4 rounded-full p-1 hover:bg-gray-200 dark:hover:bg-slate-700"
+                        className="absolute right-4 top-4 rounded-full p-1 hover:bg-gray-200"
                     >
-                        <X className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+                        <X className="h-5 w-5 text-gray-600" />
                     </button>
 
                     {/* Logo & Header */}
                     <div className="mb-8 flex flex-col items-center">
-                        <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-pink-100 to-blue-100 p-2 shadow-inner dark:from-slate-700 dark:to-slate-800">
+                        <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-pink-100 to-blue-100 p-2 shadow-inner">
                             <img
                                 src={logo}
                                 alt="LGU Naval Logo"
                                 className="h-16 w-16 object-contain"
                             />
                         </div>
-                        <h1 className="text-center text-2xl font-bold text-gray-800 dark:text-white">LGU Naval EMS</h1>
-                        <p className="mt-1 text-center text-gray-600 dark:text-gray-300">Event Management System</p>
+                        <h1 className="text-center text-2xl font-bold text-gray-800">LGU Naval EMS</h1>
+                        <p className="mt-1 text-center text-gray-600">Event Management System</p>
                     </div>
 
                     {/* Form */}
                     <form onSubmit={handleLoginSubmit} className="space-y-5">
                         {/* Email */}
                         <div>
-                            <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
+                            <label className="mb-1.5 block text-sm font-medium text-gray-700">Email Address</label>
                             <div className="relative">
                                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                    <Mail className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+                                    <Mail className="h-5 w-5 text-gray-400" />
                                 </div>
                                 <input
                                     type="email"
@@ -102,7 +102,7 @@ export default function AuthFormModal({ isOpen, onClose }) {
                                     onChange={handleInput}
                                     disabled={isLoading}
                                     placeholder="name@mail.com"
-                                    className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-10 pr-4 text-gray-800 placeholder-gray-500 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 disabled:opacity-70 dark:border-slate-700 dark:bg-slate-700/50 dark:text-white dark:placeholder-gray-400 dark:focus:ring-blue-500/20"
+                                    className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-10 pr-4 text-gray-800 placeholder-gray-500 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 disabled:opacity-70"
                                     required
                                 />
                             </div>
@@ -111,17 +111,17 @@ export default function AuthFormModal({ isOpen, onClose }) {
                         {/* Password */}
                         <div>
                             <div className="mb-1.5 flex items-center justify-between">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                                <label className="block text-sm font-medium text-gray-700">Password</label>
                                 <a
                                     onClick={() => setForgotPassword(true)}
-                                    className="cursor-pointer text-xs font-medium text-pink-600 hover:underline dark:text-pink-400"
+                                    className="cursor-pointer text-xs font-medium text-pink-600 hover:underline"
                                 >
                                     Forgot password?
                                 </a>
                             </div>
                             <div className="relative">
                                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                    <Lock className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+                                    <Lock className="h-5 w-5 text-gray-400" />
                                 </div>
                                 <input
                                     type="password"
@@ -130,7 +130,7 @@ export default function AuthFormModal({ isOpen, onClose }) {
                                     onChange={handleInput}
                                     disabled={isLoading}
                                     placeholder="••••••••"
-                                    className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-10 pr-4 text-gray-800 placeholder-gray-500 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 disabled:opacity-70 dark:border-slate-700 dark:bg-slate-700/50 dark:text-white dark:placeholder-gray-400 dark:focus:ring-blue-500/20"
+                                    className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-10 pr-4 text-gray-800 placeholder-gray-500 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 disabled:opacity-70"
                                     required
                                 />
                             </div>
@@ -142,11 +142,11 @@ export default function AuthFormModal({ isOpen, onClose }) {
                                 id="remember-me"
                                 name="remember-me"
                                 type="checkbox"
-                                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700"
+                                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                             />
                             <label
                                 htmlFor="remember-me"
-                                className="ml-2 block text-sm text-gray-800 dark:text-gray-300"
+                                className="ml-2 block text-sm text-gray-800"
                             >
                                 Remember me
                             </label>
@@ -165,7 +165,7 @@ export default function AuthFormModal({ isOpen, onClose }) {
                             Sign In to Account
                         </button>
                     </form>
-                    <div className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
+                    <div className="mt-6 text-center text-xs text-gray-500">
                         For government officials use only. Unauthorized access prohibited.
                     </div>
                 </div>

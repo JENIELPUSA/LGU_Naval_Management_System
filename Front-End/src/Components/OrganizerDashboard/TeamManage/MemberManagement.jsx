@@ -44,7 +44,7 @@ export default function MemberManagement({
                                     key={member._id}
                                     value={member._id}
                                 >
-                                    {member.name}
+                                    {member.first_name} {member.middle_name} {member.last_name}
                                 </option>
                             ))}
                         </select>
@@ -86,7 +86,8 @@ export default function MemberManagement({
                                                 placeholder="Add new task..."
                                                 className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:placeholder-slate-400 dark:focus:ring-blue-500"
                                             />
-                                            <button
+                                           <button
+                                                type="button"
                                                 onClick={() => addTaskToMember(member._id)}
                                                 className="rounded-lg bg-blue-500 px-3 py-2 text-sm text-white hover:bg-blue-600"
                                             >
@@ -94,7 +95,7 @@ export default function MemberManagement({
                                             </button>
                                         </div>
 
-                                        {member.tasks.length > 0 && (
+                                        {member.tasks && member.tasks.length > 0 && (
                                             <div className="rounded border border-slate-200 bg-white p-2 dark:border-slate-600 dark:bg-slate-800">
                                                 <p className="mb-1 text-xs font-medium text-slate-600 dark:text-slate-400">Tasks:</p>
                                                 <ul className="space-y-1">
@@ -122,11 +123,11 @@ export default function MemberManagement({
                                         <div>
                                             <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">Assign to Team:</label>
                                             <select
-                                                value={member.teamIds[0] || ""}
+                                                value={member.teamId || ""}
                                                 onChange={(e) => assignMemberToTeam(member._id, e.target.value)}
                                                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:focus:ring-blue-500"
                                             >
-                                                <option value="0">No team assigned</option>
+                                                <option value="">No team assigned</option>
                                                 {filteredTeams.map((team) => (
                                                     <option
                                                         key={team._id}
@@ -137,21 +138,21 @@ export default function MemberManagement({
                                                 ))}
                                             </select>
 
-                                            {member.teamIds.length > 0 && (
+                                            {member.teamId && (
                                                 <div className="mt-2">
                                                     <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Assigned to:</p>
                                                     <div className="mt-1 flex flex-wrap gap-1">
-                                                        {member.teamIds.map((teamId) => {
-                                                            const team = teams?.find((t) => t._id === teamId);
+                                                        {(() => {
+                                                            const team = teams?.find((t) => t._id === member.teamId);
                                                             return team ? (
                                                                 <span
-                                                                    key={teamId}
+                                                                    key={team._id}
                                                                     className="rounded bg-blue-100 px-2 py-1 text-xs text-blue-800 dark:bg-blue-900 dark:text-blue-300"
                                                                 >
                                                                     {team.teamName || team.teams?.teamName}
                                                                 </span>
                                                             ) : null;
-                                                        })}
+                                                        })()}
                                                     </div>
                                                 </div>
                                             )}

@@ -11,6 +11,17 @@ const LGUSchema = new mongoose.Schema({
   gender: { type: String, enum: ["Male", "Female"] },
   contact_number: String,
   email: { type: String, required: true },
+  teamId: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Team",
+      required: true,
+    },
+  ],
+  task: {
+    type: [String],
+    default: [],
+  },
   created_at: { type: Date, default: Date.now },
 });
 

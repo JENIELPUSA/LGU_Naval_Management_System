@@ -81,46 +81,46 @@ const RegistrationModal = ({
 
                             {!selectedEvent ? (
                                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                    {isEventUpcoming.map((event, index) => (
-                                        <motion.div
-                                            key={event.id}
-                                            className="cursor-pointer rounded-xl border p-4 transition-shadow hover:shadow-md"
-                                            onClick={() => handleEventSelect(event)}
-                                            variants={eventCardVariant}
-                                            initial="hidden"
-                                            animate="visible"
-                                            transition={{ delay: index * 0.05 }}
-                                        >
-                                            <div className="flex items-start space-x-4">
-                                                <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-100 to-pink-100">
-                                                    <svg
-                                                        className="h-8 w-8 text-blue-600"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        viewBox="0 0 24 24"
-                                                    >
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            strokeWidth="2"
-                                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                                        />
-                                                    </svg>
+                                    {Array.isArray(isEventUpcoming) && isEventUpcoming.length > 0 ? (
+                                        isEventUpcoming.map((event, index) => (
+                                            <motion.div
+                                                key={event.id}
+                                                className="cursor-pointer rounded-xl border p-4 transition-shadow hover:shadow-md"
+                                                onClick={() => handleEventSelect(event)}
+                                                variants={eventCardVariant}
+                                                initial="hidden"
+                                                animate="visible"
+                                                transition={{ delay: index * 0.05 }}
+                                            >
+                                                <div className="flex items-start space-x-4">
+                                                    <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-100 to-pink-100">
+                                                        <svg
+                                                            className="h-8 w-8 text-blue-600"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            viewBox="0 0 24 24"
+                                                        >
+                                                            <path
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                strokeWidth="2"
+                                                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                                            />
+                                                        </svg>
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="font-semibold text-gray-800">{event.proposal?.title}</h3>
+                                                        <p className="mt-1 text-sm text-gray-600">{formatEventDate(event.eventDate)}</p>
+                                                        <p className="mt-2 line-clamp-2 text-xs text-gray-500">{event.proposal?.description}</p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <h3 className="font-semibold text-gray-800">
-                                                        {event.proposal?.title}
-                                                    </h3>
-                                                    <p className="mt-1 text-sm text-gray-600">
-                                                        {formatEventDate(event.eventDate)}
-                                                    </p>
-                                                    <p className="mt-2 line-clamp-2 text-xs text-gray-500">
-                                                        {event.proposal?.description}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </motion.div>
-                                    ))}
+                                            </motion.div>
+                                        ))
+                                    ) : (
+                                        <div className="col-span-1 md:col-span-2 text-center text-gray-500 py-10">
+                                            No upcoming events.
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 <motion.div
@@ -129,20 +129,14 @@ const RegistrationModal = ({
                                     exit={{ opacity: 0 }}
                                 >
                                     <div className="mb-6 rounded-xl bg-blue-50 p-4">
-                                        <h3 className="font-semibold text-blue-800">
-                                            {selectedEvent.proposal.title}
-                                        </h3>
-                                        <p className="text-sm text-blue-600">
-                                            {formatEventDate(selectedEvent.eventDate)}
-                                        </p>
+                                        <h3 className="font-semibold text-blue-800">{selectedEvent.proposal.title}</h3>
+                                        <p className="text-sm text-blue-600">{formatEventDate(selectedEvent.eventDate)}</p>
                                     </div>
 
                                     <form onSubmit={handleSubmit} className="space-y-4">
                                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                             <div>
-                                                <label className="mb-1 block text-sm font-medium text-gray-700">
-                                                    First Name
-                                                </label>
+                                                <label className="mb-1 block text-sm font-medium text-gray-700">First Name</label>
                                                 <input
                                                     type="text"
                                                     name="firstName"
@@ -153,9 +147,7 @@ const RegistrationModal = ({
                                                 />
                                             </div>
                                             <div>
-                                                <label className="mb-1 block text-sm font-medium text-gray-700">
-                                                    Last Name
-                                                </label>
+                                                <label className="mb-1 block text-sm font-medium text-gray-700">Last Name</label>
                                                 <input
                                                     type="text"
                                                     name="lastName"
@@ -168,9 +160,7 @@ const RegistrationModal = ({
                                         </div>
 
                                         <div>
-                                            <label className="mb-1 block text-sm font-medium text-gray-700">
-                                                Email Address
-                                            </label>
+                                            <label className="mb-1 block text-sm font-medium text-gray-700">Email Address</label>
                                             <input
                                                 type="email"
                                                 name="email"
@@ -182,9 +172,7 @@ const RegistrationModal = ({
                                         </div>
 
                                         <div>
-                                            <label className="mb-1 block text-sm font-medium text-gray-700">
-                                                Phone Number
-                                            </label>
+                                            <label className="mb-1 block text-sm font-medium text-gray-700">Phone Number</label>
                                             <input
                                                 type="tel"
                                                 name="phone"
@@ -196,9 +184,7 @@ const RegistrationModal = ({
                                         </div>
 
                                         <div>
-                                            <label className="mb-1 block text-sm font-medium text-gray-700">
-                                                Address
-                                            </label>
+                                            <label className="mb-1 block text-sm font-medium text-gray-700">Address</label>
                                             <textarea
                                                 name="address"
                                                 value={formData.address}

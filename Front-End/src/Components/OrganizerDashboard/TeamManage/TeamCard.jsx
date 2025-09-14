@@ -11,6 +11,9 @@ export default function TeamCard({
   updateTeam,
   cancelEditing
 }) {
+
+
+  console.log("team",team)
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 p-5 transition-colors duration-200 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600">
       <div className="mb-4 flex items-center justify-between">

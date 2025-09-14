@@ -20,8 +20,6 @@ exports.BroadcastControllerEmail = AsyncErrorHandler(async (req, res) => {
 
     const teamIds = teams.map(team => team._id);
 
-    console.log("Matched Team IDs:", teamIds);
-
     res.status(200).json({
       status: "success",
       data: teamIds, 

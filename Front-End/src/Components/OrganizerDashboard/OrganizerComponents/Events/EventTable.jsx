@@ -354,7 +354,7 @@ const EvenTable = () => {
                                                         <div className="flex items-center gap-1">
                                                             <Calendar size={14} />
                                                             <span>
-                                                                {new Date(event.created_at).toLocaleDateString("en-US", {
+                                                                {new Date(event.eventDate).toLocaleDateString("en-US", {
                                                                     weekday: "short",
                                                                     year: "numeric",
                                                                     month: "short",

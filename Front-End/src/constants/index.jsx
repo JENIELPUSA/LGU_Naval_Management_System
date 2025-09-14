@@ -43,11 +43,6 @@ export const navbarLinks = [
                 path: "/dashboard/admin",
             },
             {
-                label: "Officer",
-                icon: UserPlus,
-                path: "/dashboard/officer",
-            },
-            {
                 label: "Organizer",
                 icon: UserPlus,
                 path: "/dashboard/organizer",

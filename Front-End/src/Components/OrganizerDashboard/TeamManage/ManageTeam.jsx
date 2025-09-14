@@ -1,7 +1,7 @@
 import React, { useContext, useState, useEffect } from "react";
 import { PlusCircleIcon, UserPlusIcon, UsersIcon, ClipboardDocumentListIcon, CalendarIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { BuildingOfficeIcon } from "@heroicons/react/24/solid";
-import { OfficerDisplayContext } from "../../../contexts/OfficerContext/OfficerContext";
+import { LguDisplayContext } from "../../../contexts/LguContext/LguContext";
 import { EventDisplayContext } from "../../../contexts/EventContext/EventContext";
 import { TEamContext } from "../../../contexts/TeamContext/TeamContext";
 import MemberManagement from "./MemberManagement";
@@ -11,7 +11,7 @@ import TeamSummary from "./TeamSummary";
 export default function ManageTeam() {
     const { AddTeam, deleteTeam, UpdateTeam } = useContext(TEamContext);
     const { isDropdownEvent } = useContext(EventDisplayContext);
-    const { BroadcastEmail,isOfficer, UpdatedataAssign, Getsummary, isSummary } = useContext(OfficerDisplayContext);
+  const {BroadcastEmail,isLgu,UpdatedataAssign, Getsummary, isSummary } = useContext(LguDisplayContext);
 
     const [teams, setTeams] = useState([]);
     const [members, setMembers] = useState([]);
@@ -85,7 +85,7 @@ export default function ManageTeam() {
     }, [isSummary, selectedEvent]);
 
     // Create officer members with their actual data from the database
-    const officerMembers = isOfficer.map((officer) => ({
+    const officerMembers = isLgu.map((officer) => ({
         _id: officer._id,
         name: `${officer.first_name} ${officer.last_name}`,
         teamIds: officer.teamId || [],
@@ -482,7 +482,7 @@ export default function ManageTeam() {
                 <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
                     <MemberManagement
                         members={members}
-                        officerMembers={officerMembers}
+                        officerMembers={isLgu}
                         filteredTeams={filteredTeams}
                         selectedMember={selectedMember}
                         setSelectedMember={setSelectedMember}

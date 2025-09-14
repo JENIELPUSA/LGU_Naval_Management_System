@@ -169,7 +169,7 @@ export const LguDisplayProvider = ({ children }) => {
                 task: values.task || "",
                 teamId: values.teamId || "",
             };
-            const response = await axiosInstance.patch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/Officer/${dataID}`, dataToSend, {
+            const response = await axiosInstance.patch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/LGU/${dataID}`, dataToSend, {
                 headers: { Authorization: `Bearer ${authToken}` },
             });
 
@@ -198,7 +198,7 @@ export const LguDisplayProvider = ({ children }) => {
             try {
                 setIsLoading(true);
                 const res = await axios.get(
-                    `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/Officer/GetAssignEventSummary?eventId=${eventId}`,
+                    `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/LGU/GetAssignEventSummary?eventId=${eventId}`,
                     {
                         withCredentials: true,
                         headers: {
@@ -227,7 +227,7 @@ export const LguDisplayProvider = ({ children }) => {
             try {
                 setIsLoading(true);
                 const res = await axios.get(
-                    `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/Officer/BroadcastControllerEmail?eventId=${team_id}`,
+                    `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/LGU/BroadcastControllerEmail?team_id=${team_id}`,
                     {
                         withCredentials: true,
                         headers: {
