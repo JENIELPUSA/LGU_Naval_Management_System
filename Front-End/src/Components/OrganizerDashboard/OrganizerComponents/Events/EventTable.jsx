@@ -402,31 +402,6 @@ const EvenTable = () => {
                                                     </div>
                                                 </div>
 
-                                                <div className="space-y-4">
-                                                    <div>
-                                                        <div className="mb-2 flex items-center gap-2">
-                                                            <FileText
-                                                                size={16}
-                                                                className="text-blue-500"
-                                                            />
-                                                            <h4 className="font-medium text-gray-900 dark:text-white">Event Url</h4>
-                                                            {event.registerUrl && (
-                                                                <button
-                                                                    onClick={() => handleCopy(event._id, event.registerUrl)}
-                                                                    className="ml-2 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400"
-                                                                    title="Copy URL"
-                                                                >
-                                                                    <Copy size={16} />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                        <p className="line-clamp-3 pl-6 text-sm text-gray-600 dark:text-gray-300">
-                                                            {event.registerUrl || "No URL available"}
-                                                        </p>
-                                                        {copiedEventId === event._id && <span className="pl-6 text-xs text-green-500">Copied!</span>}
-                                                    </div>
-                                                </div>
-
                                                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                                     {/* Organizer Details */}
                                                     {event.organizer && (

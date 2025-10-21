@@ -54,25 +54,25 @@ export const ParticipantDisplayProvider = ({ children }) => {
                     headers: { "Content-Type": "application/json" },
                 },
             );
+
             if (res.data.status === "success") {
-                setParticipant((prevUsers) => [...prevUsers, res.data.data]);
-                setModalStatus("success");
-                setShowModal(true);
+                setParticipant((prev) => [...prev, res.data.data.participant]);
+                return res.data;
             } else {
-                setModalStatus("failed");
-                setShowModal(true);
-                return { success: false, error: "Unexpected response from server." };
+                throw new Error(res.data.message || "Registration failed.");
             }
         } catch (error) {
-            if (error.response && error.response.data) {
+            let message = "Something went wrong.";
+            if (error.response?.data) {
                 const errorData = error.response.data;
-                const message = typeof errorData === "string" ? errorData : errorData.message || errorData.error || "Something went wrong.";
-                setCustomError(message);
+                message = typeof errorData === "string" ? errorData : errorData.message || errorData.error || "Registration failed.";
             } else if (error.request) {
-                setCustomError("No response from the server.");
+                message = "No response from server. Please check your connection.";
             } else {
-                setCustomError(error.message || "Unexpected error occurred.");
+                message = error.message || "Unexpected error.";
             }
+
+            throw new Error(message);
         }
     };
 
@@ -215,7 +215,7 @@ export const ParticipantDisplayProvider = ({ children }) => {
             });
 
             const payload = res.data;
-            console.log("payload",payload)
+            console.log("payload", payload);
             setIncomingEvent(payload.data || []);
         } catch (error) {
             console.error("Error fetching admin data:", error);
