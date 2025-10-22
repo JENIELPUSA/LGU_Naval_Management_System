@@ -4,6 +4,7 @@
   "description": "Responsive Web Site",
   "main": "app.js",
   "dependencies": {
+    "@getbrevo/brevo": "^3.0.1",
     "@headlessui/react": "^2.2.2",
     "@react-three/drei": "^10.0.7",
     "@react-three/fiber": "^9.1.2",
@@ -168,7 +169,7 @@
     "neo-async": "^2.6.2",
     "node-cron": "^3.0.3",
     "node-releases": "^2.0.19",
-    "nodemailer": "^6.9.15",
+    "nodemailer": "^7.0.9",
     "normalize-path": "^3.0.0",
     "object-assign": "^4.1.1",
     "object-inspect": "^1.13.3",

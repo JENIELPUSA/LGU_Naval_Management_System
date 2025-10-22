@@ -1,22 +1,21 @@
-const nodemailer = require("nodemailer");
+const Brevo = require("@getbrevo/brevo");
+
+const client = new Brevo.TransactionalEmailsApi();
+client.setApiKey(
+  Brevo.TransactionalEmailsApiApiKeys.apiKey,
+  process.env.BREVO_API_KEY
+);
 
 const sendEmail = async (options) => {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    pool: true,
-    maxMessages: Infinity,
-    maxConnections: 500,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD,
-    },
-  });
-
-  const mailOptions = {
-    from: `LGU Naval Management System <${process.env.EMAIL_USER}>`,
-    to: options.email,
-    subject: options.subject,
-    html: `
+  try {
+    const emailData = {
+      sender: {
+        name: "LGUNAVAL",
+        email: "appuse12300@gmail.com",
+      },
+      to: [{ email: options.email }],
+      subject: options.subject,
+      htmlContent: `
        <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -211,16 +210,17 @@ const sendEmail = async (options) => {
     </div>
 </body>
 </html>
-        `,
-    attachments: options.attachments || [],
-  };
+      `,
+      attachments: options.attachments || [],
+    };
 
-  try {
-    await transporter.sendMail(mailOptions);
-    console.log("Email sent successfully");
+    await client.sendTransacEmail(emailData);
+    console.log("✅ Email sent successfully via Brevo API!");
   } catch (error) {
-    console.error("Error sending email:", error);
-    throw new Error("Error sending email");
+    console.error(
+      "❌ Error sending email via Brevo API:",
+      error.response?.body || error
+    );
   }
 };
 
