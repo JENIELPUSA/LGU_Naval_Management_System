@@ -69,7 +69,7 @@ exports.participantCreate = AsyncErrorHandler(async (req, res) => {
       color: { dark: "#2563eb", light: "#ffffff" },
       width: 200,
     });
-    
+
     const pdfBuffer = await new Promise((resolve, reject) => {
       const doc = new PDFDocument({
         size: "A4",
@@ -163,21 +163,39 @@ exports.participantCreate = AsyncErrorHandler(async (req, res) => {
         participant.middle_name || ""
       } ${participant.last_name}`.trim();
 
-      doc.font("Helvetica-Bold").fontSize(16).fillColor(primaryColor).text(participantName, 70, doc.y + 10);
+      doc
+        .font("Helvetica-Bold")
+        .fontSize(16)
+        .fillColor(primaryColor)
+        .text(participantName, 70, doc.y + 10);
       doc.y += 25;
-      doc.font("Helvetica-Bold").text("Email: ", { continued: true }).font("Helvetica").text(participant.email);
+      doc
+        .font("Helvetica-Bold")
+        .text("Email: ", { continued: true })
+        .font("Helvetica")
+        .text(participant.email);
       doc.y += 15;
-      doc.font("Helvetica-Bold").text("Contact: ", { continued: true }).font("Helvetica").text(
-        `${participant.contact_number}${participant.extention ? ` ext. ${participant.extention}` : ""}`
-      );
+      doc
+        .font("Helvetica-Bold")
+        .text("Contact: ", { continued: true })
+        .font("Helvetica")
+        .text(
+          `${participant.contact_number}${
+            participant.extention ? ` ext. ${participant.extention}` : ""
+          }`
+        );
       doc.y += 15;
-      doc.font("Helvetica-Bold").text("Gender: ", { continued: true }).font("Helvetica").text(
-        participant.gender || "Not specified"
-      );
+      doc
+        .font("Helvetica-Bold")
+        .text("Gender: ", { continued: true })
+        .font("Helvetica")
+        .text(participant.gender || "Not specified");
       doc.y += 15;
-      doc.font("Helvetica-Bold").text("Participant ID: ", { continued: true }).font("Helvetica").text(
-        participant._id.toString()
-      );
+      doc
+        .font("Helvetica-Bold")
+        .text("Participant ID: ", { continued: true })
+        .font("Helvetica")
+        .text(participant._id.toString());
 
       // QR Code
       doc.y = infoBoxY + 140;
@@ -190,36 +208,81 @@ exports.participantCreate = AsyncErrorHandler(async (req, res) => {
       const qrBuffer = Buffer.from(qrImage.split(",")[1], "base64");
       const qrX = (doc.page.width - 160) / 2;
       const qrY = doc.y;
-      doc.rect(qrX - 10, qrY - 10, 180, 180).fillAndStroke("#ffffff", primaryColor);
+      doc
+        .rect(qrX - 10, qrY - 10, 180, 180)
+        .fillAndStroke("#ffffff", primaryColor);
       doc.image(qrBuffer, qrX, qrY, { fit: [160, 160] });
       doc.y = qrY + 190;
       doc
         .fontSize(10)
         .fillColor(textColor)
-        .text("Scan this QR code for event check-in verification", { align: "center" });
+        .text("Scan this QR code for event check-in verification", {
+          align: "center",
+        });
 
       // Footer
       doc.y = doc.page.height - 120;
-      doc.moveTo(50, doc.y).lineTo(doc.page.width - 50, doc.y).stroke(primaryColor);
+      doc
+        .moveTo(50, doc.y)
+        .lineTo(doc.page.width - 50, doc.y)
+        .stroke(primaryColor);
       doc.moveDown(0.5);
-      doc.fontSize(10).fillColor("#6b7280").text(
-        "This is an official event registration pass. Please present this document at the event entrance.",
-        { align: "center" }
-      );
-      doc.text("For inquiries, please contact the event organizers.", { align: "center" });
-      doc.fontSize(8).text(`Generated on: ${new Date().toLocaleString()}`, { align: "center" });
+      doc
+        .fontSize(10)
+        .fillColor("#6b7280")
+        .text(
+          "This is an official event registration pass. Please present this document at the event entrance.",
+          { align: "center" }
+        );
+      doc.text("For inquiries, please contact the event organizers.", {
+        align: "center",
+      });
+      doc
+        .fontSize(8)
+        .text(`Generated on: ${new Date().toLocaleString()}`, {
+          align: "center",
+        });
 
       doc.end();
     });
 
-    // 🔹 Step 5: Respond with participant data + base64 PDF
+    console.log("participant",participant)
+
+    await sendEmail({
+      email: participant.email,
+      subject: "Event Registration Confirmation",
+      text: `
+    Dear ${participant.first_name},
+
+    Thank you for registering for the event "${
+      participant.proposalInfo?.title || "Unnamed Event"
+    }".
+    Please find your official registration pass attached as a PDF file.
+    
+    We look forward to seeing you at the venue:
+    ${participant.event?.venue || "TBA"}.
+
+    Best regards,
+    LGU Event Management Team
+  `,
+      attachments: [
+        {
+          filename: `Event_Pass_${participant._id}.pdf`,
+          content: pdfBuffer, // <-- direct buffer from PDFDocument
+          contentType: "application/pdf",
+        },
+      ],
+    });
+
     res.status(201).json({
       status: "success",
       message: "Participant registered successfully.",
       data: {
         participant: {
           id: participant._id,
-          name: `${participant.first_name} ${participant.middle_name || ""} ${participant.last_name}`.trim(),
+          name: `${participant.first_name} ${participant.middle_name || ""} ${
+            participant.last_name
+          }`.trim(),
           email: participant.email,
           event: participant.event?.event_name || "N/A",
           venue: participant.event?.venue || "N/A",
@@ -243,7 +306,15 @@ exports.ParticipantDisplay = AsyncErrorHandler(async (req, res) => {
   const limit = parseInt(req.query.limit) || 5;
   const skip = (page - 1) * limit;
 
-  const { search, first_name, middle_name, last_name, extention, dateFrom, dateTo } = req.query;
+  const {
+    search,
+    first_name,
+    middle_name,
+    last_name,
+    extention,
+    dateFrom,
+    dateTo,
+  } = req.query;
 
   const matchStage = {};
 
@@ -475,15 +546,15 @@ exports.deleteParticipant = AsyncErrorHandler(async (req, res, next) => {
 
 exports.getParticipantsCountPerEvent = async (req, res) => {
   const role = req.user.role;
-  const userId = req.user.linkId; 
+  const userId = req.user.linkId;
 
   try {
-    const currentDate = new Date(); 
+    const currentDate = new Date();
 
     const pipeline = [
       {
         $group: {
-          _id: "$event_id", 
+          _id: "$event_id",
           totalParticipants: { $sum: 1 },
         },
       },
@@ -511,7 +582,9 @@ exports.getParticipantsCountPerEvent = async (req, res) => {
           "eventDetails.eventDate": { $lte: currentDate }, // <-- dito lang nag-filter
         },
       },
-      ...(role === "organizer" ? [{ $match: { "eventDetails.created_by": userId } }] : []),
+      ...(role === "organizer"
+        ? [{ $match: { "eventDetails.created_by": userId } }]
+        : []),
       {
         $project: {
           _id: 0,
@@ -526,8 +599,8 @@ exports.getParticipantsCountPerEvent = async (req, res) => {
         },
       },
       {
-        $sort: { eventDate: -1 } // pinaka-latest muna
-      }
+        $sort: { eventDate: -1 }, // pinaka-latest muna
+      },
     ];
 
     const result = await ParticipantModel.aggregate(pipeline);
@@ -536,13 +609,8 @@ exports.getParticipantsCountPerEvent = async (req, res) => {
       status: "success",
       data: result.length > 0 ? result : null,
     });
-
   } catch (error) {
     console.error("Error getting participants count per event:", error);
     res.status(500).json({ message: "Server Error" });
   }
 };
-
-
-
-
