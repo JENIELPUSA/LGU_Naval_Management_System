@@ -77,6 +77,9 @@ export const ParticipantDisplayProvider = ({ children }) => {
     };
 
     const Attendance = async (values) => {
+
+
+        console.log("values",values)
         try {
             const response = await axios.patch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/Participant/${values.code}`, values, {
                 headers: { "Content-Type": "application/json" },
@@ -119,7 +122,7 @@ export const ParticipantDisplayProvider = ({ children }) => {
         }
     };
 
-    const FetchParticipant = async (page = 1, limit, searchTerm = "", fromDate = "", toDate = "") => {
+    const FetchParticipant = async (page = 1, limit, searchTerm = "", fromDate = "", toDate = "",event_id="") => {
         if (!authToken) return;
 
         try {
@@ -128,6 +131,7 @@ export const ParticipantDisplayProvider = ({ children }) => {
             const params = {
                 page,
                 limit,
+                event_id
             };
 
             if (searchTerm && searchTerm.trim() !== "") {

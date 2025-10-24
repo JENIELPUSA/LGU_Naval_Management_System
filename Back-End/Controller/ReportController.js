@@ -40,67 +40,77 @@ exports.reportCreate = AsyncErrorHandler(async (req, res) => {
 });
 
 exports.reportdisplay = AsyncErrorHandler(async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 9;
-  const skip = (page - 1) * limit;
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 9;
+    const skip = (page - 1) * limit;
 
-  const result = await reportmodel.aggregate([
-    {
-      $lookup: {
-        from: "events",
-        localField: "event_id",
-        foreignField: "_id",
-        as: "EventInfo",
+    const result = await reportmodel.aggregate([
+      {
+        $lookup: {
+          from: "events",
+          localField: "event_id",
+          foreignField: "_id",
+          as: "EventInfo",
+        },
       },
-    },
-    { $unwind: { path: "$EventInfo", preserveNullAndEmptyArrays: true } },
+      { $unwind: { path: "$EventInfo", preserveNullAndEmptyArrays: true } },
 
-    {
-      $lookup: {
-        from: "proposals",
-        localField: "EventInfo.proposalId",
-        foreignField: "_id",
-        as: "proposalInfo",
+      {
+        $lookup: {
+          from: "proposals",
+          localField: "EventInfo.proposalId",
+          foreignField: "_id",
+          as: "proposalInfo",
+        },
       },
-    },
-    { $unwind: { path: "$proposalInfo", preserveNullAndEmptyArrays: true } },
+      { $unwind: { path: "$proposalInfo", preserveNullAndEmptyArrays: true } },
 
-    { $sort: { created_at: -1 } },
+      { $sort: { created_at: -1 } },
 
-    {
-      $facet: {
-        data: [
-          { $skip: skip },
-          { $limit: limit },
-          {
-            $project: {
-              _id: 1,
-              feedback: 1,
-              created_at:1,
-              rating: 1,
-              userName: 1,
-              proposalTitle: "$proposalInfo.title", // <--- FIX
+      {
+        $facet: {
+          data: [
+            { $skip: skip },
+            { $limit: limit },
+            {
+              $project: {
+                _id: 1,
+                feedback: 1,
+                created_at: 1,
+                rating: 1,
+                userName: 1,
+                proposalTitle: "$proposalInfo.title",
+              },
             },
-          },
-        ],
-        totalCount: [{ $count: "count" }],
+          ],
+          totalCount: [{ $count: "count" }],
+        },
       },
-    },
-  ]);
+    ]);
 
-  const events = result[0].data || [];
-  const totalCount = result[0].totalCount[0]?.count || 0;
-  const totalPages = Math.ceil(totalCount / limit);
+    const events = result[0].data || [];
+    const totalCount = result[0].totalCount[0]?.count || 0;
+    const totalPages = Math.ceil(totalCount / limit);
 
-  res.status(200).json({
-    status: "success",
-    currentPage: page,
-    totalPages,
-    totalCount,
-    results: events.length,
-    data: events.length > 0 ? events : null,
-  });
+    return res.status(200).json({
+      status: "success",
+      currentPage: page,
+      totalPages,
+      totalCount,
+      results: events.length,
+      data: events,
+    });
+  } catch (error) {
+    console.error("❌ Error fetching report display:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "An error occurred while fetching reports",
+      error: error.message,
+    });
+  }
 });
+
 
 
 

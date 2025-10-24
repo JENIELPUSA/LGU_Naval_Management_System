@@ -21,7 +21,7 @@ const AddAdminFormModal = ({ isOpen, onClose, onSubmit, formData, setFormData, i
         const avatarToSend =
             file ||
             (typeof formData.avatar === "object" && formData.avatar !== null && formData.avatar.url) ||
-            (typeof formData.avatar === "string" && formData.avatar); // fallback if avatar is string URL
+            (typeof formData.avatar === "string" && formData.avatar);
 
         onSubmit(e, { ...formData, avatar: avatarToSend });
         setFile(null);
@@ -32,8 +32,8 @@ const AddAdminFormModal = ({ isOpen, onClose, onSubmit, formData, setFormData, i
     }
 
     return (
-        <div className="fixed inset-0 z-[900] flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-slate-800">
+        <div className="fixed inset-0 z-[900] flex items-start justify-center bg-black/50 p-4 sm:items-center">
+            <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-slate-800 max-h-[90vh] overflow-y-auto">
                 <div className="mb-4 flex items-center justify-between">
                     <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200">{isEditing ? "Edit Admin" : "Add New Admin"}</h3>
                     <button
@@ -64,14 +64,14 @@ const AddAdminFormModal = ({ isOpen, onClose, onSubmit, formData, setFormData, i
                     <div>
                         <label className="mb-1 block text-sm text-slate-600 dark:text-slate-400">Upload Picture</label>
                         <div
-                            className="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-4 text-center hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700/50 dark:hover:bg-slate-700"
+                            className="flex w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-4 text-center hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700/50 dark:hover:bg-slate-700 aspect-[4/3] relative"
                             onClick={() => fileInputRef.current.click()}
                         >
                             {file || formData.avatar?.url ? (
                                 <img
                                     src={file ? URL.createObjectURL(file) : formData.avatar?.url}
                                     alt="Preview"
-                                    className="h-full object-contain"
+                                    className="h-full w-full object-contain"
                                 />
                             ) : (
                                 <>
@@ -146,7 +146,6 @@ const AddAdminFormModal = ({ isOpen, onClose, onSubmit, formData, setFormData, i
                         >
                             <option value="Male">Male</option>
                             <option value="Female">Female</option>
-                            <option value="Other">Other</option>
                         </select>
                     </div>
                     <div>

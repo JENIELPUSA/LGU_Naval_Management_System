@@ -21,7 +21,7 @@ const AddOrganizerFormModal = ({ isOpen, onClose, onSubmit, formData, setFormDat
         const avatarToSend =
             file ||
             (typeof formData.avatar === "object" && formData.avatar !== null && formData.avatar.url) ||
-            (typeof formData.avatar === "string" && formData.avatar); // fallback if avatar is string URL
+            (typeof formData.avatar === "string" && formData.avatar);
 
         onSubmit(e, { ...formData, avatar: avatarToSend });
         setFile(null);
@@ -32,10 +32,10 @@ const AddOrganizerFormModal = ({ isOpen, onClose, onSubmit, formData, setFormDat
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-slate-800">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 sm:items-center">
+            <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-slate-800 max-h-[90vh] overflow-y-auto">
                 <div className="mb-4 flex items-center justify-between">
-                    <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200">{isEditing ? "Edit Admin" : "Add New Admin"}</h3>
+                    <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200">{isEditing ? "Edit Organizer" : "Add New Organizer"}</h3>
                     <button
                         onClick={onClose}
                         className="text-slate-400 hover:text-slate-500 dark:hover:text-slate-300"
@@ -64,14 +64,14 @@ const AddOrganizerFormModal = ({ isOpen, onClose, onSubmit, formData, setFormDat
                     <div>
                         <label className="mb-1 block text-sm text-slate-600 dark:text-slate-400">Upload Picture</label>
                         <div
-                            className="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-4 text-center hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700/50 dark:hover:bg-slate-700"
+                            className="flex w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-4 text-center hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700/50 dark:hover:bg-slate-700 aspect-[4/3] relative"
                             onClick={() => fileInputRef.current.click()}
                         >
                             {file || formData.avatar?.url ? (
                                 <img
                                     src={file ? URL.createObjectURL(file) : formData.avatar?.url}
                                     alt="Preview"
-                                    className="h-full object-contain"
+                                    className="h-full w-full object-contain"
                                 />
                             ) : (
                                 <>
@@ -146,9 +146,9 @@ const AddOrganizerFormModal = ({ isOpen, onClose, onSubmit, formData, setFormDat
                         >
                             <option value="Male">Male</option>
                             <option value="Female">Female</option>
-                            <option value="Other">Other</option>
                         </select>
                     </div>
+                    
                     <div>
                         <label className="mb-1 block text-sm text-slate-600 dark:text-slate-400">Contact Number</label>
                         <input
@@ -184,7 +184,7 @@ const AddOrganizerFormModal = ({ isOpen, onClose, onSubmit, formData, setFormDat
                             type="submit"
                             className="flex items-center gap-2 rounded-lg bg-pink-500 px-4 py-2 text-white shadow-sm transition hover:bg-pink-600 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 dark:bg-pink-600 dark:hover:bg-pink-700 dark:focus:ring-pink-500 dark:focus:ring-offset-slate-900"
                         >
-                            <span className="relative">{isEditing ? "Save Changes" : "Add Admin"}</span>
+                            <span className="relative">{isEditing ? "Save Changes" : "Add Organizer"}</span>
                         </button>
                     </div>
                 </form>

@@ -12,11 +12,11 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData }) => {
     const { isLgu } = useContext(LguDisplayContext);
     const { isDropdownProposal, DropdownProposal } = useContext(ProposalDisplayContext);
     const { isResourcesDropdown, FetchResourcesDropdownData } = useContext(ResourcesDisplayContext);
-    
+
     const lguDropdownRef = useRef(null);
     const proposalDropdownRef = useRef(null);
     const resourcesDropdownRef = useRef(null);
-    
+
     const generateTimeOptions = () => {
         const times = [];
         const startHour = 8;
@@ -62,7 +62,7 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData }) => {
         const date = new Date(isoDateString);
         return date.toISOString().split("T")[0];
     };
-    
+
     useEffect(() => {
         if (isOpen) {
             DropdownProposal(showAllProposals); // initially false = default 5
@@ -271,10 +271,18 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData }) => {
                                         {formData.lguId
                                             ? (() => {
                                                   const selectedLgu = isLgu.find((l) => l._id === formData.lguId);
-                                                  return selectedLgu ? `${selectedLgu.middle_name} ${selectedLgu.last_name}` : "Selected LGU";
+                                                  if (!selectedLgu) return "Selected LGU";
+
+                                                  // Filter out "N/A" values
+                                                  const nameParts = [selectedLgu.first_name, selectedLgu.middle_name, selectedLgu.last_name].filter(
+                                                      (part) => part && part !== "N/A",
+                                                  );
+
+                                                  return nameParts.length > 0 ? nameParts.join(" ") : "Selected LGU";
                                               })()
                                             : "Select an LGU..."}
                                     </span>
+
                                     <ChevronDown
                                         className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${isLguDropdownOpen ? "rotate-180" : ""}`}
                                     />

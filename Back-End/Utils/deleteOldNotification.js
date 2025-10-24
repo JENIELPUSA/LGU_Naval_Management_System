@@ -20,25 +20,49 @@ const getEmailsOfPastEventParticipants = async () => {
     const pastEventIds = pastEvents.map(event => event._id);
 
     // 2. Get participants for past events
-    const participantsWithEvent = await Participant.aggregate([
-      { $match: { event_id: { $in: pastEventIds } } },
-      {
-        $lookup: {
-          from: "events",
-          localField: "event_id",
-          foreignField: "_id",
-          as: "event"
-        }
-      },
-      { $unwind: "$event" },
-      { 
-        $project: { 
-          email: 1, 
-          "event.event_name": 1,
-          "event._id": 1
-        } 
-      }
-    ]);
+   const participantsWithEvent = await Participant.aggregate([
+  { $match: { event_id: { $in: pastEventIds } } },
+
+  // Join Event data
+  {
+    $lookup: {
+      from: "events",
+      localField: "event_id",
+      foreignField: "_id",
+      as: "event",
+    },
+  },
+  { $unwind: "$event" },
+
+  // Join Proposal data linked to each Event
+  {
+    $lookup: {
+      from: "proposals",
+      localField: "event.proposalId", // assuming Event has proposal_id
+      foreignField: "_id",
+      as: "proposal",
+    },
+  },
+  {
+    $unwind: {
+      path: "$proposal",
+      preserveNullAndEmptyArrays: true, // in case event has no proposal linked
+    },
+  },
+
+  // Select fields to display
+  {
+    $project: {
+      email: 1,
+      "event._id": 1,
+      "event.event_name": 1,
+      "proposal.title": 1, // display proposal name
+    },
+  },
+]);
+
+
+    console.log("participantsWithEvent",participantsWithEvent)
 
     if (participantsWithEvent.length === 0) {
       console.log("⚠️ No participants found for past events.");
@@ -53,7 +77,7 @@ const getEmailsOfPastEventParticipants = async () => {
 
       await sendEmail({
         email: participant.email,
-        subject: `Event Registration Confirmation - ${participant.event.event_name}`,
+        subject: `Event Registration Confirmation - ${participant. proposal.title}`,
         text: `Mag-iwan ng Review patungkol sa aming Event na Ginanap kahapon: ${pageUrl}`
       });
     }
@@ -71,7 +95,7 @@ const getEmailsOfPastEventParticipants = async () => {
     return participantsWithEvent.map(p => ({
       email: p.email,
       eventId: p.event._id,
-      eventName: p.event.event_name
+      eventName: p.proposal.title
     }));
 
   } catch (error) {

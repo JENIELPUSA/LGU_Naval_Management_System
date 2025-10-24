@@ -5,11 +5,12 @@ import HeroSection from "./HeroSection";
 import EventDocumentation from "./EventDocumentation";
 import LatestEvents from "./LatestEvents";
 import AboutSection from "./AboutSection";
-import FeaturesSection from "./FeaturesSection";
 import Footer from "./Footer";
 import RegistrationModal from "./RegistrationModal";
 import { ParticipantDisplayContext } from "../../contexts/ParticipantContext/ParticipantContext";
 import LoadingOverlay from "../../ReusableFolder/LoadingOverlay";
+import fiestaImage from "../../assets/hero-image.png";
+import FeedBack from "../../Components/Participant/userFeedBack"
 
 const ParticipantDashboard = () => {
   const { AddParticipant, isLoading, setIsLoading } = useContext(ParticipantDisplayContext);
@@ -25,7 +26,7 @@ const ParticipantDashboard = () => {
     eventId: "",
     eventTitle: "",
   });
-  const [registrationSuccess, setRegistrationSuccess] = useState(null); // ✅ NEW
+  const [registrationSuccess, setRegistrationSuccess] = useState(null);
 
   const eventsRef = useRef(null);
   const servicesRef = useRef(null);
@@ -52,7 +53,6 @@ const ParticipantDashboard = () => {
         participant: response.data.participant,
         pdfBase64: response.data.pdfBase64,
       });
-    
     } catch (error) {
       console.error("Error adding participant:", error);
       // Optional: show error toast
@@ -86,7 +86,16 @@ const ParticipantDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-pink-50 to-blue-100 font-sans antialiased relative">
+    <div
+      className="min-h-screen font-sans antialiased relative"
+      style={{
+        backgroundImage: `url(${fiestaImage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
       {isLoading && <LoadingOverlay />}
 
       <NavHeader
@@ -96,7 +105,7 @@ const ParticipantDashboard = () => {
         aboutRef={aboutRef}
       />
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto">
         <HeroSection setShowModal={setShowModal} showModal={showModal} />
         <EventDocumentation />
         <LatestEvents
@@ -105,8 +114,8 @@ const ParticipantDashboard = () => {
           setShowModal={setShowModal}
           handleEventSelect={handleEventSelect}
         />
+        <FeedBack/>
         <AboutSection aboutRef={aboutRef} />
-        <FeaturesSection servicesRef={servicesRef} />
       </main>
 
       <Footer />
@@ -121,8 +130,8 @@ const ParticipantDashboard = () => {
         handleSubmit={handleSubmit}
         handleEventSelect={handleEventSelect}
         isEventUpcoming={isEventUpcoming}
-        registrationSuccess={registrationSuccess} // ✅ pass success data
-        onResetRegistration={resetRegistrationFlow} // ✅ pass reset fn
+        registrationSuccess={registrationSuccess}
+        onResetRegistration={resetRegistrationFlow}
       />
     </div>
   );

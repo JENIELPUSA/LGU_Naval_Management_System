@@ -27,15 +27,10 @@ export const ReportDisplayProvider = ({ children }) => {
     const [isDropdownEvent, setDropdownEvent] = useState("");
     const limit = 9;
     const FetchReportDisplay = async (page = 1, limit, searchTerm = "", fromDate = "", toDate = "") => {
-        if (!authToken) return;
-
         try {
             setIsLoading(true);
 
-            const params = {
-                page,
-                limit,
-            };
+            const params = { page, limit };
 
             if (searchTerm && searchTerm.trim() !== "") {
                 params.search = searchTerm.trim();
@@ -51,9 +46,8 @@ export const ReportDisplayProvider = ({ children }) => {
 
             const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/Report`, {
                 params,
-                withCredentials: true,
+                withCredentials: false,
                 headers: {
-                    Authorization: `Bearer ${authToken}`,
                     "Cache-Control": "no-cache",
                 },
             });
@@ -63,15 +57,15 @@ export const ReportDisplayProvider = ({ children }) => {
             setCurrentPage(currentPage || page);
             setReport(data || []);
         } catch (error) {
-            console.error("Error fetching admin data:", error);
+            console.error("Error fetching report data:", error);
         } finally {
             setIsLoading(false);
         }
     };
+
     useEffect(() => {
-        if (!authToken) return;
         FetchReportDisplay(currentPage, search, dateFrom, dateTo);
-    }, [authToken, search, dateFrom, dateTo, currentPage]);
+    }, [search, dateFrom, dateTo, currentPage]);
 
     const AddReport = async (values) => {
         try {

@@ -29,18 +29,6 @@ const Footer = () => {
                         <p className="mb-6 max-w-md text-gray-300">
                             The leading platform for digital transformation of Local Government Units in the Philippines.
                         </p>
-                        <div className="flex space-x-4">
-                            {["facebook", "twitter", "linkedin", "instagram"].map((social) => (
-                                <a
-                                    key={social}
-                                    href="#"
-                                    className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-800 transition-colors hover:bg-pink-600"
-                                >
-                                    <span className="sr-only">{social}</span>
-                                    <div className="h-5 w-5 rounded bg-gray-300"></div>
-                                </a>
-                            ))}
-                        </div>
                     </div>
                     <div>
                         <h3 className="mb-4 text-lg font-semibold">Services</h3>
@@ -65,14 +53,6 @@ const Footer = () => {
                                     Technical Support
                                 </a>
                             </li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h3 className="mb-4 text-lg font-semibold">Contact Us</h3>
-                        <ul className="space-y-2 text-gray-300">
-                            <li>📧 info@lguevents.ph</li>
-                            <li>📞 (02) 8123-4567</li>
-                            <li>📍 Manila, Philippines</li>
                         </ul>
                     </div>
                 </div>

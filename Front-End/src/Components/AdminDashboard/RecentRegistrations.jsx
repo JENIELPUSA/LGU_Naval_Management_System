@@ -1,5 +1,4 @@
-// src/components/RecentRegistrations.jsx
-import { Filter, Calendar } from "lucide-react";
+import { Filter, Calendar, User } from "lucide-react";
 import React, { useContext, useMemo } from "react";
 import { ParticipantDisplayContext } from "../../contexts/ParticipantContext/ParticipantContext";
 
@@ -16,6 +15,7 @@ const RecentRegistrations = () => {
             return participantDate === todayStr;
         });
     }, [isParticipant]);
+
     return (
         <div className="card col-span-1 border border-pink-300/50 bg-gradient-to-br from-pink-50/30 to-blue-50/30 dark:border-pink-700/50 dark:from-pink-900/20 dark:to-blue-900/20 md:col-span-2 lg:col-span-3">
             <div className="card-header flex items-center justify-between">
@@ -32,41 +32,48 @@ const RecentRegistrations = () => {
                 </div>
             </div>
             <div className="card-body h-[300px] overflow-auto p-0">
-                {todayParticipants.map((sale) => (
-                    <div
-                        key={sale.id}
-                        className="group flex items-center justify-between gap-x-4 border-b border-pink-200/50 px-4 py-3 transition-all duration-300 hover:bg-gradient-to-r hover:from-pink-50/30 hover:to-blue-50/30 dark:border-pink-900/50 dark:hover:from-pink-900/10 dark:hover:to-blue-900/10"
-                    >
-                        <div className="flex items-center gap-x-3">
-                            <div className="relative">
-                                <div className="flex size-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-blue-400 text-white">
-                                    <span className="font-bold">{sale.first_name.charAt(0)}</span>
-                                </div>
-                                <div className="absolute bottom-0 right-0 flex size-2.5">
-                                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
-                                    <span className="relative inline-flex size-2.5 rounded-full bg-green-500"></span>
-                                </div>
-                            </div>
-                            <div className="flex flex-col">
-                                <p className="font-medium text-slate-800 group-hover:text-pink-600 dark:text-slate-100 dark:group-hover:text-pink-400">
-                                    {sale.first_name}
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex flex-col items-end">
-                            <p className="font-medium text-blue-600 dark:text-blue-400">#{sale.id}</p>
-                            <div className="mt-1 flex items-center gap-1">
-                                <Calendar
-                                    size={12}
-                                    className="text-slate-500 dark:text-slate-400"
-                                />
-                                <span className="text-xs text-slate-500 dark:text-slate-400">
-                                    {new Date().toLocaleDateString("en-PH", { month: "short", day: "numeric" })}
-                                </span>
-                            </div>
-                        </div>
+                {todayParticipants.length === 0 ? (
+                    <div className="flex h-full w-full flex-col items-center justify-center gap-3 p-6 text-center text-slate-500 dark:text-slate-400">
+                        <User size={48} className="text-slate-400 dark:text-slate-500 opacity-70" />
+                        <p className="text-lg font-medium">No registrations today.</p>
                     </div>
-                ))}
+                ) : (
+                    todayParticipants.map((sale) => (
+                        <div
+                            key={sale.id}
+                            className="group flex items-center justify-between gap-x-4 border-b border-pink-200/50 px-4 py-3 transition-all duration-300 hover:bg-gradient-to-r hover:from-pink-50/30 hover:to-blue-50/30 dark:border-pink-900/50 dark:hover:from-pink-900/10 dark:hover:to-blue-900/10"
+                        >
+                            <div className="flex items-center gap-x-3">
+                                <div className="relative">
+                                    <div className="flex size-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-blue-400 text-white">
+                                        <span className="font-bold">{sale.first_name.charAt(0)}</span>
+                                    </div>
+                                    <div className="absolute bottom-0 right-0 flex size-2.5">
+                                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+                                        <span className="relative inline-flex size-2.5 rounded-full bg-green-500"></span>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col">
+                                    <p className="font-medium text-slate-800 group-hover:text-pink-600 dark:text-slate-100 dark:group-hover:text-pink-400">
+                                        {sale.first_name}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex flex-col items-end">
+                                <p className="font-medium text-blue-600 dark:text-blue-400">#{sale.id}</p>
+                                <div className="mt-1 flex items-center gap-1">
+                                    <Calendar
+                                        size={12}
+                                        className="text-slate-500 dark:text-slate-400"
+                                    />
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                                        {new Date().toLocaleDateString("en-PH", { month: "short", day: "numeric" })}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
         </div>
     );

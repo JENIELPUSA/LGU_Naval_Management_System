@@ -11,6 +11,7 @@ export default function ScannerComponent() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [selectedAction, setSelectedAction] = useState("Check-In"); // Default selection
   const scannerRef = useRef(null);
   const beepSound = useRef(
     new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg")
@@ -30,6 +31,22 @@ export default function ScannerComponent() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Restart scanner when selectedAction changes (if scanning)
+  useEffect(() => {
+    if (isScanning && !isTransitioning) {
+      const restartScanner = async () => {
+        await stopScanner();
+        // Small delay ensures camera resources are released
+        setTimeout(() => {
+          if (!isScanning) {
+            startScanner();
+          }
+        }, 300);
+      };
+      restartScanner();
+    }
+  }, [selectedAction]);
+
   const startScanner = async () => {
     if (isScanning || isTransitioning) return;
     setIsTransitioning(true);
@@ -39,9 +56,8 @@ export default function ScannerComponent() {
         scannerRef.current = new Html5Qrcode("qr-reader");
       }
 
-      // Dynamic QR box size based on screen width
       const width = window.innerWidth;
-      let qrboxSize = Math.min(250, width * 0.7); // Responsive size
+      const qrboxSize = Math.min(250, width * 0.7);
 
       await scannerRef.current.start(
         { facingMode: "environment" },
@@ -49,10 +65,16 @@ export default function ScannerComponent() {
         (decodedText) => {
           const now = new Date();
           const dateTimeString = now.toLocaleString();
-          const scanData = { code: decodedText, timestamp: dateTimeString };
+
+          const scanData = {
+            code: decodedText,
+            timestamp: dateTimeString,
+            attendance_status: selectedAction,
+          };
+
           setScanResult(scanData);
           beepSound.current.play().catch(() => {});
-          Attendance(scanData);
+          Attendance(scanData, selectedAction);
         }
       );
 
@@ -96,12 +118,13 @@ export default function ScannerComponent() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-pink-400 to-blue-500 p-4">
       {/* Logo and Header */}
       <div className="mb-4 flex flex-col items-center">
-        <img 
-          src={logo} 
-          alt="LGU Naval EMS Logo" 
-          className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24" 
+        <img
+          src={logo}
+          alt="LGU Naval EMS Logo"
+          className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24"
         />
-        <h1 className="mt-2 bg-gradient-to-r from-pink-500 to-blue-500 bg-clip-text text-center text-xl font-bold text-transparent sm:text-2xl"
+        <h1
+          className="mt-2 bg-gradient-to-r from-pink-500 to-blue-500 bg-clip-text text-center text-xl font-bold text-transparent sm:text-2xl"
           style={{
             WebkitTextStroke: "1px white",
             WebkitTextFillColor: "transparent",
@@ -113,7 +136,24 @@ export default function ScannerComponent() {
 
       {/* Scanner Container */}
       <div className="w-full max-w-md rounded-2xl bg-white p-4 shadow-xl sm:p-6">
-        <h2 className="mb-3 text-center text-lg font-bold sm:text-xl">QR Code Scanner</h2>
+        <h2 className="mb-3 text-center text-lg font-bold sm:text-xl">
+          QR Code Scanner
+        </h2>
+
+        {/* Dropdown for Check-In / Check-Out */}
+        <div className="mb-4">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
+            Select Action:
+          </label>
+          <select
+            value={selectedAction}
+            onChange={(e) => setSelectedAction(e.target.value)}
+            className="w-full rounded-lg border border-gray-300 p-2 text-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+          >
+            <option value="Check-In">Check-In</option>
+            <option value="Check-Out">Check-Out</option>
+          </select>
+        </div>
 
         {/* Scanner viewport */}
         <div className="relative">
@@ -122,8 +162,7 @@ export default function ScannerComponent() {
             className="w-full rounded-xl border-4 border-dashed border-purple-300"
             style={{ aspectRatio: "1/1" }}
           />
-          
-          {/* Scanning instructions */}
+
           <p className="mt-3 text-center text-xs text-gray-600 sm:text-sm">
             Point your camera at a QR Code
           </p>
@@ -161,6 +200,9 @@ export default function ScannerComponent() {
         {/* Display scanned result */}
         {scanResult && (
           <div className="mt-4 rounded-lg border border-green-300 bg-green-100 p-3 text-center text-green-800">
+            <p className="text-sm">
+              <strong>Action:</strong> {scanResult.attendance_status}
+            </p>
             <p className="text-sm">
               <strong>Scanned Code:</strong> {scanResult.code}
             </p>
