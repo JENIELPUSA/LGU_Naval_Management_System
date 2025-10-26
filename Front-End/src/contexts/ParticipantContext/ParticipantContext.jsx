@@ -22,6 +22,7 @@ export const ParticipantDisplayProvider = ({ children }) => {
     const [dateFrom, setDateFrom] = useState("");
     const [dateTo, setDateTo] = useState("");
     const [IncomingEvent, setIncomingEvent] = useState("");
+    const [TotalUpcoming,setTotalUpcoming]=useState(0)
     const limit = 5;
 
     useEffect(() => {
@@ -57,6 +58,8 @@ export const ParticipantDisplayProvider = ({ children }) => {
 
             if (res.data.status === "success") {
                 setParticipant((prev) => [...prev, res.data.data.participant]);
+                setModalStatus("success");
+                setShowModal(true);
                 return res.data;
             } else {
                 throw new Error(res.data.message || "Registration failed.");
@@ -77,9 +80,7 @@ export const ParticipantDisplayProvider = ({ children }) => {
     };
 
     const Attendance = async (values) => {
-
-
-        console.log("values",values)
+        console.log("values", values);
         try {
             const response = await axios.patch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/Participant/${values.code}`, values, {
                 headers: { "Content-Type": "application/json" },
@@ -122,7 +123,7 @@ export const ParticipantDisplayProvider = ({ children }) => {
         }
     };
 
-    const FetchParticipant = async (page = 1, limit, searchTerm = "", fromDate = "", toDate = "",event_id="") => {
+    const FetchParticipant = async (page = 1, limit, searchTerm = "", fromDate = "", toDate = "", event_id = "") => {
         if (!authToken) return;
 
         try {
@@ -131,7 +132,7 @@ export const ParticipantDisplayProvider = ({ children }) => {
             const params = {
                 page,
                 limit,
-                event_id
+                event_id,
             };
 
             if (searchTerm && searchTerm.trim() !== "") {
@@ -221,6 +222,7 @@ export const ParticipantDisplayProvider = ({ children }) => {
             const payload = res.data;
             console.log("payload", payload);
             setIncomingEvent(payload.data || []);
+            setTotalUpcoming(res.data.totalUpcoming);
         } catch (error) {
             console.error("Error fetching admin data:", error);
         } finally {
@@ -251,7 +253,7 @@ export const ParticipantDisplayProvider = ({ children }) => {
                 FetchParticipant,
                 DeleteParticipant,
                 isTotalParticipant,
-                IncomingEvent,
+                IncomingEvent,TotalUpcoming
             }}
         >
             {children}

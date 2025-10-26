@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from "react";
+import React, { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const RegistrationModal = ({
@@ -20,27 +20,19 @@ const RegistrationModal = ({
     return new Date(dateString).toLocaleDateString("en-US", options);
   };
 
-  // ✅ Generate PDF blob URL (for download only)
-  const pdfUrl = useMemo(() => {
-    if (!registrationSuccess?.pdfBase64) return null;
-    const byteString = atob(registrationSuccess.pdfBase64);
-    const ab = new ArrayBuffer(byteString.length);
-    const ia = new Uint8Array(ab);
-    for (let i = 0; i < byteString.length; i++) {
-      ia[i] = byteString.charCodeAt(i);
-    }
-    const blob = new Blob([ab], { type: "application/pdf" });
-    return URL.createObjectURL(blob);
-  }, [registrationSuccess]);
-
-  // ✅ Revoke blob URL on unmount or change
+  // ✅ Auto-close modal when registration is successful
   useEffect(() => {
-    return () => {
-      if (pdfUrl) {
-        URL.revokeObjectURL(pdfUrl);
-      }
-    };
-  }, [pdfUrl]);
+    if (registrationSuccess) {
+      // Optional: Add a short delay (e.g., 1000ms) so user sees feedback if you later add a success message
+      const timer = setTimeout(() => {
+        setShowModal(false);
+        setSelectedEvent(null);
+        onResetRegistration(); // Reset success state in parent
+      }, 1000); // Remove or set to 0 for instant close
+
+      return () => clearTimeout(timer);
+    }
+  }, [registrationSuccess, setShowModal, setSelectedEvent, onResetRegistration]);
 
   const backdropVariant = {
     hidden: { opacity: 0 },
@@ -95,53 +87,6 @@ const RegistrationModal = ({
                 </button>
               </div>
 
-              {/* PDF Download Button with File Icon - AT TOP */}
-              {registrationSuccess && pdfUrl && (
-                <div className="mb-4 pb-4 border-b">
-                  <div className="flex flex-col items-center bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
-                    <svg 
-                      className="h-16 w-16 text-green-600 mb-3" 
-                      fill="none" 
-                      stroke="currentColor" 
-                      viewBox="0 0 24 24"
-                    >
-                      <path 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round" 
-                        strokeWidth="2" 
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
-                    <h3 className="text-sm font-semibold text-gray-800 mb-1">Registration Successful!</h3>
-                    <p className="text-xs text-gray-600 mb-3 text-center">Your registration pass is ready</p>
-                    <button
-                      onClick={() => {
-                        const link = document.createElement("a");
-                        link.href = pdfUrl;
-                        link.download = `Pass_${registrationSuccess.participant.name.replace(/\s+/g, "_")}.pdf`;
-                        link.click();
-                      }}
-                      className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 px-5 py-2.5 text-white transition-all hover:from-green-600 hover:to-emerald-700 shadow-md hover:shadow-lg text-sm font-medium"
-                    >
-                      <svg 
-                        className="h-5 w-5" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24"
-                      >
-                        <path 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round" 
-                          strokeWidth="2" 
-                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                        />
-                      </svg>
-                      Download Pass (PDF)
-                    </button>
-                  </div>
-                </div>
-              )}
-
               {/* Event Picker */}
               {!selectedEvent ? (
                 <div className="space-y-3">
@@ -184,7 +129,7 @@ const RegistrationModal = ({
                     <p className="text-xs text-blue-600 mt-0.5">{formatEventDate(selectedEvent.eventDate)}</p>
                   </div>
 
-                  {/* Registration Form - Portrait Layout */}
+                  {/* Registration Form */}
                   <form onSubmit={handleSubmit} className="space-y-3">
                     <div>
                       <label className="mb-1 block text-xs font-medium text-gray-700">First Name</label>

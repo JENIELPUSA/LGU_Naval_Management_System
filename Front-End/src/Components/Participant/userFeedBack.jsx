@@ -3,7 +3,6 @@ import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion"
 import { ChevronDown, Calendar, MapPin, Users, Star, ThumbsUp } from "lucide-react";
 import { ReportDisplayContext } from "../../contexts/ReportContext/ReportContext";
 
-// ⭐ Star rating component
 const StarRating = ({ rating, animate = false, size = "md" }) => {
   const [animatedRating, setAnimatedRating] = useState(0);
   const sizeClasses = { sm: "h-4 w-4", md: "h-5 w-5", lg: "h-6 w-6", xl: "h-8 w-8" };
@@ -36,7 +35,6 @@ const StarRating = ({ rating, animate = false, size = "md" }) => {
   );
 };
 
-// 📊 Rating distribution bar
 const RatingBar = ({ rating, count, total }) => {
   const percentage = total > 0 ? (count / total) * 100 : 0;
   return (
@@ -58,7 +56,6 @@ const RatingBar = ({ rating, count, total }) => {
   );
 };
 
-// 🕓 Format date
 const formatDate = (dateString) => {
   const date = new Date(dateString);
   const now = new Date();
@@ -70,21 +67,17 @@ const formatDate = (dateString) => {
   return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
 };
 
-// 💬 User Feedback Section
-const UserFeedback = () => {
+const UserFeedback = ({ feedbackRef }) => {
   const { isReport } = useContext(ReportDisplayContext);
   const [feedbackList, setFeedbackList] = useState([]);
   const [visibleCount, setVisibleCount] = useState(6);
   const [isLoading, setIsLoading] = useState(true);
-  const sectionRef = useRef(null);
 
-  // Parallax scroll setup
   const { scrollYProgress } = useScroll({
-    target: sectionRef,
+    target: feedbackRef,
     offset: ["start end", "end start"]
   });
 
-  // Parallax transforms
   const headerY = useTransform(scrollYProgress, [0, 1], [100, -100]);
   const headerOpacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 1, 1, 0]);
   
@@ -120,16 +113,14 @@ const UserFeedback = () => {
 
   const handleLoadMore = () => setVisibleCount((v) => Math.min(v + 6, feedbackList.length));
 
-  // Animations
   const containerVariants = { visible: { transition: { staggerChildren: 0.1 } } };
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
 
   return (
     <section
-      ref={sectionRef}
+      ref={feedbackRef}
       className="mb-5 relative min-h-screen flex flex-col justify-center py-20 bg-gradient-to-br from-blue-50 via-white to-pink-50 overflow-hidden"
     >
-      {/* Decorative Blobs with parallax and rotation */}
       <motion.div 
         style={{ y: decorLeftY, rotate: decorLeftRotate }}
         className="absolute top-0 left-0 w-64 h-64 bg-blue-200 rounded-full -translate-x-1/2 -translate-y-1/2 opacity-20"
@@ -140,7 +131,6 @@ const UserFeedback = () => {
       />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 z-10">
-        {/* Header with parallax */}
         <motion.div
           style={{ y: headerY, opacity: headerOpacity }}
           initial={{ opacity: 0, y: 30 }}
@@ -157,9 +147,7 @@ const UserFeedback = () => {
           </p>
         </motion.div>
 
-        {/* Main Content */}
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Feedback List with parallax */}
           <motion.div 
             style={{ y: feedbackListY }}
             className="lg:w-2/3"
@@ -213,7 +201,6 @@ const UserFeedback = () => {
               </motion.div>
             )}
 
-            {/* Load More */}
             {feedbackList.length > visibleCount && !isLoading && (
               <motion.div 
                 initial={{ opacity: 0 }} 
@@ -232,7 +219,6 @@ const UserFeedback = () => {
             )}
           </motion.div>
 
-          {/* Sidebar with parallax */}
           {feedbackList.length > 0 && (
             <motion.div 
               style={{ y: sidebarY, scale: sidebarScale }}

@@ -9,10 +9,12 @@ import { LguDisplayContext } from "../../contexts/LguContext/LguContext";
 
 const StatCardGrid = () => {
   const{isTotalOfficer}=useContext(OfficerDisplayContext)
-  const { isTotalEvent, isTotalUpcomingEvent } = useContext(EventDisplayContext);
-  const { isTotalParticipant } = useContext(ParticipantDisplayContext);
+  const { isTotalEvent } = useContext(EventDisplayContext);
+  const { isTotalParticipant,IncomingEvent } = useContext(ParticipantDisplayContext);
   const {isTotalAdmin}=useContext(AdminDisplayContext)
   const {isTotalLgu}=useContext(LguDisplayContext)
+
+   const events = Array.isArray(IncomingEvent) ? IncomingEvent : [];
 
   const TotalAccount=isTotalOfficer + isTotalAdmin + isTotalLgu;
 
@@ -41,7 +43,7 @@ const StatCardGrid = () => {
     {
       icon: <Package size={26} />,
       title: "Upcoming Events",
-      value: isTotalUpcomingEvent,
+      value: events?.length || 0,
       description: "Scheduled for next 30 days",
       gradient: "from-pink-500 to-blue-400",
     },

@@ -160,15 +160,7 @@ const NotificationsView = ({ notifications, onMarkAllAsRead, onMarkAsRead, onArc
                     </div>
 
                     <div className="flex items-center space-x-2">
-                        {hasUnread && (
-                            <button
-                                onClick={onMarkAllAsRead}
-                                className="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition-all duration-200 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-blue-700 dark:bg-blue-900/40 dark:text-blue-300 dark:hover:bg-blue-800/60 dark:focus:ring-offset-gray-900"
-                            >
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                Mark all read
-                            </button>
-                        )}
+                      
                         <button
                             onClick={onShowAll}
                             className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-all duration-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:focus:ring-offset-gray-900"

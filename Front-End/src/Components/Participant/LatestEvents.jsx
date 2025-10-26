@@ -66,11 +66,6 @@ const LatestEvents = ({ eventsRef, isEventUpcoming, setShowModal, handleEventSel
       variants={staggerChildren}
       className="relative min-h-screen w-full overflow-hidden"
     >
-      {/* Main Background with Gradient */}
-      <div 
-      />
-      <div/>
-      
       {/* Main Content Container */}
       <div className="relative z-10 w-full h-full flex items-center justify-center py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">

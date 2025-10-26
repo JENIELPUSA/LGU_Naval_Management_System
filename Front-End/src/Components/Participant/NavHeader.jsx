@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import AuthFormModal from "../Login/Login";
 
-const NavHeader = ({ scrollToSection, eventsRef, servicesRef, aboutRef }) => {
+const NavHeader = ({ scrollToSection, eventsRef, feedbacRef, aboutRef,documentationRef,mapRefLocate }) => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
 
   return (
@@ -89,10 +89,16 @@ const NavHeader = ({ scrollToSection, eventsRef, servicesRef, aboutRef }) => {
                 Events
               </a>
               <a
-                onClick={() => scrollToSection(servicesRef)}
+                onClick={() => scrollToSection(feedbacRef)}
                 className="font-medium text-gray-700 transition-colors hover:text-blue-600 cursor-pointer"
               >
-                Services
+                FeedBack
+              </a>
+              <a
+                onClick={() => scrollToSection(documentationRef)}
+                className="font-medium text-gray-700 transition-colors hover:text-blue-600 cursor-pointer"
+              >
+                Documentation
               </a>
               <a
                 onClick={() => scrollToSection(aboutRef)}

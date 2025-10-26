@@ -5,6 +5,12 @@ import { ProposalDisplayContext } from "../../../../contexts/ProposalContext/Pro
 import { AuthContext } from "../../../../contexts/AuthContext";
 import { LguDisplayContext } from "../../../../contexts/LguContext/LguContext";
 import { ResourcesDisplayContext } from "../../../../contexts/ResourcesContext/ResourcesContext";
+/* --- ADDITIONAL IMPORTS (do not touch your context imports above) --- */
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import axios from "axios";
+/* ------------------------------------------------------------------- */
 
 const AddEventModal = ({ isOpen, onClose, isEditing, editingData }) => {
     const { AddEvent, UpdateEvent } = useContext(EventDisplayContext);
@@ -12,7 +18,6 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData }) => {
     const { isLgu } = useContext(LguDisplayContext);
     const { isDropdownProposal, DropdownProposal } = useContext(ProposalDisplayContext);
     const { isResourcesDropdown, FetchResourcesDropdownData } = useContext(ResourcesDisplayContext);
-
     const lguDropdownRef = useRef(null);
     const proposalDropdownRef = useRef(null);
     const resourcesDropdownRef = useRef(null);
@@ -22,7 +27,6 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData }) => {
         const startHour = 8;
         const endHour = 17;
         const interval = 30;
-
         for (let h = startHour; h <= endHour; h++) {
             for (let m = 0; m < 60; m += interval) {
                 const hour = h > 12 ? h - 12 : h;
@@ -33,19 +37,23 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData }) => {
         }
         return times;
     };
+
     const timeOptions = generateTimeOptions();
 
     const [formData, setFormData] = useState({
         eventDate: "",
         startTime: "",
         venue: "",
+        city: "",
         proposalId: "",
         lguId: "",
         resources: [],
+        latitude: null,
+        longitude: null,
     });
+
     const [showAllProposals, setShowAllProposals] = useState(false);
     const [showAllResources, setShowAllResources] = useState(false);
-
     const [isModalOpen, setIsModalOpen] = useState(true);
     const [isResourcesDropdownOpen, setIsResourcesDropdownOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,6 +64,10 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData }) => {
     const [isProposalDropdownOpen, setIsProposalDropdownOpen] = useState(false);
     const [lguFilter, setLguFilter] = useState("");
     const [isLguDropdownOpen, setIsLguDropdownOpen] = useState(false);
+    const [suggestions, setSuggestions] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [mapCenter, setMapCenter] = useState([11.5449, 124.0380]);
+    const [markerPos, setMarkerPos] = useState(null);
 
     const formatDateForInput = (isoDateString) => {
         if (!isoDateString) return "";
@@ -65,8 +77,8 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData }) => {
 
     useEffect(() => {
         if (isOpen) {
-            DropdownProposal(showAllProposals); // initially false = default 5
-            FetchResourcesDropdownData(showAllResources); // fetch resources based on showAllResources state
+            DropdownProposal(showAllProposals);
+            FetchResourcesDropdownData(showAllResources);
         }
     }, [isOpen, showAllProposals, showAllResources]);
 
@@ -76,19 +88,31 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData }) => {
                 eventDate: formatDateForInput(editingData.eventDate),
                 startTime: editingData.startTime || "",
                 venue: editingData.venue || "",
+                city: editingData.city || "",
                 proposalId: editingData.proposalId || "",
                 lguId: editingData.lguId || "",
                 resources: editingData.resources || [],
+                latitude: editingData.latitude || null,
+                longitude: editingData.longitude || null,
             });
+            if (editingData.latitude && editingData.longitude) {
+                setMarkerPos([parseFloat(editingData.latitude), parseFloat(editingData.longitude)]);
+                setMapCenter([parseFloat(editingData.latitude), parseFloat(editingData.longitude)]);
+            }
         } else {
             setFormData({
                 eventDate: "",
                 startTime: "",
                 venue: "",
+                city: "",
                 proposalId: "",
                 lguId: "",
                 resources: [],
+                latitude: null,
+                longitude: null,
             });
+            setMarkerPos(null);
+            setMapCenter([11.5449, 124.0380]);
         }
     }, [isEditing, editingData]);
 
@@ -104,12 +128,23 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData }) => {
                 setIsResourcesDropdownOpen(false);
             }
         };
-
         document.addEventListener("mousedown", handleOutsideClick);
         return () => {
             document.removeEventListener("mousedown", handleOutsideClick);
         };
-    }, [isLguDropdownOpen, isProposalDropdownOpen, isResourcesDropdownOpen]);
+    }, []);
+
+    // Prevent body scroll when modal is open
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "unset";
+        }
+        return () => {
+            document.body.style.overflow = "unset";
+        };
+    }, [isOpen]);
 
     const handleCloseModal = () => {
         setIsModalOpen(false);
@@ -118,6 +153,7 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData }) => {
         setDateFilter({ start: "", end: "" });
         setProposalFilter("");
         setLguFilter("");
+        setSuggestions([]);
     };
 
     const handleChange = (e) => {
@@ -131,20 +167,14 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData }) => {
     const handleResourceChange = (e) => {
         const { value, checked } = e.target;
         setFormData((prevData) => {
-            const updatedResources = checked ? [...prevData.resources, value] : prevData.resources.filter((id) => id !== value);
+            const updatedResources = checked
+                ? [...prevData.resources, value]
+                : prevData.resources.filter((id) => id !== value);
             return {
                 ...prevData,
                 resources: updatedResources,
             };
         });
-    };
-
-    const handleDateFilterChange = (e) => {
-        const { name, value } = e.target;
-        setDateFilter((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
     };
 
     const handleSubmit = (e) => {
@@ -173,11 +203,7 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData }) => {
     const filteredResources = Array.isArray(isResourcesDropdown)
         ? isResourcesDropdown.filter((res) => {
               const matchesText = res.resource_name.toLowerCase().includes(resourceFilter.toLowerCase());
-              let matchesDate = true;
-              if (dateFilter.start && dateFilter.end) {
-                  matchesDate = res.availability === true;
-              }
-              return matchesText && matchesDate && res.availability === true;
+              return matchesText && res.availability === true;
           })
         : [];
 
@@ -190,215 +216,342 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData }) => {
         return fullName.toLowerCase().includes(lguFilter.toLowerCase());
     });
 
+    const debounceRef = useRef(null);
+
+    const fetchSuggestions = async (query) => {
+        if (!query) {
+            setSuggestions([]);
+            return;
+        }
+        setIsSearching(true);
+        try {
+            const q = formData.city ? `${query}, ${formData.city}` : query;
+            const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=5&q=${encodeURIComponent(q)}`;
+            const res = await axios.get(url, { headers: { "Accept-Language": "en" } });
+            setSuggestions(res.data || []);
+        } catch (err) {
+            console.error("Suggestion fetch error:", err);
+            setSuggestions([]);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    useEffect(() => {
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => {
+            if (formData.venue && formData.venue.length >= 2) {
+                fetchSuggestions(formData.venue);
+            } else {
+                setSuggestions([]);
+            }
+            if (!formData.venue && formData.city && formData.city.length >= 2) {
+                (async () => {
+                    try {
+                        const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(formData.city)}`;
+                        const res = await axios.get(url);
+                        if (res.data && res.data.length > 0) {
+                            const { lat, lon } = res.data[0];
+                            setMapCenter([parseFloat(lat), parseFloat(lon)]);
+                            setMarkerPos([parseFloat(lat), parseFloat(lon)]);
+                            setFormData((prev) => ({ ...prev, latitude: lat, longitude: lon }));
+                        }
+                    } catch (err) {
+                        // fail silently
+                    }
+                })();
+            }
+        }, 700);
+        return () => clearTimeout(debounceRef.current);
+    }, [formData.venue, formData.city]);
+
+    const handleSelectSuggestion = (sug) => {
+        const displayName = sug.display_name || `${sug.type || ""}`;
+        setFormData((prev) => ({
+            ...prev,
+            venue: displayName,
+            latitude: sug.lat,
+            longitude: sug.lon,
+        }));
+        setMarkerPos([parseFloat(sug.lat), parseFloat(sug.lon)]);
+        setMapCenter([parseFloat(sug.lat), parseFloat(sug.lon)]);
+        setSuggestions([]);
+    };
+
+    const pinIcon = new L.Icon({
+        iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
+        iconSize: [32, 32],
+        iconAnchor: [16, 32],
+    });
+
+    function FlyTo({ center }) {
+        const map = useMap();
+        useEffect(() => {
+            if (center) map.flyTo(center, 15, { duration: 1.2 });
+        }, [center, map]);
+        return null;
+    }
+
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[900] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-            {/* Main Modal Container */}
-            <div className="relative w-full max-w-4xl overflow-hidden rounded-3xl border border-gray-200/50 bg-white shadow-2xl">
-                {/* Header Section */}
-                <div className="relative bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white">
-                    <button
-                        onClick={handleCloseModal}
-                        className="absolute right-4 top-4 rounded-full p-2 text-white/80 transition-all duration-200 hover:bg-white/20 hover:text-white"
-                    >
-                        <X className="h-5 w-5" />
-                    </button>
-
-                    <div className="pr-12">
-                        <h1 className="mb-2 text-2xl font-bold">{isEditing ? "Edit Event" : "Create New Event"}</h1>
-                        <p className="text-sm text-blue-100">
-                            {isEditing ? "Update event information below" : "Fill in the details to create a new event"}
-                        </p>
-                    </div>
-                </div>
-
-                {/* Content Section */}
-                <div className="space-y-6 p-6">
-                    {/* Resources Section */}
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
-                            <CircleDot className="h-5 w-5 text-blue-600" />
-                            <h2 className="text-lg font-semibold text-gray-900">Resources</h2>
-                        </div>
-
-                        <div
-                            className="relative"
-                            ref={resourcesDropdownRef}
+        <div className="fixed inset-0 z-[900] flex items-start justify-center bg-black/60 p-4 sm:p-6 md:p-4 backdrop-blur-sm overflow-y-auto">
+            {/* MAIN WRAPPER */}
+            <div className="relative flex w-full max-w-6xl max-h-[90vh] flex-col overflow-hidden rounded-3xl border border-gray-200/50 bg-white shadow-2xl md:flex-row">
+                {/* LEFT: FORM */}
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 max-h-full">
+                    {/* Header Section */}
+                    <div className="relative bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white rounded-t-2xl -mx-6 -mt-6">
+                        <button
+                            onClick={handleCloseModal}
+                            className="absolute right-4 top-4 rounded-full p-2 text-white/80 transition-all duration-200 hover:bg-white/20 hover:text-white"
                         >
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setIsResourcesDropdownOpen(!isResourcesDropdownOpen);
-                                    setIsLguDropdownOpen(false);
-                                    setIsProposalDropdownOpen(false);
-                                }}
-                                className="flex w-full items-center justify-between rounded-xl border border-gray-300 bg-white px-4 py-3 text-left transition-all duration-200 hover:border-blue-300 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                            >
-                                <span className={formData.resources.length > 0 ? "text-gray-900" : "text-gray-500"}>
-                                    {formData.resources.length > 0 ? `${formData.resources.length} resource(s) selected` : "Select resources..."}
-                                </span>
-                                <ChevronDown
-                                    className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${isResourcesDropdownOpen ? "rotate-180" : ""}`}
-                                />
-                            </button>
+                            <X className="h-5 w-5" />
+                        </button>
+                        <div className="pr-12">
+                            <h1 className="mb-2 text-2xl font-bold">{isEditing ? "Edit Event" : "Create New Event"}</h1>
+                            <p className="text-sm text-blue-100">
+                                {isEditing ? "Update event information below" : "Fill in the details to create a new event"}
+                            </p>
                         </div>
                     </div>
-                    {/* Assignment Section */}
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
-                            <Users className="h-5 w-5 text-blue-600" />
-                            <h2 className="text-lg font-semibold text-gray-900">Assignment</h2>
-                        </div>
 
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            {/* LGU Dropdown */}
-                            <div
-                                className="relative"
-                                ref={lguDropdownRef}
-                            >
-                                <label className="mb-2 block text-sm font-medium text-gray-700">Assigned LGU</label>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setIsLguDropdownOpen(!isLguDropdownOpen);
-                                        setIsProposalDropdownOpen(false);
-                                        setIsResourcesDropdownOpen(false);
-                                    }}
-                                    className="flex w-full items-center justify-between rounded-xl border border-gray-300 bg-white px-4 py-3 text-left transition-all duration-200 hover:border-blue-300 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                                >
-                                    <span className={formData.lguId ? "text-gray-900" : "text-gray-500"}>
-                                        {formData.lguId
-                                            ? (() => {
-                                                  const selectedLgu = isLgu.find((l) => l._id === formData.lguId);
-                                                  if (!selectedLgu) return "Selected LGU";
-
-                                                  // Filter out "N/A" values
-                                                  const nameParts = [selectedLgu.first_name, selectedLgu.middle_name, selectedLgu.last_name].filter(
-                                                      (part) => part && part !== "N/A",
-                                                  );
-
-                                                  return nameParts.length > 0 ? nameParts.join(" ") : "Selected LGU";
-                                              })()
-                                            : "Select an LGU..."}
-                                    </span>
-
-                                    <ChevronDown
-                                        className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${isLguDropdownOpen ? "rotate-180" : ""}`}
-                                    />
-                                </button>
+                    {/* Content Section */}
+                    <div className="space-y-6 p-6">
+                        {/* Resources Section */}
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
+                                <CircleDot className="h-5 w-5 text-blue-600" />
+                                <h2 className="text-lg font-semibold text-gray-900">Resources</h2>
                             </div>
-
-                            {/* Proposal Dropdown */}
-                            <div
-                                className="relative"
-                                ref={proposalDropdownRef}
-                            >
-                                <label className="mb-2 block text-sm font-medium text-gray-700">Related Proposal</label>
+                            <div className="relative" ref={resourcesDropdownRef}>
                                 <button
                                     type="button"
                                     onClick={() => {
-                                        setIsProposalDropdownOpen(!isProposalDropdownOpen);
+                                        setIsResourcesDropdownOpen(!isResourcesDropdownOpen);
                                         setIsLguDropdownOpen(false);
-                                        setIsResourcesDropdownOpen(false);
+                                        setIsProposalDropdownOpen(false);
                                     }}
                                     className="flex w-full items-center justify-between rounded-xl border border-gray-300 bg-white px-4 py-3 text-left transition-all duration-200 hover:border-blue-300 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                                 >
-                                    <span className={formData.proposalId ? "text-gray-900" : "text-gray-500"}>
-                                        {formData.proposalId
-                                            ? isDropdownProposal.find((p) => p._id === formData.proposalId)?.title || "Selected proposal"
-                                            : "Select a proposal..."}
+                                    <span className={formData.resources.length > 0 ? "text-gray-900" : "text-gray-500"}>
+                                        {formData.resources.length > 0
+                                            ? `${formData.resources.length} resource(s) selected`
+                                            : "Select resources..."}
                                     </span>
                                     <ChevronDown
-                                        className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${isProposalDropdownOpen ? "rotate-180" : ""}`}
+                                        className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${
+                                            isResourcesDropdownOpen ? "rotate-180" : ""
+                                        }`}
                                     />
                                 </button>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Event Details Section */}
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
-                            <Calendar className="h-5 w-5 text-blue-600" />
-                            <h2 className="text-lg font-semibold text-gray-900">Event Details</h2>
+                        {/* Assignment Section */}
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
+                                <Users className="h-5 w-5 text-blue-600" />
+                                <h2 className="text-lg font-semibold text-gray-900">Assignment</h2>
+                            </div>
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                {/* LGU Dropdown */}
+                                <div className="relative" ref={lguDropdownRef}>
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">Assigned LGU</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsLguDropdownOpen(!isLguDropdownOpen);
+                                            setIsProposalDropdownOpen(false);
+                                            setIsResourcesDropdownOpen(false);
+                                        }}
+                                        className="flex w-full items-center justify-between rounded-xl border border-gray-300 bg-white px-4 py-3 text-left transition-all duration-200 hover:border-blue-300 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        <span className={formData.lguId ? "text-gray-900" : "text-gray-500"}>
+                                            {formData.lguId
+                                                ? (() => {
+                                                      const selectedLgu = isLgu.find((l) => l._id === formData.lguId);
+                                                      if (!selectedLgu) return "Selected LGU";
+                                                      const nameParts = [
+                                                          selectedLgu.first_name,
+                                                          selectedLgu.middle_name,
+                                                          selectedLgu.last_name,
+                                                      ].filter((part) => part && part !== "N/A");
+                                                      return nameParts.length > 0 ? nameParts.join(" ") : "Selected LGU";
+                                                  })()
+                                                : "Select an LGU..."}
+                                        </span>
+                                        <ChevronDown
+                                            className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${
+                                                isLguDropdownOpen ? "rotate-180" : ""
+                                            }`}
+                                        />
+                                    </button>
+                                </div>
+
+                                {/* Proposal Dropdown */}
+                                <div className="relative" ref={proposalDropdownRef}>
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">Related Proposal</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsProposalDropdownOpen(!isProposalDropdownOpen);
+                                            setIsLguDropdownOpen(false);
+                                            setIsResourcesDropdownOpen(false);
+                                        }}
+                                        className="flex w-full items-center justify-between rounded-xl border border-gray-300 bg-white px-4 py-3 text-left transition-all duration-200 hover:border-blue-300 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        <span className={formData.proposalId ? "text-gray-900" : "text-gray-500"}>
+                                            {formData.proposalId
+                                                ? isDropdownProposal.find((p) => p._id === formData.proposalId)?.title ||
+                                                  "Selected proposal"
+                                                : "Select a proposal..."}
+                                        </span>
+                                        <ChevronDown
+                                            className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${
+                                                isProposalDropdownOpen ? "rotate-180" : ""
+                                            }`}
+                                        />
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                            <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700">Event Date</label>
-                                <input
-                                    type="date"
-                                    name="eventDate"
-                                    value={formData.eventDate}
-                                    onChange={handleChange}
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                                    required
-                                />
+                        {/* Event Details Section */}
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
+                                <Calendar className="h-5 w-5 text-blue-600" />
+                                <h2 className="text-lg font-semibold text-gray-900">Event Details</h2>
+                            </div>
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                <div>
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">Event Date</label>
+                                    <input
+                                        type="date"
+                                        name="eventDate"
+                                        value={formData.eventDate}
+                                        onChange={handleChange}
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">Start Time</label>
+                                    <select
+                                        name="startTime"
+                                        value={formData.startTime}
+                                        onChange={handleChange}
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                                        required
+                                    >
+                                        <option value="">Select time...</option>
+                                        {timeOptions.map((time, index) => (
+                                            <option key={index} value={time}>
+                                                {time}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">Venue</label>
+                                    <input
+                                        type="text"
+                                        name="venue"
+                                        value={formData.venue}
+                                        onChange={handleChange}
+                                        placeholder="Enter venue location"
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 placeholder-gray-400 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                                        required
+                                        disabled={!formData.city.trim()}
+                                        title={!formData.city.trim() ? "Please enter a city first" : ""}
+                                    />
+                                    {isSearching && <div className="text-xs text-gray-500 mt-1">Searching...</div>}
+                                    {suggestions.length > 0 && (
+                                        <ul className="mt-2 max-h-48 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-sm z-50">
+                                            {suggestions.map((sug, idx) => (
+                                                <li
+                                                    key={idx}
+                                                    className="px-3 py-2 cursor-pointer hover:bg-blue-50"
+                                                    onMouseDown={(e) => e.preventDefault()}
+                                                    onClick={() => handleSelectSuggestion(sug)}
+                                                >
+                                                    <div className="text-sm font-medium text-gray-900 line-clamp-1">
+                                                        {sug.display_name.split(",")[0]}
+                                                    </div>
+                                                    <div className="text-xs text-gray-500 line-clamp-1">{sug.display_name}</div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
                             </div>
 
-                            <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700">Start Time</label>
-                                <select
-                                    name="startTime"
-                                    value={formData.startTime}
-                                    onChange={handleChange}
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                                    required
-                                >
-                                    <option value="">Select time...</option>
-                                    {timeOptions.map((time, index) => (
-                                        <option
-                                            key={index}
-                                            value={time}
-                                        >
-                                            {time}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700">Venue</label>
+                            <div className="mt-3">
+                                <label className="mb-2 block text-sm font-medium text-gray-700">City</label>
                                 <input
                                     type="text"
-                                    name="venue"
-                                    value={formData.venue}
+                                    name="city"
+                                    value={formData.city}
                                     onChange={handleChange}
-                                    placeholder="Enter venue location"
+                                    placeholder="Enter city (e.g., Biliran)"
                                     className="w-full rounded-xl border border-gray-300 px-4 py-3 placeholder-gray-400 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                                    required
                                 />
                             </div>
                         </div>
-                    </div>
-                    {/* Action Buttons */}
-                    <div className="border-t border-gray-200 pt-6">
-                        {message && (
-                            <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
-                                <p className="text-sm font-medium text-blue-800">{message}</p>
-                            </div>
-                        )}
 
-                        <div className="flex gap-3">
-                            <button
-                                type="button"
-                                onClick={handleCloseModal}
-                                className="flex-1 rounded-xl border border-gray-300 px-6 py-3 font-medium text-gray-700 transition-all duration-200 hover:bg-gray-50"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleSubmit}
-                                disabled={isSubmitting}
-                                className="flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 font-medium text-white shadow-lg transition-all duration-200 hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                {isSubmitting ? (isEditing ? "Updating..." : "Creating...") : isEditing ? "Update Event" : "Create Event"}
-                            </button>
+                        {/* Action Buttons */}
+                        <div className="border-t border-gray-200 pt-6">
+                            {message && (
+                                <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
+                                    <p className="text-sm font-medium text-blue-800">{message}</p>
+                                </div>
+                            )}
+                            <div className="flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={handleCloseModal}
+                                    className="flex-1 rounded-xl border border-gray-300 px-6 py-3 font-medium text-gray-700 transition-all duration-200 hover:bg-gray-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleSubmit}
+                                    disabled={isSubmitting}
+                                    className="flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 font-medium text-white shadow-lg transition-all duration-200 hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {isSubmitting
+                                        ? isEditing
+                                            ? "Updating..."
+                                            : "Creating..."
+                                        : isEditing
+                                        ? "Update Event"
+                                        : "Create Event"}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
+                {/* MAP: BELOW ON MOBILE, RIGHT ON MD+ */}
+                <div className="w-full border-t border-gray-200 md:w-[40%] md:border-t-0 md:border-l min-h-[400px] md:min-h-full">
+                    <MapContainer center={mapCenter} zoom={12} style={{ height: "100%", width: "100%" }}>
+                        <TileLayer
+                            attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+                        <FlyTo center={mapCenter} />
+                        {markerPos && (
+                            <Marker position={markerPos} icon={pinIcon}>
+                                <Popup>
+                                    <div className="text-sm font-medium">{formData.venue || "Venue"}</div>
+                                    <div className="text-xs text-gray-600">{formData.city}</div>
+                                </Popup>
+                            </Marker>
+                        )}
+                    </MapContainer>
+                </div>
+
+                {/* Dropdown Overlays (unchanged) */}
                 {isLguDropdownOpen && (
                     <div
                         className="fixed z-[950] max-h-80 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
@@ -424,7 +577,6 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData }) => {
                                 {filteredLgus.length} of {isLgu.length} LGUs
                             </div>
                         </div>
-
                         <div className="max-h-60 overflow-y-auto">
                             {filteredLgus.length > 0 ? (
                                 filteredLgus.map((lgu) => (
@@ -453,7 +605,6 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData }) => {
                     </div>
                 )}
 
-                {/* Proposal Dropdown */}
                 {isProposalDropdownOpen && (
                     <div
                         className="fixed z-[950] max-h-80 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
@@ -478,7 +629,6 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData }) => {
                             <div className="mt-2 text-xs text-gray-500">
                                 {filteredProposals.length} of {isDropdownProposal.length} proposals
                             </div>
-                            {/* Show All Checkbox */}
                             <label className="mt-2 flex items-center space-x-2">
                                 <input
                                     type="checkbox"
@@ -489,7 +639,6 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData }) => {
                                 <span className="text-sm text-gray-700">Show all proposals</span>
                             </label>
                         </div>
-
                         <div className="max-h-60 overflow-y-auto">
                             {filteredProposals.length > 0 ? (
                                 filteredProposals.map((prop) => (
@@ -503,7 +652,9 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData }) => {
                                         }}
                                     >
                                         <div className="font-medium text-gray-900">{prop.title}</div>
-                                        {prop.description && <div className="line-clamp-2 text-sm text-gray-500">{prop.description}</div>}
+                                        {prop.description && (
+                                            <div className="line-clamp-2 text-sm text-gray-500">{prop.description}</div>
+                                        )}
                                     </div>
                                 ))
                             ) : (
@@ -516,7 +667,6 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData }) => {
                     </div>
                 )}
 
-                {/* Resources Dropdown */}
                 {isResourcesDropdownOpen && (
                     <div
                         className="fixed z-[950] max-h-96 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
@@ -541,7 +691,6 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData }) => {
                             <div className="mt-2 text-xs text-gray-500">
                                 {filteredResources.length} of {isResourcesDropdown.length} resources
                             </div>
-                            {/* Show All Checkbox for Resources */}
                             <label className="flex items-center space-x-2">
                                 <input
                                     type="checkbox"
@@ -552,7 +701,6 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData }) => {
                                 <span className="text-sm text-gray-700">Show all resources</span>
                             </label>
                         </div>
-
                         <div className="max-h-60 overflow-y-auto p-4">
                             <div className="grid grid-cols-1 gap-3">
                                 {filteredResources.length > 0 ? (

@@ -406,7 +406,7 @@ const EventCalendarSchedule = () => {
 
         {/* Event Details Modal */}
         {selectedEvent && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[999]">
             <div className="bg-white rounded-xl shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto dark:bg-gray-800">
               <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -530,9 +530,6 @@ const EventCalendarSchedule = () => {
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700"
                 >
                   Close
-                </button>
-                <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
-                  Edit Event
                 </button>
               </div>
             </div>

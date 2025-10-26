@@ -49,18 +49,16 @@ const events = [
   },
 ];
 
-const EventDocumentation = () => {
+const EventDocumentation = ({ documentationRef }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [autoPlay, setAutoPlay] = useState(true);
-  
-  const sectionRef = useRef(null);
+
   const { scrollYProgress } = useScroll({
-    target: sectionRef,
+    target: documentationRef,
     offset: ["start end", "end start"]
   });
 
-  // Parallax transforms for different elements
   const headerY = useTransform(scrollYProgress, [0, 1], [100, -100]);
   const headerOpacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 1, 1, 0]);
   
@@ -84,7 +82,6 @@ const EventDocumentation = () => {
 
   const currentEvent = events[currentIndex];
 
-  // Auto-play functionality
   useEffect(() => {
     if (!autoPlay) return;
     const timer = setInterval(() => handleNext(), 6000);
@@ -93,14 +90,13 @@ const EventDocumentation = () => {
 
   return (
     <motion.section
-      ref={sectionRef}
+      ref={documentationRef}
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.2 }}
       variants={{ visible: { transition: { staggerChildren: 0.3 } } }}
-      className=" relative min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-blue-50 via-white to-pink-50 overflow-hidden py-12"
+      className="relative min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-blue-50 via-white to-pink-50 overflow-hidden py-12"
     >
-      {/* Background decorative elements with parallax */}
       <motion.div 
         style={{ y: decorLeftY }}
         className="absolute top-0 left-0 w-72 h-72 bg-blue-200 rounded-full -translate-x-1/2 -translate-y-1/2 opacity-20"
@@ -111,7 +107,6 @@ const EventDocumentation = () => {
       />
 
       <div className="relative z-10 w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header with parallax */}
         <motion.div 
           variants={fadeIn}
           style={{ y: headerY, opacity: headerOpacity }}
@@ -126,12 +121,10 @@ const EventDocumentation = () => {
           <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-pink-500 mx-auto rounded-full"></div>
         </motion.div>
 
-        {/* Main Display with parallax */}
         <motion.div 
           style={{ y: cardY, scale: cardScale }}
           className="relative flex items-center justify-center mb-8"
         >
-          {/* Navigation Arrows */}
           <button
             onClick={handleBack}
             className="absolute -left-4 md:left-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-2xl bg-white/90 backdrop-blur-sm shadow-lg hover:bg-white hover:scale-110 transition-all duration-300 border border-gray-100"
@@ -146,7 +139,6 @@ const EventDocumentation = () => {
             <ChevronRight className="w-6 h-6 text-gray-700" />
           </button>
 
-          {/* Event Card */}
           <AnimatePresence mode="wait">
             <motion.div
               key={currentIndex}
@@ -157,7 +149,6 @@ const EventDocumentation = () => {
               className="w-full max-w-6xl mx-auto transform overflow-hidden rounded-3xl bg-white shadow-xl hover:shadow-2xl transition-all duration-500"
             >
               <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[600px]">
-                {/* Image/Video Section */}
                 <div className="relative overflow-hidden group">
                   <img
                     src={currentEvent.img}
@@ -166,14 +157,12 @@ const EventDocumentation = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-                  {/* Event Category Badge */}
                   <div className="absolute top-6 left-6">
                     <span className="px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-full shadow-lg">
                       {currentEvent.category}
                     </span>
                   </div>
 
-                  {/* Play Button Overlay */}
                   <div className="absolute inset-0 flex items-center justify-center">
                     <motion.button
                       whileHover={{ scale: 1.1 }}
@@ -186,9 +175,7 @@ const EventDocumentation = () => {
                   </div>
                 </div>
 
-                {/* Content Section */}
                 <div className="flex flex-col p-8">
-                  {/* Meta Information */}
                   <div className="flex flex-wrap gap-4 mb-6">
                     <div className="flex items-center text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
                       <Calendar className="w-4 h-4 mr-2" />
@@ -200,7 +187,6 @@ const EventDocumentation = () => {
                     </div>
                   </div>
 
-                  {/* Title and Description */}
                   <div className="mb-8">
                     <h3 className="mb-4 text-2xl lg:text-3xl font-bold text-gray-800 leading-tight">
                       {currentEvent.title}
@@ -210,7 +196,6 @@ const EventDocumentation = () => {
                     </p>
                   </div>
 
-                  {/* Embedded Video */}
                   <div className="mt-auto">
                     <motion.div 
                       variants={scaleUp} 
@@ -219,7 +204,7 @@ const EventDocumentation = () => {
                       <div className="relative pt-[56.25%]">
                         <iframe
                           className="absolute inset-0 w-full h-full"
-                          src={currentEvent.video}
+                          src={currentEvent.video.trim()}
                           title={currentEvent.title}
                           frameBorder="0"
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -234,12 +219,10 @@ const EventDocumentation = () => {
           </AnimatePresence>
         </motion.div>
 
-        {/* Pagination + Controls with parallax */}
         <motion.div 
           style={{ y: controlsY }}
           className="flex flex-col items-center space-y-6"
         >
-          {/* Auto-play Toggle */}
           <button
             onClick={() => setAutoPlay(!autoPlay)}
             className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
@@ -251,7 +234,6 @@ const EventDocumentation = () => {
             {autoPlay ? "⏸️ Auto-play Enabled" : "▶️ Auto-play Disabled"}
           </button>
 
-          {/* Pagination Dots */}
           <div className="flex space-x-3">
             {events.map((_, index) => (
               <motion.button
@@ -271,7 +253,6 @@ const EventDocumentation = () => {
             ))}
           </div>
 
-          {/* Page Counter */}
           <div className="text-center">
             <span className="text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
               {currentIndex + 1} of {events.length}

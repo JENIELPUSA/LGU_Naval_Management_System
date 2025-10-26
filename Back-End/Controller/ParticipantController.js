@@ -518,12 +518,14 @@ exports.getParticipantsCountPerEvent = async (req, res) => {
     const currentDate = new Date();
 
     const pipeline = [
+      // Group participants by event_id
       {
         $group: {
           _id: "$event_id",
           totalParticipants: { $sum: 1 },
         },
       },
+      // Join with events
       {
         $lookup: {
           from: "events",
@@ -533,6 +535,13 @@ exports.getParticipantsCountPerEvent = async (req, res) => {
         },
       },
       { $unwind: { path: "$eventDetails", preserveNullAndEmptyArrays: true } },
+
+      // Optional: filter for organizer role
+      ...(role === "organizer"
+        ? [{ $match: { "eventDetails.created_by": mongoose.Types.ObjectId(userId) } }]
+        : []),
+
+      // Join with proposals
       {
         $lookup: {
           from: "proposals",
@@ -542,15 +551,17 @@ exports.getParticipantsCountPerEvent = async (req, res) => {
         },
       },
       { $unwind: { path: "$proposalInfo", preserveNullAndEmptyArrays: true } },
+
+      // Only include approved proposals and past/future events if needed
       {
         $match: {
           "proposalInfo.status": "approved",
-          "eventDetails.eventDate": { $lte: currentDate }, // <-- dito lang nag-filter
+          // If you want only past events, uncomment:
+          // "eventDetails.eventDate": { $lte: currentDate }
         },
       },
-      ...(role === "organizer"
-        ? [{ $match: { "eventDetails.created_by": userId } }]
-        : []),
+
+      // Project final fields
       {
         $project: {
           _id: 0,
@@ -564,16 +575,17 @@ exports.getParticipantsCountPerEvent = async (req, res) => {
           created_by: "$eventDetails.created_by",
         },
       },
-      {
-        $sort: { eventDate: -1 }, // pinaka-latest muna
-      },
+
+      { $sort: { eventDate: -1 } }, // latest first
     ];
 
     const result = await ParticipantModel.aggregate(pipeline);
+      const totalUpcoming = result.filter((event) => event.isUpcoming).length;
 
     res.status(200).json({
       status: "success",
-      data: result.length > 0 ? result : null,
+      totalUpcoming,
+      data: result.length > 0 ? result : [],
     });
   } catch (error) {
     console.error("Error getting participants count per event:", error);

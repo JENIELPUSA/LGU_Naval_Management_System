@@ -4,7 +4,6 @@ import { ParticipantDisplayContext } from "../../contexts/ParticipantContext/Par
 
 const UpcomingEventsTable = () => {
   const { IncomingEvent } = useContext(ParticipantDisplayContext);
-
   const events = Array.isArray(IncomingEvent) ? IncomingEvent : [];
 
   return (
