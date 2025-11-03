@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import { FileText, MessageSquareText, X, Paperclip, Eye, Download, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCw } from "lucide-react";
-import { pdfjs, Document, Page } from 'react-pdf';
-import 'react-pdf/dist/Page/AnnotationLayer.css';
-import 'react-pdf/dist/Page/TextLayer.css';
+import { pdfjs, Document, Page } from "react-pdf";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
-const AddFormModal = ({ isOpen, onClose, onSubmit, formData, setFormData, isEditing, initialFileUrl, initialFileName }) => {
+const AddFormModal = ({ isOpen, onClose, onSubmit, formData, setFormData, isEditing, initialFileUrl, initialFileName, FontColor, bgtheme }) => {
     const [file, setFile] = useState(null);
     const [fileName, setFileName] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -433,9 +433,7 @@ const AddFormModal = ({ isOpen, onClose, onSubmit, formData, setFormData, isEdit
                                         <FileText className="mx-auto h-16 w-16 opacity-50" />
                                     </div>
                                     <h3 className="mb-2 text-lg font-semibold">Cannot preview PDF</h3>
-                                    <p className="mb-4 text-gray-300">
-                                        PDF preview is not available. You can still download the file.
-                                    </p>
+                                    <p className="mb-4 text-gray-300">PDF preview is not available. You can still download the file.</p>
                                     <a
                                         href={pdfPreviewUrl}
                                         download={fileName}
@@ -460,8 +458,8 @@ const AddFormModal = ({ isOpen, onClose, onSubmit, formData, setFormData, isEdit
                                         loading={<div className="p-8 text-center text-gray-600">Loading PDF...</div>}
                                         className="max-h-[70vh] overflow-auto"
                                     >
-                                        <Page 
-                                            pageNumber={currentPage} 
+                                        <Page
+                                            pageNumber={currentPage}
                                             scale={scale}
                                             rotate={rotation}
                                             className="rounded-lg"
@@ -489,7 +487,11 @@ const AddFormModal = ({ isOpen, onClose, onSubmit, formData, setFormData, isEdit
                                 <button
                                     onClick={confirmSubmit}
                                     disabled={isSubmitting}
-                                    className="rounded-lg bg-gradient-to-r from-pink-600 to-blue-600 px-6 py-2 font-medium text-white transition-all duration-200 hover:from-pink-700 hover:to-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+                                    style={{
+                                        background: bgtheme,
+                                        color: FontColor, 
+                                    }}
+                                    className="rounded-lg px-6 py-2 font-medium text-white transition-all duration-200 hover:from-pink-700 hover:to-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
                                 >
                                     {isSubmitting ? "Submitting..." : "Confirm Submission"}
                                 </button>

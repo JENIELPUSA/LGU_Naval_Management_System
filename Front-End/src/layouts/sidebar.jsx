@@ -8,21 +8,21 @@ import { cn } from "@/utils/cn";
 import PropTypes from "prop-types";
 import LoadingOverlay from "../ReusableFolder/LoadingOverlay";
 
-export const Sidebar = forwardRef(({ collapsed }, ref) => {
+export const Sidebar = forwardRef(({ collapsed, bgtheme, FontColor }, ref) => {
     const { last_name, first_name, logout, role } = useContext(AuthContext);
     const { isunread } = useContext(NotificationDisplayContext);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     const handleLogout = () => {
-        setIsLoggingOut(true); // show overlay immediately
+        setIsLoggingOut(true);
         setTimeout(async () => {
             try {
-                await logout(); // call the original logout after delay
+                await logout();
             } catch (error) {
                 console.error(error);
-                setIsLoggingOut(false); // hide overlay if logout fails
+                setIsLoggingOut(false);
             }
-        }, 1000); // 1000ms = 1 second delay
+        }, 1000);
     };
 
     const roleLabel = role === "admin" ? "Administrator" : role === "organizer" ? "Organizer" : role === "lgu" ? "LGU" : role;
@@ -58,43 +58,59 @@ export const Sidebar = forwardRef(({ collapsed }, ref) => {
             "/dashboard/lgu",
             "/dashboard/lgu-response",
             "/dashboard/participants",
+            "/dashboard/settings",
         ],
     };
 
     return (
         <>
-            {isLoggingOut && <LoadingOverlay />} {/* overlay */}
+            {isLoggingOut && <LoadingOverlay />}
             <aside
                 ref={ref}
+                style={{
+                    background: bgtheme,
+                    color: FontColor,
+                }}
                 className={cn(
-                    "fixed z-[100] flex h-full w-[240px] flex-col overflow-x-hidden border-r border-slate-300 [background:linear-gradient(180deg,#FF9EED_0%,#89C6F9_100%)] [transition:width_300ms_cubic-bezier(0.4,0,0.2,1),left_300ms_cubic-bezier(0.4,0,0.2,1)] dark:border-slate-700 dark:[background:linear-gradient(180deg,#C00070_0%,#0040A0_100%)]",
-                    collapsed ? "md:w-[70px] md:items-center" : "md:w-[240px]",
-                    collapsed ? "max-md:-left-full" : "max-md:left-0",
+                    "fixed z-[100] flex h-full flex-col overflow-x-hidden transition-all duration-300 ease-in-out",
+                    collapsed ? "w-0 md:w-[70px]" : "w-full md:w-[240px]",
+                    collapsed ? "max-md:-left-full" : "max-md:left-0 max-md:w-[220px]",
                 )}
             >
-                <div
-                    className={cn(
-                        "flex items-center gap-3 border-y border-blue-200/50 p-3 dark:border-blue-800/50",
-                        collapsed && "md:justify-center",
-                    )}
-                >
+                {/* User Info */}
+                <div className={cn("flex items-center gap-2 p-2.5", collapsed && "md:justify-center")}>
                     <div className="relative">
                         <img
                             src={avatarPlaceholder}
                             alt="User"
-                            className="h-10 w-10 rounded-full border-2 border-white object-cover dark:border-slate-800"
+                            className={cn(
+                                "rounded-full border-2 border-white object-cover dark:border-slate-800",
+                                collapsed ? "h-8 w-8" : "h-9 w-9",
+                                "max-md:h-8 max-md:w-8",
+                            )}
                         />
-                        <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-800"></div>
+                        <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-[1.5px] border-white bg-emerald-500 dark:border-slate-800"></div>
                     </div>
                     {!collapsed && (
                         <div className="overflow-hidden">
-                            <p className="truncate font-medium text-slate-800 dark:text-slate-100">{user.name}</p>
-                            <p className="truncate text-xs text-slate-600 dark:text-slate-300">{user.role}</p>
+                            <p
+                                className="truncate text-sm font-medium max-md:text-xs"
+                                style={{ color: FontColor }}
+                            >
+                                {user.name}
+                            </p>
+                            <p
+                                className="truncate text-[10px] opacity-80 max-md:text-[9px]"
+                                style={{ color: FontColor }}
+                            >
+                                {user.role}
+                            </p>
                         </div>
                     )}
                 </div>
 
-                <div className="flex w-full flex-col gap-y-4 overflow-y-auto overflow-x-hidden p-3 [scrollbar-width:_thin]">
+                {/* Sidebar Links */}
+                <div className="flex w-full flex-col gap-y-3 overflow-y-auto overflow-x-hidden p-2 [scrollbar-width:thin] max-md:p-1.5">
                     {navbarLinks.map((navbarLink) => {
                         const filteredLinks = navbarLink.links.filter((link) => rolePermissions[role]?.includes(link.path));
 
@@ -105,34 +121,48 @@ export const Sidebar = forwardRef(({ collapsed }, ref) => {
                                 key={navbarLink.title}
                                 className={cn("sidebar-group", collapsed && "md:items-center")}
                             >
-                                <p className={cn("sidebar-group-title text-slate-800 dark:text-slate-100", collapsed && "md:w-[45px]")}>
+                                <p
+                                    className={cn(
+                                        "sidebar-group-title px-1 py-1 text-xs font-semibold max-md:text-[10px]",
+                                        collapsed && "md:w-[45px]",
+                                    )}
+                                    style={{ color: FontColor }}
+                                >
                                     {navbarLink.title}
                                 </p>
+
                                 {filteredLinks.map((link) => (
                                     <NavLink
                                         key={link.label}
                                         to={link.path}
                                         className={({ isActive }) =>
                                             cn(
-                                                "sidebar-item text-slate-700 hover:bg-white/30 dark:text-slate-200 dark:hover:bg-black/30",
-                                                isActive && "!bg-white/50 dark:!bg-black/50",
-                                                collapsed && "md:w-[45px]",
+                                                "sidebar-item flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm hover:bg-white/30 max-md:gap-2 max-md:px-1.5 max-md:py-1 max-md:text-xs",
+                                                isActive && "!bg-white/50",
+                                                collapsed && "md:w-[45px] md:justify-center md:px-0",
                                             )
                                         }
+                                        style={{ color: FontColor }}
                                     >
                                         <div className="relative flex-shrink-0">
-                                            <link.icon size={22} />
+                                            <link.icon
+                                                size={collapsed ? 18 : 20}
+                                                color={FontColor}
+                                            />
                                             {link.label === "Notification" && isunread > 0 && collapsed && (
-                                                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white shadow-sm">
+                                                <span className="absolute -right-1 -top-1 flex h-3 w-3 items-center justify-center rounded-full bg-red-500 text-[8px] font-medium text-white shadow-sm">
                                                     {isunread > 9 ? "9+" : isunread}
                                                 </span>
                                             )}
                                         </div>
                                         {!collapsed && (
-                                            <p className="flex items-center justify-between whitespace-nowrap">
+                                            <p
+                                                className="flex items-center justify-between whitespace-nowrap"
+                                                style={{ color: FontColor }}
+                                            >
                                                 {link.label}
                                                 {link.label === "Notification" && isunread > 0 && (
-                                                    <span className="ml-2 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-xs font-medium text-white shadow-sm transition-all duration-200">
+                                                    <span className="ml-1.5 inline-flex h-4 min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-medium text-white shadow-sm max-md:h-3 max-md:min-w-[16px] max-md:text-[8px]">
                                                         {isunread > 99 ? "99+" : isunread}
                                                     </span>
                                                 )}
@@ -145,16 +175,17 @@ export const Sidebar = forwardRef(({ collapsed }, ref) => {
                     })}
                 </div>
 
-                <div className="mt-auto border-t border-blue-200 p-4 dark:border-blue-800">
+                {/* Logout */}
+                <div className="mt-auto p-2 max-md:p-1.5">
                     <button
                         onClick={handleLogout}
                         className={cn(
-                            "flex w-full items-center gap-2 rounded-lg py-2",
-                            "text-sm font-medium transition-all duration-200",
-                            "text-blue-800 hover:bg-blue-100 dark:text-blue-200 dark:hover:bg-blue-800/30",
-                            collapsed ? "md:w-[45px] md:justify-center md:px-0 md:py-3" : "px-3",
-                            "mx-1",
+                            "flex w-full items-center justify-center gap-2 rounded-lg py-1.5 text-sm font-medium transition-all duration-200 max-md:py-1 max-md:text-xs",
+                            "hover:bg-white/30",
+                            collapsed ? "md:w-[45px] md:px-0" : "px-2 max-md:px-1.5",
+                            "mx-0.5",
                         )}
+                        style={{ color: FontColor }}
                     >
                         {!collapsed && <p className="whitespace-nowrap">Logout</p>}
                     </button>
@@ -168,4 +199,6 @@ Sidebar.displayName = "Sidebar";
 
 Sidebar.propTypes = {
     collapsed: PropTypes.bool,
+    bgtheme: PropTypes.string,
+    FontColor: PropTypes.string,
 };

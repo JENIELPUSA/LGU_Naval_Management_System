@@ -1,39 +1,67 @@
-// src/components/DashboardHeader.jsx
 import { Calendar } from "lucide-react";
 import logo from "../../assets/logo-login.png";
 
-const DashboardHeader = () => {
-  return (
-    <div className="rounded-lg bg-gradient-to-r from-pink-500 to-blue-500 p-6 text-white shadow-lg">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-4">
-          <img
-            src={logo}
-            alt="LGU Logo"
-            className="h-20 w-20 rounded-full border-2 border-white object-cover shadow-md"
-          />
-          <div>
-            <h1 className="text-3xl font-bold">LGU NAVAL EVENT MANAGEMENT SYSTEM</h1>
-            <p className="mt-1 text-pink-100">Comprehensive platform for managing local government unit events</p>
-          </div>
+const DashboardHeader = ({ bgtheme, FontColor }) => {
+    return (
+        <div
+            style={{ background: bgtheme, color: FontColor }}
+            className="rounded-md p-3 shadow"
+        >
+            <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                <div className="flex items-center gap-2">
+                    <img
+                        src={logo}
+                        alt="LGU Logo"
+                        className="h-12 w-12 rounded-full border object-cover shadow-sm sm:h-16 sm:w-16"
+                        style={{ borderColor: FontColor }}
+                    />
+                    <div>
+                        <h1
+                            className="text-lg font-bold leading-tight sm:text-xl"
+                            style={{ color: FontColor }}
+                        >
+                            LGU NAVAL EVENT MANAGEMENT SYSTEM
+                        </h1>
+                        <p
+                            className="mt-0.5 text-[11px] sm:text-xs"
+                            style={{ color: FontColor }}
+                        >
+                            Comprehensive platform for managing local government unit events
+                        </p>
+                    </div>
+                </div>
+                <div
+                    className="flex items-center gap-2 rounded p-2 backdrop-blur-sm"
+                    style={{ background: `${FontColor}20` }} // semi-transparent background based on FontColor
+                >
+                    <Calendar
+                        size={20}
+                        style={{ color: FontColor }}
+                        className="sm:size-24"
+                    />
+                    <div>
+                        <p
+                            className="text-[11px] font-semibold sm:text-xs"
+                            style={{ color: FontColor }}
+                        >
+                            Today's Date
+                        </p>
+                        <p
+                            className="text-[11px] leading-tight sm:text-xs"
+                            style={{ color: FontColor }}
+                        >
+                            {new Date().toLocaleDateString("en-PH", {
+                                weekday: "short",
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                            })}
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div className="mt-4 flex items-center gap-3 rounded-lg bg-white/20 p-3 backdrop-blur-sm md:mt-0">
-          <Calendar size={32} className="text-white" />
-          <div>
-            <p className="font-semibold">Today's Date</p>
-            <p>
-              {new Date().toLocaleDateString("en-PH", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default DashboardHeader;

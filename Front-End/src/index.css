@@ -88,3 +88,97 @@
 .recharts-tooltip-item {
     @apply text-base font-medium !text-blue-500 dark:!text-blue-600;
 }
+
+/* accessibility.css */
+
+/* High Contrast Mode */
+.high-contrast {
+  --bg-color: #000000;
+  --text-color: #ffffff;
+  --link-color: #ffff00;
+  --button-bg: #ffffff;
+  --button-text: #000000;
+}
+
+.high-contrast body {
+  background-color: var(--bg-color) !important;
+  color: var(--text-color) !important;
+}
+
+.high-contrast a {
+  color: var(--link-color) !important;
+  text-decoration: underline !important;
+}
+
+.high-contrast button {
+  background-color: var(--button-bg) !important;
+  color: var(--button-text) !important;
+  border: 2px solid var(--text-color) !important;
+}
+
+.high-contrast .bg-white {
+  background-color: var(--bg-color) !important;
+  color: var(--text-color) !important;
+}
+
+.high-contrast .text-gray-800 {
+  color: var(--text-color) !important;
+}
+
+/* Reduced Motion */
+.reduced-motion * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* Link Styles */
+.link-underline a {
+  text-decoration: underline !important;
+}
+
+.highlight-links a {
+  background-color: yellow !important;
+  color: black !important;
+  padding: 2px 4px !important;
+}
+
+/* Focus styles for keyboard navigation */
+.keyboard-highlight button:focus,
+.keyboard-highlight a:focus,
+.keyboard-highlight input:focus,
+.keyboard-highlight select:focus,
+.keyboard-highlight textarea:focus {
+  outline: 3px solid #0032a0 !important;
+  outline-offset: 2px !important;
+}
+
+/* Screen reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Focus styles for all interactive elements */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid #0032a0;
+  outline-offset: 2px;
+}
+
+/* Dyslexia-friendly font */
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('https://cdn.jsdelivr.net/npm/open-dyslexic@1.0.3/otf/OpenDyslexic-Regular.otf');
+  font-weight: normal;
+  font-style: normal;
+}

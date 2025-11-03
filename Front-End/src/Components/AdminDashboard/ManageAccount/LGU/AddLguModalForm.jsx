@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 
-const AddLguModalForm = ({ isOpen, onClose, onSubmit, formData, setFormData, isEditing }) => {
+const AddLguModalForm = ({ isOpen, onClose, onSubmit, formData, setFormData, isEditing, bgtheme, FontColor }) => {
     const fileInputRef = useRef(null);
     const [file, setFile] = useState(null);
 
@@ -33,7 +33,7 @@ const AddLguModalForm = ({ isOpen, onClose, onSubmit, formData, setFormData, isE
 
     return (
         <div className="fixed inset-0 z-[900] flex items-start justify-center bg-black/50 p-4 sm:items-center">
-            <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-slate-800 max-h-[90vh] overflow-y-auto">
+            <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl bg-white p-6 shadow-xl dark:bg-slate-800">
                 <div className="mb-4 flex items-center justify-between">
                     <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200">{isEditing ? "Edit LGU" : "Add New LGU"}</h3>
                     <button
@@ -64,7 +64,7 @@ const AddLguModalForm = ({ isOpen, onClose, onSubmit, formData, setFormData, isE
                     <div>
                         <label className="mb-1 block text-sm text-slate-600 dark:text-slate-400">Upload Picture</label>
                         <div
-                            className="flex w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-4 text-center hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700/50 dark:hover:bg-slate-700 aspect-[4/3] relative"
+                            className="relative flex aspect-[4/3] w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-4 text-center hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700/50 dark:hover:bg-slate-700"
                             onClick={() => fileInputRef.current.click()}
                         >
                             {file || formData.avatar?.url ? (
@@ -180,8 +180,9 @@ const AddLguModalForm = ({ isOpen, onClose, onSubmit, formData, setFormData, isE
                             Cancel
                         </button>
                         <button
+                            style={{ background: bgtheme, color: FontColor }}
                             type="submit"
-                            className="flex items-center gap-2 rounded-lg bg-pink-500 px-4 py-2 text-white shadow-sm transition hover:bg-pink-600 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 dark:bg-pink-600 dark:hover:bg-pink-700 dark:focus:ring-pink-500 dark:focus:ring-offset-slate-900"
+                            className="flex items-center gap-2 rounded-lg px-4 py-2 text-white shadow-sm transition hover:bg-pink-600 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 dark:bg-pink-600 dark:hover:bg-pink-700 dark:focus:ring-pink-500 dark:focus:ring-offset-slate-900"
                         >
                             <span className="relative">{isEditing ? "Save Changes" : "Add LGU"}</span>
                         </button>

@@ -55,8 +55,6 @@ const LGUResponseTable = () => {
         setCurrentPage(1);
     };
 
-    console.log()
-
     const handleKeyDown = (e) => {
         if (e.key === "Enter") {
             handleSearch();
@@ -73,16 +71,13 @@ const LGUResponseTable = () => {
         await UpdateResponse(id, values);
     };
 
-    // Modified handleReject to open notes popup
     const handleReject = (response) => {
         setCurrentRejectResponse(response);
         setRejectModalOpen(true);
         setNotesError("");
     };
 
-    // New function to confirm rejection with notes
     const handleConfirmReject = async () => {
-        // Validate that notes are provided
         if (!rejectNotes.trim()) {
             setNotesError("Notes are required for rejection");
             return;
@@ -258,7 +253,6 @@ const LGUResponseTable = () => {
                                         onKeyDown={handleKeyDown}
                                     />
 
-                                    {/* 🔍 Button sa loob ng textbox */}
                                     <button
                                         onClick={handleSearch}
                                         className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 hover:bg-pink-100 hover:text-pink-600 dark:hover:bg-pink-900 dark:hover:text-pink-200"
@@ -315,46 +309,25 @@ const LGUResponseTable = () => {
                                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                     <thead className="bg-gray-50 dark:bg-gray-700">
                                         <tr>
-                                            <th
-                                                scope="col"
-                                                className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300"
-                                            >
+                                            <th scope="col" className="w-[25%] px-4 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
                                                 Event Details
                                             </th>
-                                            <th
-                                                scope="col"
-                                                className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300"
-                                            >
+                                            <th scope="col" className="w-[15%] px-4 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
                                                 Date & Time
                                             </th>
-                                            <th
-                                                scope="col"
-                                                className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300"
-                                            >
+                                            <th scope="col" className="w-[15%] px-4 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
                                                 Organizer
                                             </th>
-                                            <th
-                                                scope="col"
-                                                className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300"
-                                            >
+                                            <th scope="col" className="w-[10%] px-4 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
                                                 Resources
                                             </th>
-                                            <th
-                                                scope="col"
-                                                className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300"
-                                            >
+                                            <th scope="col" className="w-[10%] px-4 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
                                                 Status
                                             </th>
-                                            <th
-                                                scope="col"
-                                                className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300"
-                                            >
+                                            <th scope="col" className="w-[15%] px-4 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
                                                 Actions
                                             </th>
-                                            <th
-                                                scope="col"
-                                                className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300"
-                                            >
+                                            <th scope="col" className="w-[5%] px-4 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">
                                                 {/* Expand column */}
                                             </th>
                                         </tr>
@@ -370,23 +343,28 @@ const LGUResponseTable = () => {
                                                         key={event._id}
                                                         className={`${isExpanded ? "bg-gray-50 dark:bg-gray-700" : "hover:bg-gray-50 dark:hover:bg-gray-700"} transition-colors`}
                                                     >
-                                                        <td className="whitespace-nowrap px-6 py-4">
-                                                            <div className="flex items-center">
+                                                        {/* Event Details - WITH CLAMP */}
+                                                        <td className="px-4 py-4">
+                                                            <div className="flex items-start">
                                                                 <div className="h-10 w-10 flex-shrink-0">
                                                                     <FileText className="h-10 w-10 rounded-full text-blue-500" />
                                                                 </div>
-                                                                <div className="ml-4">
-                                                                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                                                <div className="ml-3 min-w-0 flex-1">
+                                                                    {/* Title with line clamp */}
+                                                                    <div className="line-clamp-2 text-sm font-medium text-gray-900 dark:text-white break-words">
                                                                         {event.proposalInfo?.title || "Untitled Event"}
                                                                     </div>
-                                                                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                                                                    {/* Venue with line clamp */}
+                                                                    <div className="line-clamp-1 text-sm text-gray-500 dark:text-gray-400 mt-1 break-words">
                                                                         {event.EventInfo?.venue || "TBD"}
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </td>
-                                                        <td className="whitespace-nowrap px-6 py-4">
-                                                            <div className="text-sm text-gray-900 dark:text-white">
+
+                                                        {/* Date & Time */}
+                                                        <td className="px-4 py-4">
+                                                            <div className="text-sm text-gray-900 dark:text-white whitespace-nowrap">
                                                                 {new Date(event.EventInfo?.eventDate).toLocaleDateString("en-US", {
                                                                     weekday: "short",
                                                                     year: "numeric",
@@ -394,17 +372,21 @@ const LGUResponseTable = () => {
                                                                     day: "numeric",
                                                                 })}
                                                             </div>
-                                                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                                                            <div className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
                                                                 {event.EventInfo?.startTime || "TBD"}
                                                             </div>
                                                         </td>
-                                                        <td className="whitespace-nowrap px-6 py-4">
+
+                                                        {/* Organizer - WITH CLAMP */}
+                                                        <td className="px-4 py-4">
                                                             {event.organizer ? (
-                                                                <div>
-                                                                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                                                <div className="min-w-0">
+                                                                    {/* Organizer name with line clamp */}
+                                                                    <div className="line-clamp-2 text-sm font-medium text-gray-900 dark:text-white break-words">
                                                                         {`${event.organizer.first_name || ""} ${event.organizer.last_name || ""}`.trim()}
                                                                     </div>
-                                                                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                                                                    {/* Email with line clamp */}
+                                                                    <div className="line-clamp-1 text-sm text-gray-500 dark:text-gray-400 break-words mt-1">
                                                                         {event.organizer.email || "N/A"}
                                                                     </div>
                                                                 </div>
@@ -413,7 +395,8 @@ const LGUResponseTable = () => {
                                                             )}
                                                         </td>
 
-                                                        <td className="whitespace-nowrap px-6 py-4">
+                                                        {/* Resources */}
+                                                        <td className="px-4 py-4">
                                                             <div className="text-sm text-gray-900 dark:text-white">
                                                                 {event.resources ? event.resources.length : 0} resources
                                                             </div>
@@ -424,14 +407,17 @@ const LGUResponseTable = () => {
                                                             </div>
                                                         </td>
 
-                                                        <td className="whitespace-nowrap px-6 py-4">
+                                                        {/* Status */}
+                                                        <td className="px-4 py-4">
                                                             <span
                                                                 className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusConfig.badge}`}
                                                             >
                                                                 {event.status?.charAt(0).toUpperCase() + event.status?.slice(1) || "Unknown"}
                                                             </span>
                                                         </td>
-                                                        <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
+
+                                                        {/* Actions */}
+                                                        <td className="px-4 py-4">
                                                             <div className="flex items-center space-x-2">
                                                                 {role !== "organizer" && (
                                                                     <>
@@ -464,7 +450,9 @@ const LGUResponseTable = () => {
                                                                 </button>
                                                             </div>
                                                         </td>
-                                                        <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+
+                                                        {/* Expand Button */}
+                                                        <td className="px-4 py-4 text-right">
                                                             <button
                                                                 onClick={() => toggleRowExpansion(event._id)}
                                                                 className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
@@ -473,40 +461,33 @@ const LGUResponseTable = () => {
                                                             </button>
                                                         </td>
                                                     </tr>
+                                                    
+                                                    {/* Expanded Row */}
                                                     {isExpanded && (
                                                         <tr className="bg-gray-50 dark:bg-gray-700">
-                                                            <td
-                                                                colSpan="7"
-                                                                className="px-6 py-4"
-                                                            >
+                                                            <td colSpan="7" className="px-4 py-4">
                                                                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                                                     {/* Event Details */}
                                                                     <div className="space-y-4">
                                                                         <div>
                                                                             <div className="mb-2 flex items-center gap-2">
-                                                                                <FileText
-                                                                                    size={16}
-                                                                                    className="text-blue-500"
-                                                                                />
+                                                                                <FileText size={16} className="text-blue-500" />
                                                                                 <h4 className="font-medium text-gray-900 dark:text-white">
                                                                                     Event Description
                                                                                 </h4>
                                                                             </div>
-                                                                            <p className="pl-6 text-sm text-gray-600 dark:text-gray-300">
+                                                                            <p className="pl-6 text-sm text-gray-600 dark:text-gray-300 break-words">
                                                                                 {event.eventInfo?.description || "No description available"}
                                                                             </p>
                                                                         </div>
                                                                         <div>
                                                                             <div className="mb-2 flex items-center gap-2">
-                                                                                <UserCheck
-                                                                                    size={16}
-                                                                                    className="text-purple-500"
-                                                                                />
+                                                                                <UserCheck size={16} className="text-purple-500" />
                                                                                 <h4 className="font-medium text-gray-900 dark:text-white">
                                                                                     Respondent
                                                                                 </h4>
                                                                             </div>
-                                                                            <p className="pl-6 text-sm text-gray-600 dark:text-gray-300">
+                                                                            <p className="pl-6 text-sm text-gray-600 dark:text-gray-300 break-words">
                                                                                 {event.LGUInfo
                                                                                     ? `${event.LGUInfo.first_name || ""} ${event.LGUInfo.middle_name || ""} ${event.LGUInfo.last_name || ""}`.trim()
                                                                                     : "No respondent information available"}
@@ -514,13 +495,10 @@ const LGUResponseTable = () => {
                                                                         </div>
                                                                         <div>
                                                                             <div className="mb-2 flex items-center gap-2">
-                                                                                <FileText
-                                                                                    size={16}
-                                                                                    className="text-blue-500"
-                                                                                />
+                                                                                <FileText size={16} className="text-blue-500" />
                                                                                 <h4 className="font-medium text-gray-900 dark:text-white">Notes</h4>
                                                                             </div>
-                                                                            <p className="pl-6 text-sm text-gray-600 dark:text-gray-300">
+                                                                            <p className="pl-6 text-sm text-gray-600 dark:text-gray-300 break-words">
                                                                                 {event.note || "N/A"}
                                                                             </p>
                                                                         </div>
@@ -531,36 +509,26 @@ const LGUResponseTable = () => {
                                                                         <div className="space-y-4">
                                                                             <div>
                                                                                 <div className="mb-3 flex items-center gap-2">
-                                                                                    <Database
-                                                                                        size={16}
-                                                                                        className="text-green-500"
-                                                                                    />
+                                                                                    <Database size={16} className="text-green-500" />
                                                                                     <h4 className="font-medium text-gray-900 dark:text-white">
                                                                                         Resources Details
                                                                                     </h4>
                                                                                 </div>
                                                                                 <div className="max-h-48 space-y-3 overflow-y-auto pr-2">
                                                                                     {event.resources.map((resource, idx) => (
-                                                                                        <div
-                                                                                            key={idx}
-                                                                                            className="text-sm text-gray-600 dark:text-gray-300"
-                                                                                        >
+                                                                                        <div key={idx} className="text-sm text-gray-600 dark:text-gray-300">
                                                                                             <div className="flex items-center gap-1 font-medium text-gray-900 dark:text-white">
-                                                                                                <div
-                                                                                                    className={`h-2 w-2 rounded-full ${resource.availability ? "bg-green-500" : "bg-red-500"}`}
-                                                                                                ></div>
+                                                                                                <div className={`h-2 w-2 rounded-full ${resource.availability ? "bg-green-500" : "bg-red-500"}`}></div>
                                                                                                 {resource.resource_name}
                                                                                             </div>
                                                                                             <div className="ml-3 mt-1 flex items-center gap-2">
-                                                                                                <span>
+                                                                                                <span className="break-words">
                                                                                                     {resource.resource_type} •{" "}
-                                                                                                    {resource.availability
-                                                                                                        ? "Available"
-                                                                                                        : "Unavailable"}
+                                                                                                    {resource.availability ? "Available" : "Unavailable"}
                                                                                                 </span>
                                                                                             </div>
                                                                                             {resource.description && (
-                                                                                                <div className="ml-3 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                                                                <div className="ml-3 mt-1 text-xs text-gray-500 dark:text-gray-400 break-words">
                                                                                                     {resource.description}
                                                                                                 </div>
                                                                                             )}
@@ -651,7 +619,6 @@ const LGUResponseTable = () => {
                                 value={rejectNotes}
                                 onChange={(e) => {
                                     setRejectNotes(e.target.value);
-                                    // Clear error when user starts typing
                                     if (e.target.value.trim() && notesError) {
                                         setNotesError("");
                                     }
@@ -677,7 +644,7 @@ const LGUResponseTable = () => {
                                 <button
                                     onClick={handleConfirmReject}
                                     className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
-                                    disabled={!rejectNotes.trim()} // Disable button if notes are empty
+                                    disabled={!rejectNotes.trim()}
                                 >
                                     Confirm Reject
                                 </button>

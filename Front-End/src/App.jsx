@@ -5,7 +5,7 @@ import PublicRoute from "./Components/PublicRoute/PublicRoute";
 import ManageTeam from "./Components/OrganizerDashboard/TeamManage/ManageTeam";
 import Layout from "@/routes/layout";
 import DashboardPage from "@/routes/dashboard/page";
-import Login from "./Components/Participant/ParticipantDashboard";
+import PublicAccess from "./Components/Participant/Home";
 import PdfViewerModel from "./components/AdminDashboard/Proposal/PdfViewer";
 import ResetPassword from "./Components/Login/ResetPassword";
 import AdminLayout from "./Components/AdminDashboard/ManageAccount/Admin/AdminLayout";
@@ -17,20 +17,26 @@ import EventTable from "./Components/OrganizerDashboard/OrganizerComponents/Even
 import ResourcesTable from "./Components/AdminDashboard/Resources/ResourcesTable";
 import LGUTable from "./Components/AdminDashboard/ManageAccount/LGU/LGUTable";
 import Calendar from "./Components/Calendar/Calendar";
+import Login from "./Components/Login/Login"
 import LGUResponseTable from "./Components/LGUDashboard/LGUComponent/LGUResponseTable";
 import Register from "./Components/RegistrationComponents/RegistrationModalComponent";
 import BarcodeScanner from "./Components/Scanner/ScannerComponent";
 import Participant from "./Components/AdminDashboard/Participant/ParticipantTable"
 import Report from "./Components/Reportsandcomments/reportscomment"
 import ReportTable from "./Components/Reportsandcomments/ReportTable"
+import Setting from "./Components/Setting/SettingLayout"
 function App() {
     const router = createBrowserRouter([
         {
             element: <PublicRoute />,
             children: [
                 {
-                    path: "/login",
-                    element: <Login />,
+                    path: "/Public-Access",
+                    element: <PublicAccess />,
+                },
+                {
+                    path: "/Login",
+                    element: <Login/>,
                 },
                 {
                     path: "/reset-password/:token",
@@ -121,6 +127,11 @@ function App() {
                             path: "/dashboard/lgu-response",
                             element: <LGUResponseTable />,
                         },
+                         {
+                            path: "/dashboard/settings",
+                            element: <Setting/>,
+                        },
+            
                     ],
                 },
             ],

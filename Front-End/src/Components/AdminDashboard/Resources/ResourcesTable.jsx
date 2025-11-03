@@ -6,6 +6,7 @@ import SuccessFailed from "../../../ReusableFolder/SuccessandField";
 import StatusVerification from "../../../ReusableFolder/StatusModal";
 import AddFormModal from "./ResourcesAddForm";
 import { AuthContext } from "../../../contexts/AuthContext";
+import { PersonilContext } from "../../../contexts/PersonelContext/PersonelContext";
 
 const ResourcesTable = () => {
     const {
@@ -22,6 +23,7 @@ const ResourcesTable = () => {
         limit,
         isTotalresources,
     } = useContext(ResourcesDisplayContext);
+    const { bgtheme, FontColor } = useContext(PersonilContext);
     const { role } = useContext(AuthContext);
     const [isDeleteID, setDeleteID] = useState(null);
     const [tempSearchTerm, setTempSearchTerm] = useState("");
@@ -252,7 +254,8 @@ const ResourcesTable = () => {
 
                     <button
                         onClick={openAddModal}
-                        className="flex items-center gap-2 rounded-lg bg-pink-500 px-4 py-2 text-white transition hover:bg-pink-600 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 dark:bg-pink-600 dark:hover:bg-pink-700 dark:focus:ring-pink-500 dark:focus:ring-offset-slate-900"
+                        style={{ background: bgtheme, color: FontColor }}
+                        className="flex items-center gap-2 rounded-lg px-4 py-2 transition focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 dark:bg-pink-600 dark:hover:bg-pink-700 dark:focus:ring-pink-500 dark:focus:ring-offset-slate-900"
                     >
                         <Plus size={18} />
                         <span className="relative">Add Form</span>
@@ -414,6 +417,8 @@ const ResourcesTable = () => {
                     setFormData={setFormData}
                     isEditing={isEditing}
                     editingData={isEditing ? formData : null}
+                    bgtheme={bgtheme}
+                    FontColor={FontColor}
                 />
                 <SuccessFailed
                     isOpen={showModal}

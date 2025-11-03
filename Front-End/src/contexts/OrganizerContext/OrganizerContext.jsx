@@ -23,7 +23,7 @@ export const OrganizerDisplayProvider = ({ children }) => {
     const [dateFrom, setDateFrom] = useState("");
     const [dateTo, setDateTo] = useState("");
 
-    const limit = 5; // Fetch all admins by default (no pagination)
+    const limit = 5; 
 const FetchOrganizerData = async (page = 1, limit, searchTerm = "", fromDate = "", toDate = "") => {
     if (!authToken) return;
 

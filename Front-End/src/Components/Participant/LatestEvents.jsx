@@ -1,226 +1,340 @@
 import React, { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Calendar, MapPin, Users } from "lucide-react";
-import Login from "../Login/Login";
+import { ChevronRight, ChevronLeft, Calendar, MapPin, Users, Clock } from "lucide-react";
+import { useAccessibility } from "./NavHeader"; // Import the accessibility hook
 
-const heroBG4 =
-  "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?ixlib=rb-4.0.3&auto=format&fit=crop&w=2069&q=80";
+const heroBG4 = "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?ixlib=rb-4.0.3&auto=format&fit=crop&w=2069&q=80";
 
 const fadeIn = {
-  hidden: { opacity: 0, y: 50 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
-};
-
-const slideIn = {
-  hidden: { opacity: 0, x: 30 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.5, ease: "easeOut" } },
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
 };
 
 const staggerChildren = {
-  visible: { transition: { staggerChildren: 0.15 } },
+    visible: { transition: { staggerChildren: 0.08 } },
 };
 
 const LatestEvents = ({ eventsRef, isEventUpcoming, setShowModal, handleEventSelect }) => {
-  const carouselRef = useRef(null);
-  const [currentScroll, setCurrentScroll] = useState(0);
+    const accessibility = useAccessibility(); // Use the accessibility hook
 
-  const handleNext = () => {
-    if (carouselRef.current) {
-      const itemWidth = carouselRef.current.querySelector(".carousel-item").offsetWidth + 24;
-      const newScroll = currentScroll + itemWidth;
-      carouselRef.current.scrollTo({ left: newScroll, behavior: "smooth" });
-      setCurrentScroll(newScroll);
-    }
-  };
+    // Translation function for this component
+    const t = (key) => {
+        const translations = {
+            en: {
+                latestEvents: "Latest Events",
+                stayUpdated: "Stay updated with the latest events and activities happening in our community.",
+                noUpcomingEvents: "No Upcoming Events",
+                checkBackLater: "Check back later for new events and activities.",
+                registerEvent: "Register Event",
+                public: "Public",
+                openToPublic: "Open to Public",
+                duration: "Duration: 2-3 hrs",
+                noDescription: "No description available.",
+                untitledEvent: "Untitled Event",
+                tba: "TBA",
+                sports: "Sports",
+                cultural: "Cultural",
+                meeting: "Meeting",
+                festival: "Festival",
+                communityService: "Community Service",
+                training: "Training",
+                communityEvent: "Community Event",
+                navalBiliran: "Naval, Biliran",
+                eventLocation: "Event location",
+                eventDate: "Event date",
+                eventTime: "Event time",
+                eventCategory: "Event category",
+                eventDescription: "Event description",
+                registerForEvent: "Register for event",
+                clickToRegister: "Click to register for this event"
+            },
+            tl: {
+                latestEvents: "Pinakabagong Mga Event",
+                stayUpdated: "Manatiling updated sa mga pinakabagong event at aktibidad na nagaganap sa ating komunidad.",
+                noUpcomingEvents: "Walang Paparating na Event",
+                checkBackLater: "Bumalik mamaya para sa mga bagong event at aktibidad.",
+                registerEvent: "Magrehistro sa Event",
+                public: "Pampubliko",
+                openToPublic: "Bukas sa Publiko",
+                duration: "Tagal: 2-3 oras",
+                noDescription: "Walang available na deskripsyon.",
+                untitledEvent: "Event na Walang Pamagat",
+                tba: "TBA",
+                sports: "Sports",
+                cultural: "Kultural",
+                meeting: "Pulong",
+                festival: "Pista",
+                communityService: "Serbisyong Pangkomunidad",
+                training: "Pagsasanay",
+                communityEvent: "Event ng Komunidad",
+                navalBiliran: "Naval, Biliran",
+                eventLocation: "Lokasyon ng event",
+                eventDate: "Petsa ng event",
+                eventTime: "Oras ng event",
+                eventCategory: "Kategorya ng event",
+                eventDescription: "Deskripsyon ng event",
+                registerForEvent: "Magrehistro para sa event",
+                clickToRegister: "I-click para magrehistro sa event na ito"
+            }
+        };
+        return translations[accessibility.language]?.[key] || translations.en[key] || key;
+    };
 
-  const handlePrev = () => {
-    if (carouselRef.current) {
-      const itemWidth = carouselRef.current.querySelector(".carousel-item").offsetWidth + 24;
-      const newScroll = Math.max(0, currentScroll - itemWidth);
-      carouselRef.current.scrollTo({ left: newScroll, behavior: "smooth" });
-      setCurrentScroll(newScroll);
-    }
-  };
+    const formatEventDate = (dateString) => {
+        if (!dateString) return t('tba');
+        return new Date(dateString).toLocaleDateString(accessibility.language === 'tl' ? 'tl-PH' : 'en-US', { 
+            year: "numeric", 
+            month: "short", 
+            day: "numeric" 
+        });
+    };
 
-  const formatEventDate = (dateString) => {
-    if (!dateString) return "TBA";
-    const options = { year: "numeric", month: "short", day: "numeric" };
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", options);
-  };
+    const formatEventTime = (dateString) => {
+        if (!dateString) return "";
+        return new Date(dateString).toLocaleTimeString(accessibility.language === 'tl' ? 'tl-PH' : 'en-US', { 
+            hour: "2-digit", 
+            minute: "2-digit", 
+            hour12: true 
+        });
+    };
 
-  const getEventCategory = (event) => {
-    const title = event.proposal?.title?.toLowerCase() || "";
-    if (title.includes("sports") || title.includes("game")) return "Sports";
-    if (title.includes("cultural") || title.includes("fiesta")) return "Cultural";
-    if (title.includes("party") || title.includes("celebration")) return "Community";
-    return "Event";
-  };
+    const getEventCategory = (event) => {
+        const title = event.proposal?.title?.toLowerCase() || "";
+        const description = event.proposal?.description?.toLowerCase() || "";
 
-  return (
-    <motion.section
-      ref={eventsRef}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.2 }}
-      variants={staggerChildren}
-      className="relative min-h-screen w-full overflow-hidden"
-    >
-      {/* Main Content Container */}
-      <div className="relative z-10 w-full h-full flex items-center justify-center py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
-          
-          {/* Header Section */}
-          <motion.div 
-            variants={fadeIn} 
-            className="text-center mb-12"
-          >
-            <h2 className="mb-4 text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-white bg-clip-text text-transparent">
-              Latest Events
-            </h2>
-            <p className="text-lg text-white max-w-2xl mx-auto">
-              Join exciting events and celebrations in your community
-            </p>
-            <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-pink-500 mx-auto mt-4 rounded-full" />
-          </motion.div>
+        if (title.includes("sports") || description.includes("sports") || title.includes("game")) return t('sports');
+        if (title.includes("cultural") || description.includes("cultural") || title.includes("fiesta")) return t('cultural');
+        if (title.includes("meeting") || description.includes("meeting") || title.includes("seminar")) return t('meeting');
+        if (title.includes("festival") || description.includes("festival")) return t('festival');
+        if (title.includes("clean") || description.includes("clean")) return t('communityService');
+        if (title.includes("training") || description.includes("training")) return t('training');
+        return t('communityEvent');
+    };
 
-          {/* Transparent Container for Cards */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/30 overflow-hidden p-6">
-            
-            {/* Carousel Section */}
-            <div className="relative">
-              
-              {/* Navigation Arrows */}
-              <button
-                onClick={handlePrev}
-                className="absolute -left-4 top-1/2 -translate-y-1/2 z-30 p-3 rounded-2xl bg-white/90 backdrop-blur-sm shadow-lg hover:bg-white hover:scale-110 transition-all duration-300 border border-gray-100"
-              >
-                <ChevronLeft className="w-6 h-6 text-gray-700" />
-              </button>
+    const getCategoryColor = (category) => {
+        const baseCategory = category.toLowerCase();
+        if (baseCategory.includes(t('sports').toLowerCase())) return "bg-blue-500";
+        if (baseCategory.includes(t('cultural').toLowerCase())) return "bg-purple-500";
+        if (baseCategory.includes(t('meeting').toLowerCase())) return "bg-yellow-500";
+        if (baseCategory.includes(t('festival').toLowerCase())) return "bg-pink-500";
+        if (baseCategory.includes(t('communityService').toLowerCase())) return "bg-green-500";
+        if (baseCategory.includes(t('training').toLowerCase())) return "bg-indigo-500";
+        return "bg-red-500";
+    };
 
-              <button
-                onClick={handleNext}
-                className="absolute -right-4 top-1/2 -translate-y-1/2 z-30 p-3 rounded-2xl bg-white/90 backdrop-blur-sm shadow-lg hover:bg-white hover:scale-110 transition-all duration-300 border border-gray-100"
-              >
-                <ChevronRight className="w-6 h-6 text-gray-700" />
-              </button>
+    const getEventLocation = (event) => event.proposal?.location || t('navalBiliran');
 
-              {/* Carousel Container */}
-              <div
-                ref={carouselRef}
-                className="carousel-container flex gap-6 overflow-x-auto pb-8 scroll-smooth px-2"
-                style={{
-                  scrollbarWidth: "none",
-                  msOverflowStyle: "none",
-                }}
-              >
-                {Array.isArray(isEventUpcoming) && isEventUpcoming.length > 0 ? (
-                  isEventUpcoming.map((event, index) => (
-                    <motion.div
-                      key={index}
-                      variants={slideIn}
-                      initial="hidden"
-                      whileInView="visible"
-                      viewport={{ once: true }}
-                      className="carousel-item group w-80 flex-shrink-0"
+    // Get 4 latest events based on eventDate
+    const getLatestEvents = () => {
+        if (!isEventUpcoming || isEventUpcoming.length === 0) return [];
+        
+        // Sort events by eventDate in descending order (newest first)
+        const sortedEvents = [...isEventUpcoming].sort((a, b) => {
+            const dateA = a.eventDate ? new Date(a.eventDate) : new Date(0);
+            const dateB = b.eventDate ? new Date(b.eventDate) : new Date(0);
+            return dateB - dateA;
+        });
+        
+        // Return only the first 4 events
+        return sortedEvents.slice(0, 4);
+    };
+
+    const latestEvents = getLatestEvents();
+
+    const handleEventClick = (event, index) => {
+        setShowModal(true);
+        handleEventSelect(event);
+        const eventTitle = event.proposal?.title || t('untitledEvent');
+        accessibility.speakText(`${t('registerForEvent')}: ${eventTitle}`);
+    };
+
+    return (
+        <motion.section
+            ref={eventsRef}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+            variants={staggerChildren}
+            className="relative w-full bg-white py-8 sm:py-12"
+            aria-labelledby="latest-events-heading"
+        >
+            <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
+                {/* Header */}
+                <motion.div
+                    variants={fadeIn}
+                    className="mb-6 text-center sm:mb-8"
+                >
+                    <h2 
+                        id="latest-events-heading"
+                        className="mb-3 bg-gradient-to-r from-blue-500 to-pink-500 bg-clip-text text-3xl font-bold uppercase tracking-wide text-transparent sm:text-4xl"
+                        onFocus={() => accessibility.speakText(t('latestEvents'))}
                     >
-                      {/* Event Card */}
-                      <div className="transform overflow-hidden rounded-2xl bg-white shadow-xl transition-all duration-500 hover:shadow-2xl group-hover:-translate-y-2 h-full flex flex-col">
-                        
-                        {/* Image Container */}
-                        <div className="relative h-48 overflow-hidden">
-                          <img
-                            src={heroBG4}
-                            alt={event.proposal?.title || "Event Image"}
-                            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                        {t('latestEvents')}
+                    </h2>
 
-                          {/* Category & Date Badges */}
-                          <div className="absolute top-3 left-3">
-                            <span className="px-3 py-1 bg-blue-500 text-white text-sm font-medium rounded-full shadow-lg">
-                              {getEventCategory(event)}
-                            </span>
-                          </div>
+                    <p className="mx-auto max-w-lg text-sm text-gray-600 sm:text-base">
+                        {t('stayUpdated')}
+                    </p>
+                    <div className="mx-auto mt-2 h-1 w-16 rounded-full bg-gradient-to-r from-blue-500 to-pink-500" />
+                </motion.div>
 
-                          <div className="absolute top-3 right-3">
-                            <span className="flex items-center px-3 py-1 bg-white/90 backdrop-blur-sm text-gray-800 text-sm font-medium rounded-full shadow-lg">
-                              <Calendar className="w-3 h-3 mr-1" />
-                              {formatEventDate(event.eventDate)}
-                            </span>
-                          </div>
+                {/* Event List */}
+                <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                    {latestEvents.length > 0 ? (
+                        <div className="divide-y divide-gray-100">
+                            {latestEvents.map((event, index) => {
+                                const category = getEventCategory(event);
+                                const categoryColor = getCategoryColor(category);
+                                const eventLocation = getEventLocation(event);
+                                const eventTitle = event.proposal?.title || t('untitledEvent');
+                                const eventDescription = event.proposal?.description || t('noDescription');
+
+                                return (
+                                    <motion.div
+                                        key={index}
+                                        variants={fadeIn}
+                                        className="group cursor-pointer transition-all duration-200 hover:bg-gray-50"
+                                        onClick={() => handleEventClick(event, index)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault();
+                                                handleEventClick(event, index);
+                                            }
+                                        }}
+                                        tabIndex={0}
+                                        role="button"
+                                        aria-label={`${eventTitle}. ${t('eventCategory')}: ${category}. ${t('eventDate')}: ${formatEventDate(event.eventDate)}. ${t('clickToRegister')}`}
+                                    >
+                                        <div className="p-4 sm:p-5">
+                                            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
+                                                {/* Image */}
+                                                <div className="h-24 w-full flex-shrink-0 overflow-hidden rounded-lg shadow-sm sm:w-40">
+                                                    <img
+                                                        src={heroBG4}
+                                                        alt={`${eventTitle} - ${category}`}
+                                                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                    />
+                                                </div>
+
+                                                {/* Content */}
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                                        <div className="flex flex-wrap items-center gap-2 text-xs">
+                                                            <span 
+                                                                className={`rounded-full px-2 py-0.5 text-white ${categoryColor}`}
+                                                                aria-label={`${t('eventCategory')}: ${category}`}
+                                                            >
+                                                                {category}
+                                                            </span>
+                                                            <div 
+                                                                className="flex items-center gap-1 text-gray-500"
+                                                                aria-label={`${t('eventDate')}: ${formatEventDate(event.eventDate)}`}
+                                                            >
+                                                                <Calendar className="h-3.5 w-3.5" />
+                                                                <span>{formatEventDate(event.eventDate)}</span>
+                                                            </div>
+                                                            {event.eventDate && (
+                                                                <div 
+                                                                    className="flex items-center gap-1 text-gray-500"
+                                                                    aria-label={`${t('eventTime')}: ${formatEventTime(event.eventDate)}`}
+                                                                >
+                                                                    <Clock className="h-3.5 w-3.5" />
+                                                                    <span>{formatEventTime(event.eventDate)}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div 
+                                                            className="flex items-center gap-1 text-xs text-gray-400"
+                                                            aria-label={t('public')}
+                                                        >
+                                                            <Users className="h-3.5 w-3.5" />
+                                                            <span>{t('public')}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <h3 
+                                                        className="mb-1 text-lg font-semibold text-gray-800 transition-colors group-hover:text-red-600 sm:text-xl"
+                                                        onFocus={() => accessibility.speakText(eventTitle)}
+                                                    >
+                                                        {eventTitle}
+                                                    </h3>
+
+                                                    <p 
+                                                        className="mb-2 line-clamp-2 text-sm leading-snug text-gray-600"
+                                                        aria-label={`${t('eventDescription')}: ${eventDescription}`}
+                                                    >
+                                                        {eventDescription}
+                                                    </p>
+
+                                                    <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                                                        <div 
+                                                            className="flex items-center gap-1"
+                                                            aria-label={`${t('eventLocation')}: ${eventLocation}`}
+                                                        >
+                                                            <MapPin className="h-3.5 w-3.5" />
+                                                            <span>{eventLocation}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <Users className="h-3.5 w-3.5" />
+                                                            <span>{t('openToPublic')}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <Clock className="h-3.5 w-3.5" />
+                                                            <span>{t('duration')}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="mt-2 flex items-center justify-between">
+                                                        <button 
+                                                            className="flex items-center gap-1 text-xs font-medium text-red-600 transition-all hover:text-red-700 group-hover:gap-2"
+                                                            onFocus={() => accessibility.speakText(t('registerEvent'))}
+                                                        >
+                                                            {t('registerEvent')}
+                                                            <motion.span
+                                                                animate={accessibility.reducedMotion ? {} : { x: [0, 5, 0] }}
+                                                                transition={accessibility.reducedMotion ? {} : { duration: 1, repeat: Infinity }}
+                                                            >
+                                                                <ChevronRight className="h-3.5 w-3.5" />
+                                                            </motion.span>
+                                                        </button>
+                                                        <span 
+                                                            className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-400"
+                                                            aria-label={`Event number ${index + 1}`}
+                                                        >
+                                                            #{index + 1}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                );
+                            })}
                         </div>
-
-                        {/* Content Container */}
-                        <div className="p-5 flex flex-col flex-grow">
-                          <h3 className="mb-2 text-lg font-bold text-gray-800 line-clamp-2 leading-tight">
-                            {event.proposal?.title || "Untitled Event"}
-                          </h3>
-                          <p className="mb-4 text-sm leading-relaxed text-gray-600 line-clamp-2 flex-grow">
-                            {event.proposal?.description || "No description available."}
-                          </p>
-
-                          <div className="flex items-center justify-between mb-4 text-xs text-gray-500">
-                            <div className="flex items-center">
-                              <MapPin className="w-3 h-3 mr-1" />
-                              <span>Naval, Biliran</span>
+                    ) : (
+                        <motion.div
+                            variants={fadeIn}
+                            className="py-12 text-center"
+                            aria-live="polite"
+                        >
+                            <div className="mx-auto max-w-md">
+                                <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-blue-100 to-pink-100">
+                                    <Calendar className="h-6 w-6 text-gray-400" />
+                                </div>
+                                <h3 
+                                    className="mb-1 text-sm font-semibold text-gray-600 sm:text-base"
+                                    onFocus={() => accessibility.speakText(t('noUpcomingEvents'))}
+                                >
+                                    {t('noUpcomingEvents')}
+                                </h3>
+                                <p className="text-xs text-gray-500">{t('checkBackLater')}</p>
                             </div>
-                            <div className="flex items-center">
-                              <Users className="w-3 h-3 mr-1" />
-                              <span>Community</span>
-                            </div>
-                          </div>
-
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => {
-                              setShowModal(true);
-                              handleEventSelect(event);
-                            }}
-                            className="w-full rounded-lg bg-gradient-to-r from-blue-500 to-pink-500 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-all duration-200 hover:from-blue-600 hover:to-pink-600 hover:shadow-xl"
-                          >
-                            Register Now
-                          </motion.button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))
-                ) : (
-                  <motion.div variants={fadeIn} className="w-full text-center py-12">
-                    <div className="max-w-md mx-auto">
-                      <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-r from-blue-100 to-pink-100 flex items-center justify-center">
-                        <Calendar className="w-10 h-10 text-gray-400" />
-                      </div>
-                      <h3 className="text-xl font-semibold text-gray-600 mb-2">No Upcoming Events</h3>
-                      <p className="text-gray-500">Check back later for new events in your community.</p>
-                    </div>
-                  </motion.div>
-                )}
-              </div>
-
-              {/* Scroll Indicator */}
-              <div className="flex justify-center mt-6">
-                <div className="flex space-x-2 bg-white/70 backdrop-blur-sm rounded-full p-2 shadow-lg">
-                  {Array.isArray(isEventUpcoming) &&
-                    isEventUpcoming.map((_, index) => (
-                      <div
-                        key={index}
-                        className={`h-2 rounded-full transition-all duration-300 ${
-                          Math.floor(currentScroll / 304) === index
-                            ? "bg-gradient-to-r from-blue-500 to-pink-500 w-8"
-                            : "bg-gray-300 w-2"
-                        }`}
-                      />
-                    ))}
+                        </motion.div>
+                    )}
                 </div>
-              </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </motion.section>
-  );
+        </motion.section>
+    );
 };
 
 export default LatestEvents;

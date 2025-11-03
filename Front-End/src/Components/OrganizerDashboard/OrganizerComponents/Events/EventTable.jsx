@@ -7,6 +7,7 @@ import StatusVerification from "../../../../ReusableFolder/StatusModal";
 import { ResourcesDisplayContext } from "../../../../contexts/ResourcesContext/ResourcesContext";
 import AddFormModal from "./EventAddForm";
 import { AuthContext } from "../../../../contexts/AuthContext";
+import { PersonilContext } from "../../../../contexts/PersonelContext/PersonelContext";
 
 const EvenTable = () => {
     const {
@@ -22,6 +23,7 @@ const EvenTable = () => {
         limit,
         isTotalEvent,
     } = useContext(EventDisplayContext);
+    const { bgtheme, FontColor } = useContext(PersonilContext);
     const { isResourcesDropdown } = useContext(ResourcesDisplayContext);
     const { role } = useContext(AuthContext);
 
@@ -321,7 +323,8 @@ const EvenTable = () => {
                                 {/* Add Button */}
                                 <button
                                     onClick={openAddModal}
-                                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-all hover:bg-blue-700 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                                    style={{ background: bgtheme, color: FontColor }}
+                                    className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium shadow-lg transition-all hover:bg-blue-700 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
                                 >
                                     <Plus size={16} />
                                     Add Event
@@ -568,6 +571,8 @@ const EvenTable = () => {
                     setFormData={setFormData}
                     isEditing={isEditing}
                     editingData={isEditing ? formData : null}
+                    bgtheme={bgtheme}
+                    FontColor={FontColor}
                 />
 
                 <SuccessFailed

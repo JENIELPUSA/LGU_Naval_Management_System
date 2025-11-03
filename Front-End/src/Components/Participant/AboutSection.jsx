@@ -1,6 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Target, Zap, Users, Heart, Shield, Globe } from "lucide-react";
+import Image from "../../assets/Bannerpic.jpg";
+import { useAccessibility } from "./NavHeader"; // Import the accessibility hook
 
 const fadeIn = {
   hidden: { opacity: 0, y: 30 },
@@ -11,33 +12,51 @@ const staggerChildren = {
   visible: { transition: { staggerChildren: 0.15 } },
 };
 
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.9 },
-  visible: { opacity: 1, scale: 1, transition: { duration: 0.5, ease: "easeOut" } },
-};
-
 const AboutSection = ({ aboutRef }) => {
-  const features = [
-    {
-      icon: <Users className="w-6 h-6" />,
-      title: "Community Focused",
-      description: "Bringing citizens closer through accessible event management",
-    },
-    {
-      icon: <Zap className="w-6 h-6" />,
-      title: "Efficient Planning",
-      description: "Streamlined coordination between departments and organizations",
-    },
-    {
-      icon: <Shield className="w-6 h-6" />,
-      title: "Transparent Process",
-      description: "Clear accountability in government resources and funds",
-    },
-    {
-      icon: <Globe className="w-6 h-6" />,
-      title: "Digital Innovation",
-      description: "Modern solutions for community engagement and participation",
-    },
+  const accessibility = useAccessibility(); // Use the accessibility hook
+
+  // Translation function for this component
+  const t = (key) => {
+    const translations = {
+      en: {
+        aboutNavalLGU: "About Naval LGU",
+        theLGUInNaval: "THE LGU IN NAVAL",
+        lguDescription: "The Local Government Unit (LGU) of Naval, Biliran continuously promotes innovative ways to enhance public service and get closer to every citizen. As part of this initiative, the Event Management System was developed — a digital platform that serves as the center of information and management for all official activities and events of the town.",
+        vision: "VISION",
+        visionDescription: "In 2032, we envision the Province of Biliran anchored on sustainable agriculture and tourism industries in Eastern Visayas, with God-loving, healthy, educated, and empowered citizens living in a peaceful, resilient, and progressive economy within a technologically competent and ecologically balanced community.",
+        mission: "MISSION",
+        missionDescription: "To empower Biliranons through the provision of social services and economic opportunities.",
+        objective: "OBJECTIVE",
+        objective1: "Strengthen public service efficiency through innovation and digital transformation.",
+        objective2: "Promote transparency and accountability in all levels of governance.",
+        objective3: "Enhance citizen participation and engagement in local development programs.",
+        objective4: "Foster sustainable economic growth and environmental protection for future generations.",
+        objectives: "Objectives"
+      },
+      tl: {
+        aboutNavalLGU: "Tungkol sa LGU ng Naval",
+        theLGUInNaval: "ANG LGU SA NAVAL",
+        lguDescription: "Ang Local Government Unit (LGU) ng Naval, Biliran ay patuloy na nagpapalaganap ng mga makabagong paraan upang mapahusay ang serbisyong publiko at maging mas malapit sa bawat mamamayan. Bilang bahagi ng inisyatibang ito, ang Event Management System ay binuo — isang digital platform na nagsisilbing sentro ng impormasyon at pamamahala para sa lahat ng opisyal na aktibidad at event ng bayan.",
+        vision: "MISYON",
+        visionDescription: "Sa 2032, aming isinasaisip ang Lalawigan ng Biliran na nakasalalay sa sustainable na agrikultura at industriya ng turismo sa Silangang Visayas, na may mga mamamayang umiibig sa Diyos, malusog, edukado, at may kapangyarihan na naninirahan sa isang mapayapa, matatag, at progresibong ekonomiya sa loob ng isang teknolohikal na karampatan at ekolohikal na balanseng komunidad.",
+        mission: "LAYUNIN",
+        missionDescription: "Upang bigyan ng kapangyarihan ang mga Biliranon sa pamamagitan ng pagbibigay ng mga serbisyong panlipunan at mga oportunidad sa ekonomiya.",
+        objective: "MGA LAYUNIN",
+        objective1: "Palakasin ang kahusayan ng serbisyong publiko sa pamamagitan ng inobasyon at digital na pagbabago.",
+        objective2: "Itaguyod ang transparency at pananagutan sa lahat ng antas ng pamamahala.",
+        objective3: "Pahusayin ang pakikilahok at pakikipag-ugnayan ng mamamayan sa mga programa ng pag-unlad ng lokal.",
+        objective4: "Itaguyod ang sustainable na paglago ng ekonomiya at proteksyon sa kapaligiran para sa mga susunod na henerasyon.",
+        objectives: "Mga Layunin"
+      }
+    };
+    return translations[accessibility.language]?.[key] || translations.en[key] || key;
+  };
+
+  const objectives = [
+    t('objective1'),
+    t('objective2'),
+    t('objective3'),
+    t('objective4')
   ];
 
   return (
@@ -47,169 +66,150 @@ const AboutSection = ({ aboutRef }) => {
       whileInView="visible"
       viewport={{ once: true, amount: 0.2 }}
       variants={staggerChildren}
-      className="relative overflow-hidden bg-gradient-to-br py-16 md:py-20 min-h-screen"
+      className="relative overflow-hidden py-16 sm:py-20 lg:py-24"
+      style={{
+        fontFamily: accessibility.fontType === "dyslexia" ? "'OpenDyslexic', Arial, sans-serif" : "'Bernard MT Condensed', 'Anton', Impact, sans-serif",
+        letterSpacing: "0.5px",
+      }}
+      aria-labelledby="about-section-heading"
     >
-      {/* Background shapes */}
+      {/* Background Image with Lighter Blur */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage: `url(${Image})`,
+        }}
+        aria-hidden="true"
+      >
+        {/* Reduced Blur & Softer Overlay */}
+        <div className="absolute inset-0 bg-black/20 backdrop-blur-sm"></div>
+      </div>
 
-
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 z-10">
-        {/* Header */}
-        <motion.div variants={fadeIn} className="text-center mb-14 md:mb-5">
-          <h2 className="mb-4 text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-white bg-clip-text text-transparent">
-            About Our Mission
-          </h2>
-          <p className="text-lg text-gray-100 max-w-2xl mx-auto leading-relaxed">
-            Connecting the community through innovative event management solutions
-          </p>
-          <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-pink-500 mx-auto mt-4 rounded-full"></div>
-        </motion.div>
-
-        {/* Main Card */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-100/50 overflow-hidden">
-          <div className="py-10 md:py-16 px-6 md:px-12">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-              {/* Left Content */}
-              <motion.div variants={fadeIn} className="space-y-8">
-                <div>
-                  <h3 className="text-3xl font-bold text-gray-800 mb-6">
-                    LGU Event Management System
+      <div className="relative z-10 mx-auto max-w-6xl px-4 text-gray-800 sm:px-6 lg:px-8">
+        <div className="overflow-hidden">
+          <div className="px-4 py-8 sm:px-6 sm:py-12 md:px-8">
+            {/* Section Heading for Screen Readers */}
+            <h2 id="about-section-heading" className="sr-only">
+              {t('aboutNavalLGU')}
+            </h2>
+            
+            <div className="grid grid-cols-1 gap-10 sm:gap-12 lg:grid-cols-2">
+              {/* LEFT COLUMN */}
+              <motion.div variants={fadeIn} className="space-y-10">
+                {/* THE LGU IN NAVAL */}
+                <motion.div 
+                  variants={fadeIn} 
+                  className="rounded-2xl border border-white/20 bg-white/90 p-6 shadow-xl backdrop-blur-sm"
+                  onFocus={() => accessibility.speakText(`${t('theLGUInNaval')}. ${t('lguDescription')}`)}
+                  tabIndex={0}
+                  role="article"
+                  aria-labelledby="lgu-heading"
+                >
+                  <h3 
+                    id="lgu-heading"
+                    className="mb-4 text-3xl font-bold uppercase tracking-wider bg-gradient-to-r from-blue-500 to-pink-400 bg-clip-text text-transparent"
+                  >
+                    {t('theLGUInNaval')}
                   </h3>
-                  <p className="text-lg leading-relaxed text-gray-600">
-                    The Local Government Unit (LGU) of Naval, Biliran continuously promotes
-                    innovative ways to enhance public service and get closer to every citizen.
-                    As part of this initiative, the Event Management System was developed — a
-                    digital platform that serves as the center of information and management
-                    for all official activities and events of the town.
+                  <p className="text-lg leading-relaxed text-gray-700">
+                    {t('lguDescription')}
                   </p>
-                </div>
+                </motion.div>
 
-                {/* Feature Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {features.map((feature, index) => (
-                    <motion.div
-                      key={index}
-                      variants={scaleIn}
-                      whileHover={{ scale: 1.02 }}
-                      className="bg-gradient-to-br from-blue-50 to-pink-50 rounded-2xl p-4 border border-gray-100"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-500 to-pink-500 flex items-center justify-center text-white">
-                          {feature.icon}
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-gray-800">{feature.title}</h4>
-                          <p className="text-sm text-gray-600">{feature.description}</p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+                {/* VISION */}
+                <motion.div 
+                  variants={fadeIn} 
+                  className="rounded-2xl border border-white/20 bg-white/90 p-6 shadow-xl backdrop-blur-sm"
+                  onFocus={() => accessibility.speakText(`${t('vision')}. ${t('visionDescription')}`)}
+                  tabIndex={0}
+                  role="article"
+                  aria-labelledby="vision-heading"
+                >
+                  <h3 
+                    id="vision-heading"
+                    className="mb-4 text-3xl font-bold uppercase tracking-wider bg-gradient-to-r from-blue-500 to-pink-400 bg-clip-text text-transparent"
+                  >
+                    {t('vision')}
+                  </h3>
+                  <p className="text-lg leading-relaxed text-gray-700">
+                    {t('visionDescription')}
+                  </p>
+                </motion.div>
+              </motion.div>
 
-                {/* Objectives */}
-                <div>
-                  <h4 className="text-xl font-semibold text-gray-800 mb-4">Our Objectives</h4>
-                  <ul className="space-y-4">
-                    {[
-                      "Enhance coordination between LGU departments and organizations in planning and conducting events.",
-                      "Provide easier access to information for the public regarding programs, fiestas, cultural events, youth and sports activities, and other community gatherings.",
-                      "Ensure transparency and efficiency in the use of government funds and resources in every activity.",
-                      "Encourage resident participation to strengthen the relationship between the government and the citizens.",
-                    ].map((objective, index) => (
-                      <motion.li key={index} variants={fadeIn} className="flex items-start group">
-                        <div className="mr-4 mt-1 flex-shrink-0">
-                          <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-pink-500 flex items-center justify-center">
-                            <div className="w-2 h-2 bg-white rounded-full"></div>
-                          </div>
-                        </div>
-                        <span className="text-gray-600 group-hover:text-gray-700 transition-colors">
-                          {objective}
-                        </span>
+              {/* RIGHT COLUMN */}
+              <motion.div variants={fadeIn} className="space-y-10">
+                {/* MISSION */}
+                <motion.div 
+                  variants={fadeIn} 
+                  className="rounded-2xl border border-white/20 bg-white/90 p-6 shadow-xl backdrop-blur-sm"
+                  onFocus={() => accessibility.speakText(`${t('mission')}. ${t('missionDescription')}`)}
+                  tabIndex={0}
+                  role="article"
+                  aria-labelledby="mission-heading"
+                >
+                  <h3 
+                    id="mission-heading"
+                    className="mb-4 text-3xl font-bold uppercase tracking-wider bg-gradient-to-r from-blue-500 to-pink-400 bg-clip-text text-transparent"
+                  >
+                    {t('mission')}
+                  </h3>
+                  <p className="text-lg text-gray-700 leading-relaxed">
+                    {t('missionDescription')}
+                  </p>
+                </motion.div>
+
+                {/* OBJECTIVE */}
+                <motion.div 
+                  variants={fadeIn} 
+                  className="rounded-2xl border border-white/20 bg-white/90 p-6 shadow-xl backdrop-blur-sm"
+                  onFocus={() => accessibility.speakText(`${t('objective')}. ${t('objectives')}`)}
+                  tabIndex={0}
+                  role="article"
+                  aria-labelledby="objective-heading"
+                >
+                  <h3 
+                    id="objective-heading"
+                    className="mb-4 text-3xl font-bold uppercase tracking-wider bg-gradient-to-r from-blue-500 to-pink-400 bg-clip-text text-transparent"
+                  >
+                    {t('objective')}
+                  </h3>
+                  <ul 
+                    className="space-y-4 text-lg text-gray-700 leading-relaxed"
+                    aria-label={t('objectives')}
+                  >
+                    {objectives.map((objective, index) => (
+                      <motion.li 
+                        key={index}
+                        className="p-3 rounded-lg bg-pink-50/80 hover:bg-pink-100/80 transition-colors duration-300"
+                        whileHover={accessibility.reducedMotion ? {} : { scale: 1.02 }}
+                        onFocus={() => accessibility.speakText(`Objective ${index + 1}: ${objective}`)}
+                        tabIndex={0}
+                        role="listitem"
+                      >
+                        {index + 1}. {objective}
                       </motion.li>
                     ))}
                   </ul>
-                </div>
-
-                <motion.p
-                  variants={fadeIn}
-                  className="text-lg leading-relaxed text-gray-600 bg-blue-50/50 rounded-2xl p-6 border border-blue-100"
-                >
-                  Through the LGU Event Management System, event planning and execution become
-                  more organized, fast, and systematic. It also reflects the commitment of the
-                  Naval Local Government to continuously deliver responsible governance,
-                  inclusive development, and innovative solutions for the welfare of the entire
-                  community.
-                </motion.p>
-              </motion.div>
-
-              {/* Right Content */}
-              <motion.div variants={staggerChildren} className="space-y-8">
-                {/* Vision */}
-                <motion.div
-                  variants={scaleIn}
-                  className="rounded-2xl bg-gradient-to-br from-blue-500 to-pink-500 p-8 text-white shadow-xl hover:shadow-2xl transition-all duration-300 group"
-                >
-                  <div className="mb-6 flex items-center justify-center">
-                    <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <Target className="w-10 h-10 text-white" />
-                    </div>
-                  </div>
-                  <h3 className="mb-4 text-center text-2xl font-bold">Our Vision</h3>
-                  <p className="text-center text-blue-50 leading-relaxed text-base md:text-lg">
-                    In 2032, we envision the Province of Biliran anchored on sustainable
-                    agriculture and tourism industries in Eastern Visayas, with God-loving,
-                    healthy, educated, and empowered citizens living in a peaceful, resilient,
-                    and progressive economy within a technologically competent and ecologically
-                    balanced community.
-                  </p>
-                </motion.div>
-
-                {/* Mission */}
-                <motion.div
-                  variants={scaleIn}
-                  className="rounded-2xl bg-gradient-to-br from-pink-500 to-blue-500 p-8 text-white shadow-xl hover:shadow-2xl transition-all duration-300 group"
-                >
-                  <div className="mb-6 flex items-center justify-center">
-                    <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <Zap className="w-10 h-10 text-white" />
-                    </div>
-                  </div>
-                  <h3 className="mb-4 text-center text-2xl font-bold">Our Mission</h3>
-                  <p className="text-center text-blue-50 leading-relaxed text-lg font-medium">
-                    To empower Biliranons through the provision of social services and economic
-                    opportunities.
-                  </p>
-                </motion.div>
-
-                {/* Values */}
-                <motion.div
-                  variants={scaleIn}
-                  className="rounded-2xl bg-gradient-to-br from-blue-50 to-pink-50 p-6 border border-gray-200 shadow-lg"
-                >
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-500 to-pink-500 flex items-center justify-center">
-                      <Heart className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h4 className="text-xl font-bold text-gray-800">Our Commitment</h4>
-                      <p className="text-gray-600">Serving with integrity and innovation</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="text-center p-3 bg-white rounded-lg border border-gray-100">
-                      <div className="text-2xl font-bold text-blue-600">100%</div>
-                      <div className="text-gray-600">Transparency</div>
-                    </div>
-                    <div className="text-center p-3 bg-white rounded-lg border border-gray-100">
-                      <div className="text-2xl font-bold text-pink-600">24/7</div>
-                      <div className="text-gray-600">Accessibility</div>
-                    </div>
-                  </div>
                 </motion.div>
               </motion.div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Accessibility focus indicators for high contrast mode */}
+      <style jsx>{`
+        .bg-white\\/90:focus {
+          outline: ${accessibility.isHighContrast ? '2px solid yellow' : 'none'};
+          outline-offset: 2px;
+        }
+        
+        .bg-pink-50\\/80:focus {
+          outline: ${accessibility.isHighContrast ? '2px solid blue' : 'none'};
+          outline-offset: 2px;
+        }
+      `}</style>
     </motion.section>
   );
 };

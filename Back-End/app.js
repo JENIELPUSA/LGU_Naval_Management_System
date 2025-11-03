@@ -11,27 +11,28 @@ const MongoStore = require("connect-mongo");
 const AdminRoute = require("./Routes/AdminRoute");
 const Notification = require("./Routes/NotificationRoute");
 
-const Retention = require("./Routes/RetentionRoute")
+const Retention = require("./Routes/RetentionRoute");
 
-const Logs=require("./Routes/LogsRoute")
+const Logs = require("./Routes/LogsRoute");
 
 const authentic = require("./Routes/authRouter");
-const StorageOptimization = require("./Routes/StorageOptimizedRoute")
+const StorageOptimization = require("./Routes/StorageOptimizedRoute");
 
-const Organizer = require("./Routes/OrganizerRoute")
-const TeamRoute = require("./Routes/TeamRoute")
-const LguRoute = require("./Routes/LguRoute")
-const LGUResponse = require("./Routes/LguResponseRoute")
+const Organizer = require("./Routes/OrganizerRoute");
+const TeamRoute = require("./Routes/TeamRoute");
+const LguRoute = require("./Routes/LguRoute");
+const LGUResponse = require("./Routes/LguResponseRoute");
+const ContactInfoRoute = require("./Routes/ContactInfoRoute");
 
-
-const Resources = require("./Routes/ResourcesRoute")
-const EventRoute = require("./Routes/EventRoute")
-const Participant = require("./Routes/ParticipantRoute")
-const ResourcesEvent = require("./Routes/Resources_eventsRoute")
-const ReportRoute =require("./Routes/ReportRoute")
-const ProposalRoute = require("./Routes/ProposalRoute")
-const OfficerRoute = require("./Routes/OfficerRoute")
-const scheduled = require("./Utils/CronJobs/retentionJob")
+const Resources = require("./Routes/ResourcesRoute");
+const EventRoute = require("./Routes/EventRoute");
+const Participant = require("./Routes/ParticipantRoute");
+const ResourcesEvent = require("./Routes/Resources_eventsRoute");
+const ReportRoute = require("./Routes/ReportRoute");
+const ProposalRoute = require("./Routes/ProposalRoute");
+const OfficerRoute = require("./Routes/OfficerRoute");
+const scheduled = require("./Utils/CronJobs/retentionJob");
+const Personel = require("./Routes/PersonelRoute");
 
 let app = express();
 
@@ -95,20 +96,12 @@ app.use("/api/v1/Participant", Participant);
 app.use("/api/v1/Officer", OfficerRoute);
 app.use("/api/v1/LGU", LguRoute);
 app.use("/api/v1/LGUResponse", LGUResponse);
+app.use("/api/v1/Personel", Personel);
+app.use("/api/v1/ContactInfo", ContactInfoRoute);
 
 
 
 scheduled();
-
-
-
-
-
-
-
-
-
-
 
 app.use(ErrorController);
 

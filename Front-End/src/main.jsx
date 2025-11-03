@@ -17,36 +17,45 @@ import { LguDisplayProvider } from "./contexts/LguContext/LguContext.jsx";
 import { LGUResponsiseProvider } from "./contexts/LGUResponseContext/LGUResponseContext.jsx";
 import { ParticipantDisplayProvider } from "./contexts/ParticipantContext/ParticipantContext.jsx";
 import { ReportDisplayProvider } from "./contexts/ReportContext/ReportContext.jsx";
+import { PersonelDisplayProvider } from "./contexts/PersonelContext/PersonelContext.jsx";
+import { ContactDisplayProvider } from "./contexts/ContactContext/ContactInfoContext.jsx";
+import { AccessibilityProvider } from "./Components/Participant/NavHeader";
 createRoot(document.getElementById("root")).render(
     <StrictMode>
-        <AuthProvider>
-            <ReportDisplayProvider>
-                <ParticipantDisplayProvider>
-                    <LGUResponsiseProvider>
-                        <LguDisplayProvider>
-                            <TeamDisplayProvider>
-                                <NotificationDisplayProvider>
-                                    <ResourcesDisplayProvider>
-                                        <EventDisplayProvider>
-                                            <ProposalDisplayProvider>
-                                                <OfficerDisplayProvider>
-                                                    <OrganizerDisplayProvider>
-                                                        <AdminDisplayProvider>
-                                                            <SocketListener />
-                                                            <App />
-                                                            <AxiosInterceptor />
-                                                        </AdminDisplayProvider>
-                                                    </OrganizerDisplayProvider>
-                                                </OfficerDisplayProvider>
-                                            </ProposalDisplayProvider>
-                                        </EventDisplayProvider>
-                                    </ResourcesDisplayProvider>
-                                </NotificationDisplayProvider>
-                            </TeamDisplayProvider>
-                        </LguDisplayProvider>
-                    </LGUResponsiseProvider>
-                </ParticipantDisplayProvider>
-            </ReportDisplayProvider>
-        </AuthProvider>
+        <AccessibilityProvider>
+            <AuthProvider>
+                <ContactDisplayProvider>
+                    <PersonelDisplayProvider>
+                        <ReportDisplayProvider>
+                            <ParticipantDisplayProvider>
+                                <LGUResponsiseProvider>
+                                    <LguDisplayProvider>
+                                        <TeamDisplayProvider>
+                                            <NotificationDisplayProvider>
+                                                <ResourcesDisplayProvider>
+                                                    <EventDisplayProvider>
+                                                        <ProposalDisplayProvider>
+                                                            <OfficerDisplayProvider>
+                                                                <OrganizerDisplayProvider>
+                                                                    <AdminDisplayProvider>
+                                                                        <SocketListener />
+                                                                        <App />
+                                                                        <AxiosInterceptor />
+                                                                    </AdminDisplayProvider>
+                                                                </OrganizerDisplayProvider>
+                                                            </OfficerDisplayProvider>
+                                                        </ProposalDisplayProvider>
+                                                    </EventDisplayProvider>
+                                                </ResourcesDisplayProvider>
+                                            </NotificationDisplayProvider>
+                                        </TeamDisplayProvider>
+                                    </LguDisplayProvider>
+                                </LGUResponsiseProvider>
+                            </ParticipantDisplayProvider>
+                        </ReportDisplayProvider>
+                    </PersonelDisplayProvider>
+                </ContactDisplayProvider>
+            </AuthProvider>
+        </AccessibilityProvider>
     </StrictMode>,
 );

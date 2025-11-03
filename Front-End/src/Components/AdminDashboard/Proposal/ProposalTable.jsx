@@ -7,7 +7,8 @@ import StatusVerification from "../../../ReusableFolder/StatusModal";
 import AddFormModal from "./AddFormMOdal";
 import { AuthContext } from "../../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-
+import { PersonilContext } from "../../../contexts/PersonelContext/PersonelContext";
+import { motion } from "framer-motion";
 
 const ProposalTable = () => {
     const {
@@ -27,6 +28,7 @@ const ProposalTable = () => {
         UpdateStatus,
         isTotalProposal,
     } = useContext(ProposalDisplayContext);
+    const { bgtheme, FontColor } = useContext(PersonilContext);
     const navigate = useNavigate();
     const { role } = useContext(AuthContext);
     const [isDeleteID, setDeleteID] = useState(null);
@@ -44,11 +46,10 @@ const ProposalTable = () => {
     });
     const [isEditing, setIsEditing] = useState(false);
     const [editingAdminId, setIsEditingProposal] = useState(null);
-    // New states for rejection notes
     const [isRejectModalOpen, setRejectModalOpen] = useState(false);
     const [currentRejectProposal, setCurrentRejectProposal] = useState(null);
     const [rejectNotes, setRejectNotes] = useState("");
-    const [notesError, setNotesError] = useState(""); // Added state for notes validation
+    const [notesError, setNotesError] = useState("");
 
     const showingStart = (currentPage - 1) * limit + 1;
     const showingEnd = Math.min(currentPage * limit, isTotalProposal);
@@ -118,29 +119,44 @@ const ProposalTable = () => {
 
     const renderPageNumbers = () => {
         if (totalPages <= 1) return null;
+
         const maxPagesToShow = 5;
         let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
         let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
         if (endPage - startPage + 1 < maxPagesToShow) {
             startPage = Math.max(1, endPage - maxPagesToShow + 1);
         }
-        return Array.from({ length: endPage - startPage + 1 }, (_, i) => {
-            const pageNum = startPage + i;
-            return (
-                <button
-                    key={pageNum}
-                    onClick={() => goToPage(pageNum)}
-                    aria-label={`Go to page ${pageNum}`}
-                    className={`mx-1 h-10 min-w-[40px] rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-                        currentPage === pageNum
-                            ? "bg-purple-600 text-white shadow-lg shadow-purple-200 dark:bg-purple-500 dark:shadow-purple-800"
-                            : "border border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-                    }`}
-                >
-                    {pageNum}
-                </button>
-            );
-        });
+
+        const pageNumbers = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
+
+        return (
+            <div className="relative flex items-center">
+                {pageNumbers.map((pageNum, index) => (
+                    <button
+                        key={pageNum}
+                        onClick={() => goToPage(pageNum)}
+                        aria-label={`Go to page ${pageNum}`}
+                        style={{ background: bgtheme, color: FontColor }}
+                        className={`mx-0.5 h-8 min-w-[32px] rounded-md px-2 py-1 text-xs font-medium transition-all sm:mx-1 sm:h-10 sm:min-w-[40px] sm:rounded-lg sm:px-3 sm:py-2 sm:text-sm`}
+                    >
+                        {pageNum}
+                    </button>
+                ))}
+
+                {/* Moving border indicator */}
+                <motion.div
+                    className="absolute bottom-0 h-1 rounded-md bg-purple-500"
+                    layout
+                    layoutId="page-border"
+                    style={{
+                        width: 40, // width matches button width (adjust if needed)
+                        left: 8 + 42 * (currentPage - startPage), // adjust spacing based on button margin + width
+                    }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                />
+            </div>
+        );
     };
 
     const handleCloseModal = () => {
@@ -152,8 +168,8 @@ const ProposalTable = () => {
         setDeleteID(id);
         setVerification(true);
     };
+
     const handleConfirmReject = async () => {
-        // Validate that notes are provided
         if (!rejectNotes.trim()) {
             setNotesError("Notes are required for rejection");
             return;
@@ -165,7 +181,7 @@ const ProposalTable = () => {
             const values = {
                 status: "rejected",
                 submitted_by: submittedBy,
-                remarks: rejectNotes, // Include the rejection notes
+                remarks: rejectNotes,
             };
 
             await UpdateProposalMetaData(id, values);
@@ -237,9 +253,7 @@ const ProposalTable = () => {
             const pathname = urlObj.pathname;
             const parts = pathname.split("/");
             const fileNameWithExtension = parts[parts.length - 1];
-            // Decode URI encoded characters
             const decodedFileName = decodeURIComponent(fileNameWithExtension);
-            // Remove timestamp prefix if present
             return decodedFileName.replace(/^\d+_/, "");
         } catch (error) {
             return "Download File";
@@ -252,76 +266,83 @@ const ProposalTable = () => {
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-pink-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
                 {/* Header Section */}
                 <div className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/80">
-                    <div className="p-6">
-                        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="px-4 py-4 sm:p-6">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div>
-                                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Proposal Management</h1>
-                                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Review and manage proposal submissions</p>
+                                <h1 className="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">Proposal Management</h1>
+                                <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-400 sm:mt-1 sm:text-sm">
+                                    Review and manage proposal submissions
+                                </p>
                             </div>
 
-                            <div className="flex flex-col gap-3 sm:flex-row">
-                                {/* Search Input */}
-                                <div className="flex gap-2">
-                                    <div className="relative">
-                                        <input
-                                            type="text"
-                                            placeholder="Search..."
-                                            className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 pl-10 text-slate-700 shadow-sm transition focus:border-pink-400 focus:outline-none focus:ring-1 focus:ring-pink-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:focus:border-pink-500 dark:focus:ring-pink-500"
-                                            value={tempSearchTerm}
-                                            onChange={(e) => {
-                                                const value = e.target.value;
-                                                setTempSearchTerm(value);
-                                                if (value.trim() === "") {
-                                                    setSearchTerm("");
-                                                    setCurrentPage(1);
-                                                }
-                                            }}
-                                            onKeyDown={handleKeyDown}
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={handleSearch}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400"
+                            <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+                                {/* Search */}
+                                <div className="relative w-full sm:w-auto">
+                                    <input
+                                        type="text"
+                                        placeholder="Search..."
+                                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 pl-9 text-xs text-slate-700 shadow-sm transition focus:border-pink-400 focus:outline-none focus:ring-1 focus:ring-pink-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:focus:border-pink-500 dark:focus:ring-pink-500 sm:px-4 sm:py-2 sm:text-sm"
+                                        value={tempSearchTerm}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            setTempSearchTerm(value);
+                                            if (value.trim() === "") {
+                                                setSearchTerm("");
+                                                setCurrentPage(1);
+                                            }
+                                        }}
+                                        onKeyDown={handleKeyDown}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleSearch}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400"
+                                    >
+                                        <svg
+                                            className="h-4 w-4 sm:h-5 sm:w-5"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
                                         >
-                                            <svg
-                                                className="h-5 w-5"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth={2}
-                                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                                />
-                                            </svg>
-                                        </button>
-                                    </div>
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                            />
+                                        </svg>
+                                    </button>
                                 </div>
 
                                 {/* Date Filters */}
-                                <div className="flex gap-2">
+                                <div className="flex gap-1.5 sm:gap-2">
                                     <input
                                         type="date"
                                         value={dateFrom}
                                         onChange={(e) => setDateFrom(e.target.value)}
-                                        className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                        className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:px-3 sm:py-2.5 sm:text-sm"
                                     />
                                     <input
                                         type="date"
                                         value={dateTo}
                                         onChange={(e) => setDateTo(e.target.value)}
-                                        className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                        className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:px-3 sm:py-2.5 sm:text-sm"
                                     />
                                 </div>
 
                                 {/* Add Button */}
                                 <button
                                     onClick={openAddModal}
-                                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-all hover:bg-purple-700 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                                    style={{
+                                        background: bgtheme,
+                                        color: FontColor,
+                                    }}
+                                    className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium shadow-sm transition-all hover:bg-purple-700 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
                                 >
-                                    <Plus size={16} />
+                                    <Plus
+                                        size={14}
+                                        className="sm:size-4"
+                                    />
                                     Add Proposal
                                 </button>
                             </div>
@@ -330,10 +351,10 @@ const ProposalTable = () => {
                 </div>
 
                 {/* Content Section */}
-                <div className="p-6">
+                <div className="px-4 py-4 sm:p-6">
                     {isProposal && isProposal.length > 0 ? (
-                        <div className="grid gap-6">
-                            {isProposal.map((proposal, index) => {
+                        <div className="flex flex-col gap-3 sm:gap-4">
+                            {isProposal.map((proposal) => {
                                 const statusConfig = getStatusConfig(proposal.status);
                                 const organizerName = proposal.organizerInfo
                                     ? `${proposal.organizerInfo.first_name || ""} ${proposal.organizerInfo.middle_name || ""} ${proposal.organizerInfo.last_name || ""}`.trim()
@@ -344,18 +365,21 @@ const ProposalTable = () => {
                                 return (
                                     <div
                                         key={proposal._id}
-                                        className={`overflow-hidden rounded-2xl border bg-white shadow-sm transition-all duration-300 hover:shadow-lg ${statusConfig.bg} dark:bg-gray-800`}
+                                        className={`overflow-hidden rounded-xl border bg-white shadow-sm transition-all duration-300 hover:shadow-md ${statusConfig.bg} dark:bg-gray-800 sm:rounded-2xl`}
                                     >
                                         {/* Card Header */}
-                                        <div className="p-6 pb-4">
-                                            <div className="flex items-start justify-between gap-4">
+                                        <div className="p-4 pb-3 sm:p-6 sm:pb-4">
+                                            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                                                 <div className="min-w-0 flex-1">
-                                                    <h3 className="mb-2 line-clamp-2 text-xl font-semibold text-gray-900 dark:text-white">
+                                                    <h3 className="mb-1 line-clamp-2 text-base font-semibold text-gray-900 dark:text-white sm:text-xl">
                                                         {proposal.title || "Untitled Proposal"}
                                                     </h3>
-                                                    <div className="flex flex-col gap-2 text-sm text-gray-600 dark:text-gray-400 sm:flex-row sm:items-center sm:gap-4">
+                                                    <div className="flex flex-col gap-1 text-xs text-gray-600 dark:text-gray-400 sm:flex-row sm:items-center sm:gap-3 sm:text-sm">
                                                         <div className="flex items-center gap-1">
-                                                            <Clock size={14} />
+                                                            <Clock
+                                                                size={12}
+                                                                className="sm:size-4"
+                                                            />
                                                             <span>
                                                                 Submitted{" "}
                                                                 {proposal.created_at
@@ -368,7 +392,10 @@ const ProposalTable = () => {
                                                             </span>
                                                         </div>
                                                         <div className="flex items-center gap-1">
-                                                            <User size={14} />
+                                                            <User
+                                                                size={12}
+                                                                className="sm:size-4"
+                                                            />
                                                             <span className="font-medium text-gray-800 dark:text-gray-200">Organizer:</span>
                                                             <span className="truncate">{organizerName}</span>
                                                         </div>
@@ -377,7 +404,7 @@ const ProposalTable = () => {
 
                                                 {proposal.status && (
                                                     <div
-                                                        className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold ${statusConfig.badge}`}
+                                                        className={`mt-2 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold sm:mt-0 ${statusConfig.badge}`}
                                                     >
                                                         {proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1)}
                                                     </div>
@@ -386,64 +413,71 @@ const ProposalTable = () => {
                                         </div>
 
                                         {/* Card Content */}
-                                        <div className="px-6 pb-4">
-                                            <div className="space-y-6">
-                                                {/* Description Section */}
+                                        <div className="px-4 pb-3 sm:px-6 sm:pb-4">
+                                            <div className="space-y-4 sm:space-y-6">
+                                                {/* Description */}
                                                 <div>
-                                                    <div className="mb-3 flex items-center gap-2">
+                                                    <div className="mb-2 flex items-center gap-1.5 sm:gap-2">
                                                         <FileText
-                                                            size={16}
-                                                            className="text-blue-500"
+                                                            size={14}
+                                                            className="text-blue-500 sm:size-4"
                                                         />
-                                                        <h4 className="font-medium text-gray-900 dark:text-white">Description</h4>
+                                                        <h4 className="text-sm font-medium text-gray-900 dark:text-white sm:text-base">
+                                                            Description
+                                                        </h4>
                                                     </div>
-                                                    <div className="pl-6">
-                                                        <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+                                                    <div className="pl-5 sm:pl-6">
+                                                        <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-300 sm:text-sm">
                                                             {proposal.description || "No description provided"}
                                                         </p>
                                                     </div>
                                                 </div>
 
-                                                {/* File Attachment Section */}
+                                                {/* File Attachment */}
                                                 {proposal.fileUrl && (
                                                     <div>
-                                                        <div className="mb-3 flex items-center gap-2">
+                                                        <div className="mb-2 flex items-center gap-1.5 sm:gap-2">
                                                             <File
-                                                                size={16}
-                                                                className="text-purple-500"
+                                                                size={14}
+                                                                className="text-purple-500 sm:size-4"
                                                             />
-                                                            <h4 className="font-medium text-gray-900 dark:text-white">Attached File</h4>
+                                                            <h4 className="text-sm font-medium text-gray-900 dark:text-white sm:text-base">
+                                                                Attached File
+                                                            </h4>
                                                         </div>
-                                                        <div className="pl-6">
+                                                        <div className="pl-5 sm:pl-6">
                                                             <a
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     handleViewFile(proposal._id, proposal);
                                                                 }}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="inline-flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                                                                className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 sm:gap-2 sm:px-3 sm:py-2 sm:text-sm"
                                                             >
-                                                                <Eye size={14} />
+                                                                <Eye
+                                                                    size={12}
+                                                                    className="sm:size-4"
+                                                                />
                                                                 {fileName}
                                                             </a>
                                                         </div>
                                                     </div>
                                                 )}
 
-                                                {/* Remarks Section */}
+                                                {/* Remarks */}
                                                 {proposal.remarks && (
                                                     <div>
-                                                        <div className="mb-3 flex items-center gap-2">
+                                                        <div className="mb-2 flex items-center gap-1.5 sm:gap-2">
                                                             <MessageSquare
-                                                                size={16}
-                                                                className="text-blue-500"
+                                                                size={14}
+                                                                className="text-blue-500 sm:size-4"
                                                             />
-                                                            <h4 className="font-medium text-gray-900 dark:text-white">Remarks</h4>
+                                                            <h4 className="text-sm font-medium text-gray-900 dark:text-white sm:text-base">
+                                                                Remarks
+                                                            </h4>
                                                         </div>
-                                                        <div className="pl-6">
-                                                            <div className="rounded-lg border-l-4 border-pink-500 bg-gray-50 p-3 dark:bg-gray-700/50">
-                                                                <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+                                                        <div className="pl-5 sm:pl-6">
+                                                            <div className="rounded-lg border-l-4 border-pink-500 bg-gray-50 p-2 dark:bg-gray-700/50 sm:p-3">
+                                                                <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-300 sm:text-sm">
                                                                     {proposal.remarks}
                                                                 </p>
                                                             </div>
@@ -454,35 +488,39 @@ const ProposalTable = () => {
                                         </div>
 
                                         {/* Card Actions */}
-                                        <div className="border-t border-gray-100 bg-gray-50/50 px-6 py-4 dark:border-gray-700 dark:bg-gray-800/50">
-                                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                                {/* Status Indicator */}
-                                                <div className="flex items-center gap-2">
+                                        <div className="border-t border-gray-100 bg-gray-50/50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/50 sm:px-6 sm:py-4">
+                                            <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                                                <div className="flex items-center gap-1.5">
                                                     <div
-                                                        className={`h-2 w-2 rounded-full ${statusConfig.badge.replace("text-white", "").replace("bg-", "bg-")}`}
+                                                        className={`h-1.5 w-1.5 rounded-full ${statusConfig.badge.replace("text-white", "").replace("bg-", "bg-")}`}
                                                     ></div>
                                                     <span className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                                         {proposal.status || "Pending Review"}
                                                     </span>
                                                 </div>
 
-                                                {/* Action Buttons */}
-                                                <div className="flex flex-wrap gap-2">
+                                                <div className="flex flex-wrap gap-1.5 sm:gap-2">
                                                     <button
                                                         onClick={() => openEditModal(proposal)}
-                                                        className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+                                                        className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 sm:gap-1.5 sm:rounded-lg sm:px-3 sm:py-2 sm:text-sm"
                                                         title="Edit Proposal"
                                                     >
-                                                        <PencilLine size={16} />
+                                                        <PencilLine
+                                                            size={14}
+                                                            className="sm:size-4"
+                                                        />
                                                         Edit
                                                     </button>
                                                     {role === "admin" && (
                                                         <button
                                                             onClick={() => handleDeleteProposal(proposal._id)}
-                                                            className="inline-flex items-center gap-1.5 rounded-lg bg-gray-50 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+                                                            className="inline-flex items-center gap-1 rounded-md bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 sm:gap-1.5 sm:rounded-lg sm:px-3 sm:py-2 sm:text-sm"
                                                             title="Delete Proposal"
                                                         >
-                                                            <Trash size={16} />
+                                                            <Trash
+                                                                size={14}
+                                                                className="sm:size-4"
+                                                            />
                                                             Delete
                                                         </button>
                                                     )}
@@ -494,20 +532,23 @@ const ProposalTable = () => {
                             })}
                         </div>
                     ) : (
-                        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                            <div className="flex flex-col items-center justify-center py-20">
-                                <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
-                                    <Database className="h-8 w-8 text-purple-500" />
+                        <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:rounded-2xl">
+                            <div className="flex flex-col items-center justify-center py-12 sm:py-20">
+                                <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30 sm:mb-4 sm:h-16 sm:w-16">
+                                    <Database className="h-6 w-6 text-purple-500 sm:h-8 sm:w-8" />
                                 </div>
-                                <h3 className="mb-2 text-lg font-medium text-gray-900 dark:text-white">No proposals found</h3>
-                                <p className="max-w-sm text-center text-gray-500 dark:text-gray-400">
+                                <h3 className="mb-1 text-base font-medium text-gray-900 dark:text-white sm:mb-2 sm:text-lg">No proposals found</h3>
+                                <p className="max-w-xs px-2 text-center text-xs text-gray-500 dark:text-gray-400 sm:max-w-sm sm:text-sm">
                                     There are no proposals matching your current filters. Try adjusting your search criteria or add a new proposal.
                                 </p>
                                 <button
                                     onClick={openAddModal}
-                                    className="mt-6 inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-700"
+                                    className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-purple-700 sm:mt-6 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
                                 >
-                                    <Plus size={16} />
+                                    <Plus
+                                        size={14}
+                                        className="sm:size-4"
+                                    />
                                     Add First Proposal
                                 </button>
                             </div>
@@ -517,28 +558,28 @@ const ProposalTable = () => {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                    <div className="border-t border-gray-200 bg-white/80 px-6 py-4 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/80">
-                        <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-                            <div className="text-sm text-gray-700 dark:text-gray-300">
+                    <div className="border-t border-gray-200 bg-white/80 px-4 py-3 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/80 sm:px-6 sm:py-4">
+                        <div className="flex flex-col items-center justify-between gap-3 sm:flex-row sm:gap-4">
+                            <div className="text-xs text-gray-700 dark:text-gray-300 sm:text-sm">
                                 Showing <span className="font-semibold">{showingStart}</span> to <span className="font-semibold">{showingEnd}</span>{" "}
                                 of <span className="font-semibold">{isTotalProposal}</span> results
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5 sm:gap-2">
                                 <button
                                     onClick={() => goToPage(currentPage - 1)}
                                     disabled={currentPage === 1}
-                                    className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+                                    className="inline-flex items-center rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white sm:rounded-lg sm:px-4 sm:py-2 sm:text-sm"
                                 >
                                     Previous
                                 </button>
 
-                                <div className="hidden sm:flex">{renderPageNumbers()}</div>
+                                <div className="flex">{renderPageNumbers()}</div>
 
                                 <button
                                     onClick={() => goToPage(currentPage + 1)}
                                     disabled={currentPage === totalPages}
-                                    className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+                                    className="inline-flex items-center rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white sm:rounded-lg sm:px-4 sm:py-2 sm:text-sm"
                                 >
                                     Next
                                 </button>
@@ -546,6 +587,8 @@ const ProposalTable = () => {
                         </div>
                     </div>
                 )}
+
+                {/* Modals */}
                 <AddFormModal
                     isOpen={isFormModalOpen}
                     onClose={closeFormModal}
@@ -553,6 +596,8 @@ const ProposalTable = () => {
                     formData={formData}
                     setFormData={setFormData}
                     isEditing={isEditing}
+                    FontColor={FontColor}
+                    bgtheme={bgtheme}
                 />
 
                 <SuccessFailed
@@ -568,44 +613,44 @@ const ProposalTable = () => {
                     onClose={handleCloseModal}
                 />
 
-                {/* Reject Notes Modal */}
                 {isRejectModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                        <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800">
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Reject Proposal</h3>
-                            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Please provide a reason for rejecting this proposal.</p>
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+                        <div className="w-full max-w-md rounded-lg bg-white p-4 shadow-xl dark:bg-gray-800 sm:p-6">
+                            <h3 className="text-base font-medium text-gray-900 dark:text-white sm:text-lg">Reject Proposal</h3>
+                            <p className="mt-1 text-xs text-gray-600 dark:text-gray-400 sm:mt-2 sm:text-sm">
+                                Please provide a reason for rejecting this proposal.
+                            </p>
 
                             <textarea
                                 value={rejectNotes}
                                 onChange={(e) => {
                                     setRejectNotes(e.target.value);
-                                    // Clear error when user starts typing
                                     if (e.target.value.trim() && notesError) {
                                         setNotesError("");
                                     }
                                 }}
-                                className={`mt-4 w-full rounded-lg border ${notesError ? "border-red-500" : "border-gray-200"} bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white`}
-                                rows={4}
+                                className={`mt-3 w-full rounded-lg border ${notesError ? "border-red-500" : "border-gray-200"} bg-white px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm`}
+                                rows={3}
                                 placeholder="Enter reason for rejection..."
                                 required
                             />
-                            {notesError && <p className="mt-1 text-sm text-red-500">{notesError}</p>}
+                            {notesError && <p className="mt-1 text-xs text-red-500">{notesError}</p>}
 
-                            <div className="mt-6 flex justify-end gap-3">
+                            <div className="mt-4 flex justify-end gap-2 sm:mt-6 sm:gap-3">
                                 <button
                                     onClick={() => {
                                         setRejectModalOpen(false);
                                         setRejectNotes("");
                                         setNotesError("");
                                     }}
-                                    className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                                    className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 sm:rounded-lg sm:px-4 sm:py-2 sm:text-sm"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleConfirmReject}
-                                    className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
-                                    disabled={!rejectNotes.trim()} // Disable button if notes are empty
+                                    className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-1 focus:ring-red-500 disabled:opacity-50 sm:rounded-lg sm:px-4 sm:py-2 sm:text-sm"
+                                    disabled={!rejectNotes.trim()}
                                 >
                                     Confirm Reject
                                 </button>

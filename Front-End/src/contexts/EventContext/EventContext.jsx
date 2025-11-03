@@ -23,6 +23,8 @@ export const EventDisplayProvider = ({ children }) => {
     const [dateFrom, setDateFrom] = useState("");
     const [isEventUpcoming, setEventUpcoming] = useState("");
     const [dateTo, setDateTo] = useState("");
+    const [UpcomingTotalPages, setUpcomingTotalPages] = useState(0);
+    const [UpcomingCurrentPage, setUpcomingCurrentPage] = useState(0);
     const [isTotalUpcomingEvent, setTotalUpcomingEvent] = useState(0);
     const [isDropdownEvent, setDropdownEvent] = useState("");
     const limit = 5;
@@ -72,21 +74,36 @@ export const EventDisplayProvider = ({ children }) => {
         }
     };
 
-    const FetchUpcomingEvent = useCallback(async () => {
-        try {
-            setIsLoading(true);
+   // contexts/EventContext/EventContext.js
+const FetchUpcomingEvent = useCallback(async (page = 1, limit = 5, searchTerm = "") => {
+    try {
+        setIsLoading(true);
 
-            const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/Event/DisplayUpcomingEvent`, {
-                withCredentials: true,
-                headers: { "Cache-Control": "no-cache" },
-            });
-            setEventUpcoming(res.data.data || []);
-        } catch (error) {
-            console.error("Error fetching upcoming events:", error);
-        } finally {
-            setIsLoading(false);
+        const params = { page, limit };
+
+        if (searchTerm.trim() !== "") {
+            params.search = searchTerm.trim();
         }
-    }, []);
+
+        const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/Event/DisplayUpcomingEvent`, {
+            params,
+            withCredentials: true,
+            headers: { "Cache-Control": "no-cache" },
+        });
+
+        const { data, totalCount, totalPages, currentPage } = res.data;
+
+        setEventUpcoming(data || []);
+        setUpcomingTotalPages(totalPages);
+        setUpcomingCurrentPage(currentPage);
+        setUpcomingTotalCount(totalCount); // Idagdag ito kung wala pa
+
+    } catch (error) {
+        console.error("Error fetching upcoming events:", error);
+    } finally {
+        setIsLoading(false);
+    }
+}, []);
 
     useEffect(() => {
         FetchUpcomingEvent();
@@ -240,6 +257,9 @@ export const EventDisplayProvider = ({ children }) => {
                 AddEvent,
                 isTotalEvent,
                 isTotalUpcomingEvent,
+                FetchUpcomingEvent,
+                UpcomingTotalPages,
+                UpcomingCurrentPage,setUpcomingCurrentPage
             }}
         >
             {children}

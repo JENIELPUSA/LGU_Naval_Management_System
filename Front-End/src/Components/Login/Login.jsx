@@ -1,13 +1,15 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import ForgotPassword from "../Login/ForgotPassword";
 import logo from "@/assets/logo-login.png";
-import { Lock, Mail, X } from "lucide-react";
+import { Lock, Mail } from "lucide-react";
 import { motion } from "framer-motion";
 import LoginStatusModal from "../../ReusableFolder/LogInStatusModal";
+import { PersonilContext } from "../../contexts/PersonelContext/PersonelContext";
 
-export default function AuthFormModal({ isOpen, onClose }) {
+export default function AuthForm() {
+    const { bgtheme } = useContext(PersonilContext);
     const [isForgotPassword, setForgotPassword] = useState(false);
     const [loginStatus, setLoginStatus] = useState({
         show: false,
@@ -40,63 +42,53 @@ export default function AuthFormModal({ isOpen, onClose }) {
         });
     };
 
-    const handleModalClose = () => {
+    const handleStatusClose = () => {
         setLoginStatus((prev) => ({ ...prev, show: false }));
         if (loginStatus.status === "success") navigate("/dashboard");
-        onClose();
     };
 
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+            {/* Login Status Modal */}
             <LoginStatusModal
                 isOpen={loginStatus.show}
-                onClose={handleModalClose}
+                onClose={handleStatusClose}
                 status={loginStatus.status}
                 customMessage={loginStatus.message}
             />
 
+            {/* Login Form */}
             <motion.div
-                className="relative w-full max-w-md p-4"
-                initial={{ opacity: 0, y: -50 }}
+                className="w-full max-w-md"
+                initial={{ opacity: 0, y: -30 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -50 }}
+                exit={{ opacity: 0, y: -30 }}
                 transition={{ type: "spring", stiffness: 300, damping: 25 }}
             >
-                <div className="relative rounded-3xl bg-white p-8 shadow-xl">
-                    {/* Close Button */}
-                    <button
-                        onClick={onClose}
-                        className="absolute right-4 top-4 rounded-full p-1 hover:bg-gray-200"
-                    >
-                        <X className="h-5 w-5 text-gray-600" />
-                    </button>
-
-                    {/* Logo & Header */}
-                    <div className="mb-8 flex flex-col items-center">
-                        <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-pink-100 to-blue-100 p-2 shadow-inner">
+                <div className="relative rounded-2xl bg-white p-6 shadow-xl sm:p-8">
+                    {/* LOGO & TITLE */}
+                    <div className="mb-6 flex flex-col items-center sm:mb-8">
+                        <div className="mb-3 flex h-20 w-20 items-center justify-center rounded-xl bg-gradient-to-br from-pink-100 to-blue-100 p-1.5 sm:h-24 sm:w-24 sm:p-2">
                             <img
                                 src={logo}
                                 alt="LGU Naval Logo"
-                                className="h-16 w-16 object-contain"
+                                className="h-12 w-12 object-contain sm:h-16 sm:w-16"
                             />
                         </div>
-                        <h1 className="text-center text-2xl font-bold text-gray-800">LGU Naval EMS</h1>
-                        <p className="mt-1 text-center text-gray-600">Event Management System</p>
+                        <h1 className="text-center text-xl font-bold text-gray-800 sm:text-2xl">LGU Naval EMS</h1>
+                        <p className="mt-1 text-center text-sm text-gray-600">Event Management System</p>
                     </div>
 
-                    {/* Form */}
+                    {/* FORM */}
                     <form
                         onSubmit={handleLoginSubmit}
-                        className="space-y-5"
+                        className="space-y-4 sm:space-y-5"
                     >
-                        {/* Email */}
                         <div>
-                            <label className="mb-1.5 block text-sm font-medium text-gray-700">Email Address</label>
+                            <label className="mb-1 block text-xs font-medium text-gray-700 sm:text-sm">Email Address</label>
                             <div className="relative">
                                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                    <Mail className="h-5 w-5 text-gray-400" />
+                                    <Mail className="h-4 w-4 text-gray-400 sm:h-5 sm:w-5" />
                                 </div>
                                 <input
                                     type="email"
@@ -105,26 +97,25 @@ export default function AuthFormModal({ isOpen, onClose }) {
                                     onChange={handleInput}
                                     disabled={isLoading}
                                     placeholder="name@mail.com"
-                                    className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-10 pr-4 text-gray-800 placeholder-gray-500 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 disabled:opacity-70"
+                                    className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-10 pr-4 text-sm text-gray-800 placeholder-gray-500 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 disabled:opacity-70 sm:py-3"
                                     required
                                 />
                             </div>
                         </div>
 
-                        {/* Password */}
                         <div>
-                            <div className="mb-1.5 flex items-center justify-between">
-                                <label className="block text-sm font-medium text-gray-700">Password</label>
+                            <div className="mb-1 flex items-center justify-between">
+                                <label className="block text-xs font-medium text-gray-700 sm:text-sm">Password</label>
                                 <a
                                     onClick={() => setForgotPassword(true)}
-                                    className="cursor-pointer text-xs font-medium text-pink-600 hover:underline"
+                                    className="cursor-pointer text-xs font-medium text-gray-500 hover:underline"
                                 >
                                     Forgot password?
                                 </a>
                             </div>
                             <div className="relative">
                                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                    <Lock className="h-5 w-5 text-gray-400" />
+                                    <Lock className="h-4 w-4 text-gray-400 sm:h-5 sm:w-5" />
                                 </div>
                                 <input
                                     type="password"
@@ -133,13 +124,12 @@ export default function AuthFormModal({ isOpen, onClose }) {
                                     onChange={handleInput}
                                     disabled={isLoading}
                                     placeholder="••••••••"
-                                    className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-10 pr-4 text-gray-800 placeholder-gray-500 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 disabled:opacity-70"
+                                    className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-10 pr-4 text-sm text-gray-800 placeholder-gray-500 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 disabled:opacity-70 sm:py-3"
                                     required
                                 />
                             </div>
                         </div>
 
-                        {/* Remember Me */}
                         <div className="flex items-center">
                             <input
                                 id="remember-me"
@@ -149,55 +139,29 @@ export default function AuthFormModal({ isOpen, onClose }) {
                             />
                             <label
                                 htmlFor="remember-me"
-                                className="ml-2 block text-sm text-gray-800"
+                                className="ml-2 text-xs text-gray-800 sm:text-sm"
                             >
                                 Remember me
                             </label>
                         </div>
 
-                        {/* Submit */}
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className={`flex w-full items-center justify-center rounded-xl py-3.5 font-medium text-white shadow-lg transition-all ${
-                                isLoading
-                                    ? "cursor-not-allowed bg-gradient-to-r from-pink-400 to-blue-400"
-                                    : "bg-gradient-to-r from-pink-500 to-blue-600 hover:from-pink-600 hover:to-blue-700 active:scale-[0.98]"
-                            }`}
+                            style={{
+                                background: bgtheme,
+                            }}
+                            className={`flex w-full items-center justify-center rounded-xl py-2.5 font-medium text-white shadow-lg transition-all sm:py-3.5 ${isLoading ? "cursor-not-allowed" : "cursor-pointer hover:shadow-xl active:scale-[0.98]"} `}
                         >
-                            {isLoading ? (
-                                <>
-                                    <svg
-                                        className="mr-2 h-5 w-5 animate-spin text-white"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <circle
-                                            className="opacity-25"
-                                            cx="12"
-                                            cy="12"
-                                            r="10"
-                                            stroke="currentColor"
-                                            strokeWidth="4"
-                                        ></circle>
-                                        <path
-                                            className="opacity-75"
-                                            fill="currentColor"
-                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                        ></path>
-                                    </svg>
-                                    Signing In...
-                                </>
-                            ) : (
-                                "Sign In to Account"
-                            )}
+                            {isLoading ? "Signing In..." : "Sign In to Account"}
                         </button>
                     </form>
-                    <div className="mt-6 text-center text-xs text-gray-500">For government officials use only. Unauthorized access prohibited.</div>
+
+                    <div className="mt-5 text-center text-xs text-gray-500">For government officials use only. Unauthorized access prohibited.</div>
                 </div>
             </motion.div>
 
+            {/* Forgot Password Component */}
             <ForgotPassword
                 show={isForgotPassword}
                 onClose={() => setForgotPassword(false)}

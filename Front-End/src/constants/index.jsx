@@ -74,11 +74,6 @@ export const navbarLinks = [
                 path: "/dashboard/events",
             },
             {
-                label: "Reports",
-                icon: UserCheck,
-                path: "/dashboard/reports",
-            },
-            {
                 label: "Resources",
                 icon: Wrench,
                 path: "/dashboard/resources",
@@ -92,7 +87,7 @@ export const navbarLinks = [
                 label: "LGU Response",
                 icon: UserCheck,
                 path: "/dashboard/lgu-response",
-            },
+            },  
         ],
     },
 
