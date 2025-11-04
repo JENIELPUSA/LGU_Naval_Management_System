@@ -535,14 +535,14 @@ const HomeDashboard = () => {
         ],
     );
 
-    // ✅ FIXED: Correct object syntax and dependencies
+    //  FIXED: Correct object syntax and dependencies
     const venueMapProps = useMemo(
         () => ({
             isOpen: showVenueMap,
-            isEventUpcoming, // ✅ Proper shorthand (was: isEventUpcoming={isEventUpcoming})
+            isEventUpcoming, //  Proper shorthand (was: isEventUpcoming={isEventUpcoming})
             onClose: handleCloseVenueMap,
         }),
-        [showVenueMap, isEventUpcoming, handleCloseVenueMap], // ✅ Added missing dependency
+        [showVenueMap, isEventUpcoming, handleCloseVenueMap], //  Added missing dependency
     );
 
     const mainDashboardContent = useMemo(
@@ -577,6 +577,8 @@ const HomeDashboard = () => {
                         isEventUpcoming={isEventUpcoming}
                         setShowModal={setShowModal}
                         handleEventSelect={handleEventSelect}
+                        bgtheme={bgtheme}
+                        FontColor={FontColor}
                     />
                 </section>
 

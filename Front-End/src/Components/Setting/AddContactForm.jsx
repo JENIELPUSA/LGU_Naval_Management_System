@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-export default function AddContactForm({ AddContact }) {
+export default function AddContactForm({ AddContact, bgtheme, FontColor }) {
     const [formData, setFormData] = useState({
         officeName: "",
         city: "",
@@ -38,11 +38,8 @@ export default function AddContactForm({ AddContact }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log("formData", formData);
-
         try {
             await AddContact(formData);
-
             setFormData({
                 officeName: "",
                 city: "",
@@ -65,53 +62,53 @@ export default function AddContactForm({ AddContact }) {
     return (
         <form
             onSubmit={handleSubmit}
-            className="rounded-md bg-white p-6 shadow"
+            className="rounded-lg bg-white p-4 shadow dark:bg-slate-800 dark:shadow-slate-900/30 sm:p-5 md:p-6"
         >
-            <h2 className="mb-6 text-lg font-bold">Add Contact Info</h2>
+            <h2 className="mb-4 text-base font-bold text-slate-900 dark:text-slate-100 sm:mb-5 sm:text-lg">Add Contact Info</h2>
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 md:gap-6">
                 {/* Left Column */}
-                <div className="space-y-6">
-                    {/* Office Name - Full Width */}
-                    <div className="md:col-span-2">
-                        <label className="mb-2 block font-medium">Office Name</label>
+                <div className="space-y-4 sm:space-y-5">
+                    {/* Office Name */}
+                    <div>
+                        <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Office Name</label>
                         <input
                             type="text"
                             name="officeName"
                             value={formData.officeName}
                             onChange={handleChange}
-                            className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:placeholder-slate-500 sm:px-3 sm:py-2"
                             placeholder="Municipal Hall Building"
                         />
                     </div>
 
                     {/* City & Postal Code */}
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                         <div>
-                            <label className="mb-2 block font-medium">City</label>
+                            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">City</label>
                             <input
                                 type="text"
                                 name="city"
                                 value={formData.city}
                                 onChange={handleChange}
-                                className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:placeholder-slate-500 sm:px-3 sm:py-2"
                             />
                         </div>
                         <div>
-                            <label className="mb-2 block font-medium">Postal Code</label>
+                            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Postal Code</label>
                             <input
                                 type="text"
                                 name="postalCode"
                                 value={formData.postalCode}
                                 onChange={handleChange}
-                                className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:placeholder-slate-500 sm:px-3 sm:py-2"
                             />
                         </div>
                     </div>
 
                     {/* Phones */}
                     <div>
-                        <label className="mb-2 block font-medium">Phones</label>
+                        <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Phones</label>
                         <div className="space-y-2">
                             {formData.phones.map((phone, i) => (
                                 <input
@@ -119,7 +116,7 @@ export default function AddContactForm({ AddContact }) {
                                     type="text"
                                     value={phone}
                                     onChange={(e) => handleArrayChange(i, e, "phones")}
-                                    className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:placeholder-slate-500 sm:px-3 sm:py-2"
                                     placeholder="(02) 8123-4567"
                                 />
                             ))}
@@ -127,7 +124,7 @@ export default function AddContactForm({ AddContact }) {
                         <button
                             type="button"
                             onClick={() => addArrayField("phones")}
-                            className="mt-2 text-sm font-medium text-blue-600 hover:text-blue-800"
+                            className="mt-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 sm:text-sm"
                         >
                             + Add Phone
                         </button>
@@ -135,7 +132,7 @@ export default function AddContactForm({ AddContact }) {
 
                     {/* Hotlines */}
                     <div>
-                        <label className="mb-2 block font-medium">Hotlines</label>
+                        <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Hotlines</label>
                         <div className="space-y-2">
                             {formData.hotlines.map((hotline, i) => (
                                 <input
@@ -143,7 +140,7 @@ export default function AddContactForm({ AddContact }) {
                                     type="text"
                                     value={hotline}
                                     onChange={(e) => handleArrayChange(i, e, "hotlines")}
-                                    className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:placeholder-slate-500 sm:px-3 sm:py-2"
                                     placeholder="0917-123-4567"
                                 />
                             ))}
@@ -151,7 +148,8 @@ export default function AddContactForm({ AddContact }) {
                         <button
                             type="button"
                             onClick={() => addArrayField("hotlines")}
-                            className="mt-2 text-sm font-medium text-blue-600 hover:text-blue-800"
+                        
+                            className="mt-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 sm:text-sm"
                         >
                             + Add Hotline
                         </button>
@@ -159,10 +157,10 @@ export default function AddContactForm({ AddContact }) {
                 </div>
 
                 {/* Right Column */}
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-5">
                     {/* Emails */}
                     <div>
-                        <label className="mb-2 block font-medium">Emails</label>
+                        <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Emails</label>
                         <div className="space-y-2">
                             {formData.emails.map((email, i) => (
                                 <input
@@ -170,7 +168,7 @@ export default function AddContactForm({ AddContact }) {
                                     type="email"
                                     value={email}
                                     onChange={(e) => handleArrayChange(i, e, "emails")}
-                                    className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:placeholder-slate-500 sm:px-3 sm:py-2"
                                     placeholder="info@lgu-san-jose.gov.ph"
                                 />
                             ))}
@@ -178,7 +176,7 @@ export default function AddContactForm({ AddContact }) {
                         <button
                             type="button"
                             onClick={() => addArrayField("emails")}
-                            className="mt-2 text-sm font-medium text-blue-600 hover:text-blue-800"
+                            className="mt-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 sm:text-sm"
                         >
                             + Add Email
                         </button>
@@ -186,28 +184,30 @@ export default function AddContactForm({ AddContact }) {
 
                     {/* Office Hours */}
                     <div>
-                        <label className="mb-2 block font-medium">Office Hours</label>
-                        <div className="space-y-3">
+                        <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Office Hours</label>
+                        <div className="space-y-2.5">
                             {formData.officeHours.map((hour, i) => (
                                 <div
                                     key={i}
-                                    className="flex items-center gap-3"
+                                    className="flex items-start gap-2 sm:gap-3"
                                 >
-                                    <span className="w-20 text-sm font-medium text-gray-700">{hour.day}</span>
-                                    <div className="flex flex-1 gap-2">
+                                    <span className="mt-1 min-w-[60px] text-xs font-medium text-slate-700 dark:text-slate-300 sm:text-sm">
+                                        {hour.day}
+                                    </span>
+                                    <div className="flex flex-1 flex-col gap-1.5 sm:flex-row sm:gap-2">
                                         <input
                                             type="text"
                                             value={hour.open}
                                             onChange={(e) => handleOfficeHoursChange(i, "open", e)}
-                                            className="flex-1 rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="Open"
+                                            className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:placeholder-slate-500 sm:px-2.5 sm:py-1.5 sm:text-sm"
+                                            placeholder="8:00 AM"
                                         />
                                         <input
                                             type="text"
                                             value={hour.close}
                                             onChange={(e) => handleOfficeHoursChange(i, "close", e)}
-                                            className="flex-1 rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="Close"
+                                            className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:placeholder-slate-500 sm:px-2.5 sm:py-1.5 sm:text-sm"
+                                            placeholder="5:00 PM"
                                         />
                                     </div>
                                 </div>
@@ -217,11 +217,12 @@ export default function AddContactForm({ AddContact }) {
                 </div>
             </div>
 
-            {/* Submit Button - Centered */}
-            <div className="mt-8 flex justify-center">
+            {/* Submit Button */}
+            <div className="mt-5 flex justify-center sm:mt-6">
                 <button
                     type="submit"
-                    className="rounded bg-blue-600 px-6 py-2 font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    style={{background:bgtheme,color:FontColor}}
+                    className="rounded  px-4 py-1.5 text-sm font-medium transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-offset-slate-800 sm:px-6 sm:py-2 sm:text-base"
                 >
                     Save Contact Info
                 </button>

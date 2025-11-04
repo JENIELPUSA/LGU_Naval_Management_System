@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import photo1 from "../../assets/pic6.jpg";
 import photo2 from "../../assets/pic1.jpg";
@@ -7,11 +7,25 @@ import photo4 from "../../assets/pic4.jpg";
 import photo5 from "../../assets/pic5.jpg";
 import photo6 from "../../assets/pic2.jpg";
 import Award from "../../assets/Award.jpg";
-import { useAccessibility } from "./NavHeader"; // Import the accessibility hook
+import { useAccessibility } from "./NavHeader";
 
 export default function App() {
-    const accessibility = useAccessibility(); // Use the accessibility hook
+    const accessibility = useAccessibility();
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const galleryPhotos = [photo1, photo2, photo3, photo4, photo5, photo6];
+
+    // Window resize handler
+    useEffect(() => {
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+        };
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    // Mobile detection
+    const isMobile = windowWidth < 1024;
+    const isSmallMobile = windowWidth < 640;
 
     // Translation function for this component
     const t = (key) => {
@@ -66,22 +80,30 @@ export default function App() {
                 fontFamily: accessibility.fontType === "dyslexia" ? "'OpenDyslexic', Arial, sans-serif" : "inherit"
             }}
         >
-            <div className="mx-auto max-w-7xl px-4">
+            <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
                 {/* Main Content Card with Background & Margin */}
-                <div className="mb-10 rounded-xl bg-white p-12 shadow-lg">
+                <div className="mb-6 sm:mb-8 lg:mb-10 rounded-lg bg-white p-4 shadow-md sm:rounded-xl sm:p-6 lg:p-8 lg:shadow-lg">
                     {/* Header Image */}
-                    <div className="mb-6">
+                    <div className="mb-4 sm:mb-5 lg:mb-6">
                         <img
                             src={Award}
                             alt={t('awardImageAlt')}
-                            className="mx-auto h-[500px] w-full max-w-[800px] rounded-lg object-cover"
+                            className={`mx-auto w-full rounded-lg object-cover ${
+                                isSmallMobile ? 'h-48' : 
+                                isMobile ? 'h-64' : 
+                                'h-[500px] max-w-[800px]'
+                            }`}
                             onFocus={() => accessibility.speakText(t('awardImageAlt'))}
                         />
                     </div>
 
                     {/* Title */}
                     <h1 
-                        className="mb-4 text-2xl font-bold text-red-700"
+                        className={`mb-3 sm:mb-4 font-bold text-red-700 ${
+                            isSmallMobile ? 'text-lg' : 
+                            isMobile ? 'text-xl' : 
+                            'text-2xl'
+                        }`}
                         onFocus={() => accessibility.speakText(t('articleTitle'))}
                     >
                         {accessibility.language === 'tl' ? 
@@ -91,20 +113,37 @@ export default function App() {
                     </h1>
 
                     {/* Article Paragraph */}
-                    <article className="prose prose-lg mb-8 max-w-none">
+                    <article className="prose mb-6 max-w-none sm:mb-7 lg:mb-8 lg:prose-lg">
                         <p
+                            className={`leading-relaxed text-gray-700 ${
+                                isSmallMobile ? 'text-sm' : 'text-base'
+                            }`}
                             onFocus={() => accessibility.speakText(t('articleContent'))}
                         >
                             {t('articleContent')}
                         </p>
                     </article>
 
+                    {/* Photo Gallery Section Title */}
+                    <h2 
+                        className={`mb-3 font-bold text-gray-800 sm:mb-4 ${
+                            isSmallMobile ? 'text-base' : 'text-lg'
+                        }`}
+                        onFocus={() => accessibility.speakText(t('photoGallery'))}
+                    >
+                        {t('photoGallery')}
+                    </h2>
+
                     {/* Photo Gallery with Scroll-triggered Wave */}
                     <motion.div
-                        className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
+                        className={`grid gap-3 sm:gap-4 ${
+                            isSmallMobile ? 'grid-cols-1' : 
+                            isMobile ? 'grid-cols-2' : 
+                            'md:grid-cols-2 lg:grid-cols-3'
+                        }`}
                         initial="hidden"
                         whileInView="visible"
-                        viewport={{ once: true, amount: 0.2 }}
+                        viewport={{ once: true, amount: 0.1 }}
                         aria-labelledby="photo-gallery-heading"
                     >
                         <h2 
@@ -131,7 +170,11 @@ export default function App() {
                                 <img
                                     src={photo}
                                     alt={`${t('eventPhoto')} ${index + 1} - ${t('lguNavalRecognition')} ${t('awardCeremony')}`}
-                                    className="h-48 w-full object-cover"
+                                    className={`w-full object-cover ${
+                                        isSmallMobile ? 'h-32' : 
+                                        isMobile ? 'h-40' : 
+                                        'h-48'
+                                    }`}
                                     loading="lazy"
                                 />
                                 <figcaption className="sr-only">
@@ -150,6 +193,13 @@ export default function App() {
                     </div>
                 </div>
             </div>
+
+            {/* Mobile Layout Indicator (for debugging) */}
+            {process.env.NODE_ENV === "development" && isMobile && (
+                <div className="fixed bottom-2 left-2 rounded bg-orange-500 px-2 py-1 text-xs text-white">
+                    ARTICLE: {windowWidth}px
+                </div>
+            )}
         </div>
     );
 }

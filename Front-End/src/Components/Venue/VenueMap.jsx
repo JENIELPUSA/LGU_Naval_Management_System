@@ -105,13 +105,13 @@ export default function VenueMapModal({ isOpen, onClose, isEventUpcoming }) {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-2 sm:p-0"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="relative mx-4 w-full max-w-5xl rounded-2xl bg-white/90 p-6 shadow-2xl backdrop-blur-md"
+            className="relative mx-2 w-full max-w-5xl rounded-2xl bg-white/90 p-4 sm:p-6 shadow-2xl backdrop-blur-md h-[90vh] sm:h-auto"
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
@@ -120,12 +120,12 @@ export default function VenueMapModal({ isOpen, onClose, isEventUpcoming }) {
             {/* Close Button */}
             <button
               onClick={onClose}
-              className="absolute right-4 top-4 rounded-full bg-red-500 px-2 py-1 text-white hover:bg-red-600"
+              className="absolute right-3 top-3 sm:right-4 sm:top-4 rounded-full bg-red-500 px-3 py-2 sm:px-2 sm:py-1 text-white hover:bg-red-600 text-lg sm:text-base"
             >
               ✕
             </button>
 
-            <h2 className="mb-4 text-center text-2xl font-bold text-gray-800">
+            <h2 className="mb-4 text-center text-xl sm:text-2xl font-bold text-gray-800">
               Event Map - Say "close map" to exit
             </h2>
 
@@ -133,7 +133,7 @@ export default function VenueMapModal({ isOpen, onClose, isEventUpcoming }) {
               <MapContainer
                 center={[coordsList[0].lat, coordsList[0].lon]}
                 zoom={14}
-                className="h-96 w-full rounded-xl"
+                className="h-[60vh] sm:h-96 w-full rounded-xl"
                 whenCreated={(mapInstance) => (mapRef.current = mapInstance)}
               >
                 <TileLayer
@@ -148,11 +148,11 @@ export default function VenueMapModal({ isOpen, onClose, isEventUpcoming }) {
                     eventHandlers={{ click: () => handleZoom(event.lat, event.lon) }}
                   >
                     <Popup>
-                      <div className="text-left">
-                        <p className="font-bold text-gray-800">{event.title}</p>
-                        <p className="text-sm text-gray-600">Venue: {event.venue}</p>
+                      <div className="text-left max-w-xs">
+                        <p className="font-bold text-gray-800 text-sm sm:text-base">{event.title}</p>
+                        <p className="text-xs sm:text-sm text-gray-600">Venue: {event.venue}</p>
                         {event.startTime && (
-                          <p className="text-sm text-gray-600">
+                          <p className="text-xs sm:text-sm text-gray-600">
                             Starts at: {event.startTime}
                           </p>
                         )}
@@ -163,16 +163,15 @@ export default function VenueMapModal({ isOpen, onClose, isEventUpcoming }) {
                 {flyTo && <FlyToLocation position={flyTo} />}
               </MapContainer>
             ) : (
-              <div className="flex h-96 items-center justify-center rounded-xl text-gray-600">
+              <div className="flex h-[60vh] sm:h-96 items-center justify-center rounded-xl text-gray-600 text-sm sm:text-base">
                 {isEventUpcoming?.length > 0
                   ? "Loading map..."
                   : "No upcoming events with venue data."}
               </div>
             )}
 
-
             {/* Voice Command Hint */}
-            <div className="mt-3 rounded-lg bg-blue-50 p-3 text-center text-sm text-blue-800">
+            <div className="mt-3 rounded-lg bg-blue-50 p-2 sm:p-3 text-center text-xs sm:text-sm text-blue-800">
               <p>💡 <strong>Voice Command:</strong> Say "close map" or "isara ang mapa" to exit</p>
             </div>
           </motion.div>

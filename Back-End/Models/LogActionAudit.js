@@ -1,57 +1,45 @@
 const mongoose = require("mongoose");
 
-const ActivityLogSchema = new mongoose.Schema(
-  {
-    type: {
-      type: String,
-      enum: [
-        "CREATE",
-        "UPDATE",
-        "DELETE",
-        "LOGIN",
-        "LOGOUT",
-        "REVIEW",
-        "APPROVE",
-        "REJECTED",
-      ],
-      required: true,
-    },
-    action: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    performedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true,
-      refPath: "performedByModel",
-    },
-    performedByModel: {
-      type: String,
-      required: true,
-      enum: ["Admin", "Organizer","Staff"],
-    },
-    beforeChange: {
-      type: Object,
-    },
-    afterChange: {
-      type: Object,
-    },
-    level: {
-      type: String,
-      enum: ["info", "warning", "error"],
-      default: "info",
-    },
-    ipAddress: {
-      type: String,
-    },
-    userAgent: {
-      type: String,
-    },
+const logActionAuditSchema = new mongoose.Schema({
+  action_type: {
+    type: String,
+    required: true,
+    enum: ["CREATE", "UPDATE", "DELETE", "APPROVE", "REJECT"],
   },
-  {
-    timestamps: true,
-  }
-);
+  performed_by: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  module: {
+    type: String,
+    required: true,
+    enum: ["Proposal", "Event", "Resources", "Approval"],
+  },
+  reference_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: false,
+  },
+  description: {
+    type: String,
+    required: true,
+  },
+  timestamp: {
+    type: Date,
+    default: Date.now,
+  },
+  old_data: {
+    type: Object,
+    default: null,
+  },
+  new_data: {
+    type: Object,
+    default: null,
+  },
+  ip_address: {
+    type: String,
+    default: null,
+  },
+});
 
-module.exports = mongoose.model("ActivityLog", ActivityLogSchema);
+module.exports = mongoose.model("LogActionAudit", logActionAuditSchema);

@@ -13,10 +13,12 @@ const Layout = () => {
     const sidebarRef = useRef(null);
     const { bgtheme, FontColor } = useContext(PersonilContext);
 
+    // Adjust sidebar state on screen resize
     useEffect(() => {
         setCollapsed(!isDesktopDevice);
     }, [isDesktopDevice]);
 
+    // Close sidebar on outside click (mobile only)
     useClickOutside([sidebarRef], () => {
         if (!isDesktopDevice && !collapsed) {
             setCollapsed(true);
@@ -25,14 +27,15 @@ const Layout = () => {
 
     return (
         <div className="box-border flex min-h-screen bg-slate-100 dark:bg-slate-950">
-            {/* Overlay */}
+            {/* Mobile overlay (when sidebar is open) */}
             <div
                 className={cn(
-                    "pointer-events-none fixed inset-0 -z-10 bg-black opacity-0 transition-opacity",
-                    !collapsed && "max-md:pointer-events-auto max-md:z-50 max-md:opacity-30",
+                    "pointer-events-none fixed inset-0 -z-10 bg-black opacity-0 transition-opacity duration-300",
+                    !collapsed && "max-md:pointer-events-auto max-md:z-40 max-md:opacity-30"
                 )}
             />
 
+            {/* Sidebar */}
             <Sidebar
                 ref={sidebarRef}
                 collapsed={collapsed}
@@ -40,7 +43,13 @@ const Layout = () => {
                 FontColor={FontColor}
             />
 
-            <div className={cn("flex-1 transition-[margin] duration-300", collapsed ? "md:ml-[70px]" : "md:ml-[240px]")}>
+            {/* Main Content Area */}
+            <div
+                className={cn(
+                    "flex flex-1 flex-col transition-[margin] duration-300 ease-in-out",
+                    collapsed ? "md:ml-[70px]" : "md:ml-[240px]"
+                )}
+            >
                 <Header
                     collapsed={collapsed}
                     setCollapsed={setCollapsed}
@@ -48,12 +57,14 @@ const Layout = () => {
                     FontColor={FontColor}
                 />
 
-                {/* Content */}
-                <div className="box-border max-h-[calc(100vh-60px)] overflow-y-auto p-2 sm:p-4">
-                    <div className="text-xs sm:text-sm">
-                        <Outlet />
+                {/* Scrollable Content */}
+                <main className="box-border flex-1 overflow-y-auto bg-slate-100 p-2 dark:bg-slate-950 sm:p-4">
+                    <div className="mx-auto w-full max-w-[1400px]">
+                        <div className="text-xs text-slate-700 dark:text-slate-300 sm:text-sm">
+                            <Outlet />
+                        </div>
                     </div>
-                </div>
+                </main>
             </div>
         </div>
     );

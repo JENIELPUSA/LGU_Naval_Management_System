@@ -1,5 +1,20 @@
 import { useState, useEffect, useContext } from "react";
-import { CircleX, CircleCheckBig, PencilLine, Trash, Plus, Database, FileText, MessageSquare, Clock, User, Eye, File } from "lucide-react";
+import {
+    CircleX,
+    CircleCheckBig,
+    PencilLine,
+    Trash,
+    Plus,
+    Database,
+    FileText,
+    MessageSquare,
+    Clock,
+    User,
+    Eye,
+    File,
+    ChevronDown,
+    ChevronUp,
+} from "lucide-react";
 import { ProposalDisplayContext } from "../../../contexts/ProposalContext/ProposalContext";
 import LoadingOverlay from "../../../ReusableFolder/LoadingOverlay";
 import SuccessFailed from "../../../ReusableFolder/SuccessandField";
@@ -25,12 +40,12 @@ const ProposalTable = () => {
         setCurrentPage,
         limit,
         UpdateProposalMetaData,
-        UpdateStatus,
         isTotalProposal,
     } = useContext(ProposalDisplayContext);
     const { bgtheme, FontColor } = useContext(PersonilContext);
     const navigate = useNavigate();
-    const { role } = useContext(AuthContext);
+    const { role, linkId } = useContext(AuthContext);
+
     const [isDeleteID, setDeleteID] = useState(null);
     const [tempSearchTerm, setTempSearchTerm] = useState("");
     const [searchTerm, setSearchTerm] = useState("");
@@ -50,6 +65,7 @@ const ProposalTable = () => {
     const [currentRejectProposal, setCurrentRejectProposal] = useState(null);
     const [rejectNotes, setRejectNotes] = useState("");
     const [notesError, setNotesError] = useState("");
+    const [expandedRow, setExpandedRow] = useState(null);
 
     const showingStart = (currentPage - 1) * limit + 1;
     const showingEnd = Math.min(currentPage * limit, isTotalProposal);
@@ -82,7 +98,6 @@ const ProposalTable = () => {
         } else {
             result = await AddProposal(payload);
         }
-
         setIsLoading(false);
         setModalStatus(result?.success ? "success" : "failed");
         setShowModal(true);
@@ -94,19 +109,13 @@ const ProposalTable = () => {
         setIsFormModalOpen(false);
         setIsEditing(false);
         setIsEditingProposal(null);
-        setFormData({
-            title: "",
-            description: "",
-        });
+        setFormData({ title: "", description: "" });
     };
 
     const openAddModal = () => {
         setIsEditing(false);
         setIsEditingProposal(null);
-        setFormData({
-            title: "",
-            description: "",
-        });
+        setFormData({ title: "", description: "" });
         setIsFormModalOpen(true);
     };
 
@@ -119,42 +128,25 @@ const ProposalTable = () => {
 
     const renderPageNumbers = () => {
         if (totalPages <= 1) return null;
-
         const maxPagesToShow = 5;
         let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
         let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
-
         if (endPage - startPage + 1 < maxPagesToShow) {
             startPage = Math.max(1, endPage - maxPagesToShow + 1);
         }
-
-        const pageNumbers = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
-
         return (
             <div className="relative flex items-center">
-                {pageNumbers.map((pageNum, index) => (
+                {Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i).map((pageNum) => (
                     <button
                         key={pageNum}
                         onClick={() => goToPage(pageNum)}
                         aria-label={`Go to page ${pageNum}`}
                         style={{ background: bgtheme, color: FontColor }}
-                        className={`mx-0.5 h-8 min-w-[32px] rounded-md px-2 py-1 text-xs font-medium transition-all sm:mx-1 sm:h-10 sm:min-w-[40px] sm:rounded-lg sm:px-3 sm:py-2 sm:text-sm`}
+                        className="mx-0.5 h-8 min-w-[32px] rounded-md px-2 py-1 text-xs font-medium sm:mx-1 sm:h-10 sm:min-w-[40px] sm:px-3 sm:py-2 sm:text-sm"
                     >
                         {pageNum}
                     </button>
                 ))}
-
-                {/* Moving border indicator */}
-                <motion.div
-                    className="absolute bottom-0 h-1 rounded-md bg-purple-500"
-                    layout
-                    layoutId="page-border"
-                    style={{
-                        width: 40, // width matches button width (adjust if needed)
-                        left: 8 + 42 * (currentPage - startPage), // adjust spacing based on button margin + width
-                    }}
-                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                />
             </div>
         );
     };
@@ -174,7 +166,6 @@ const ProposalTable = () => {
             setNotesError("Notes are required for rejection");
             return;
         }
-
         if (currentRejectProposal) {
             const submittedBy = currentRejectProposal.submitted_by;
             const id = currentRejectProposal._id;
@@ -183,19 +174,19 @@ const ProposalTable = () => {
                 submitted_by: submittedBy,
                 remarks: rejectNotes,
             };
-
             await UpdateProposalMetaData(id, values);
             setRejectModalOpen(false);
             setRejectNotes("");
             setCurrentRejectProposal(null);
             setNotesError("");
+            FetchProposalDisplay(currentPage, limit, searchTerm, dateFrom, dateTo);
         }
     };
 
     const handleConfirmDelete = async () => {
         if (isDeleteID) {
             setIsLoading(true);
-            const result = await DeleteProposal(isDeleteID);
+            const result = await DeleteProposal(isDeleteID, linkId);
             setIsLoading(false);
             if (result?.success) {
                 setModalStatus("success");
@@ -218,31 +209,23 @@ const ProposalTable = () => {
         switch (status?.toLowerCase()) {
             case "approved":
                 return {
-                    bg: "bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800",
-                    text: "text-emerald-700 dark:text-emerald-300",
+                    bg: "bg-emerald-50 dark:bg-emerald-900/20",
                     badge: "bg-emerald-500 text-white",
-                    icon: "text-emerald-500",
                 };
             case "pending":
                 return {
-                    bg: "bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800",
-                    text: "text-amber-700 dark:text-amber-300",
+                    bg: "bg-amber-50 dark:bg-amber-900/20",
                     badge: "bg-amber-500 text-white",
-                    icon: "text-amber-500",
                 };
             case "rejected":
                 return {
-                    bg: "bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800",
-                    text: "text-red-700 dark:text-red-300",
+                    bg: "bg-red-50 dark:bg-red-900/20",
                     badge: "bg-red-500 text-white",
-                    icon: "text-red-500",
                 };
             default:
                 return {
-                    bg: "bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-700",
-                    text: "text-gray-700 dark:text-gray-300",
+                    bg: "bg-gray-50 dark:bg-gray-800",
                     badge: "bg-gray-500 text-white",
-                    icon: "text-gray-500",
                 };
         }
     };
@@ -260,11 +243,226 @@ const ProposalTable = () => {
         }
     };
 
+    const toggleRowExpansion = (id) => {
+        setExpandedRow(expandedRow === id ? null : id);
+    };
+
+    if (isLoading) return <LoadingOverlay />;
+
     return (
         <>
-            {isLoading && <LoadingOverlay />}
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-pink-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
-                {/* Header Section */}
+            {/* MOBILE VIEW */}
+            <div className="block md:hidden min-h-screen bg-slate-50 dark:bg-slate-900">
+                <div className="sticky top-0 z-10 border-b border-gray-200 bg-white/90 backdrop-blur dark:border-gray-700 dark:bg-slate-900/90">
+                    <div className="px-3 py-3">
+                        <div className="flex flex-col gap-2">
+                            <h1 className="text-base font-bold text-gray-900 dark:text-white">Proposal Management</h1>
+                            <div className="flex flex-col gap-2">
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        placeholder="Search..."
+                                        className="w-full rounded border border-slate-300 bg-white px-3 py-1.5 text-[10px] pl-8 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                                        value={tempSearchTerm}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            setTempSearchTerm(value);
+                                            if (value.trim() === "") {
+                                                setSearchTerm("");
+                                                setCurrentPage(1);
+                                            }
+                                        }}
+                                        onKeyDown={handleKeyDown}
+                                    />
+                                    <button
+                                        onClick={handleSearch}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400"
+                                    >
+                                        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div className="flex gap-1">
+                                    <input
+                                        type="date"
+                                        value={dateFrom}
+                                        onChange={(e) => setDateFrom(e.target.value)}
+                                        className="rounded border border-gray-200 bg-white px-2 py-1 text-[10px] dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                    />
+                                    <input
+                                        type="date"
+                                        value={dateTo}
+                                        onChange={(e) => setDateTo(e.target.value)}
+                                        className="rounded border border-gray-200 bg-white px-2 py-1 text-[10px] dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                    />
+                                </div>
+                                <button
+                                    onClick={openAddModal}
+                                    style={{ background: bgtheme, color: FontColor }}
+                                    className="mt-1 rounded border px-2 py-1 text-[10px] font-medium"
+                                >
+                                    <Plus size={10} className="inline mr-1" /> Add Proposal
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="px-3 py-3">
+                    {isProposal && isProposal.length > 0 ? (
+                        <div className="space-y-3">
+                            {isProposal.map((proposal) => {
+                                const statusConfig = getStatusConfig(proposal.status);
+                                const organizerName = proposal.organizerInfo
+                                    ? `${proposal.organizerInfo.first_name || ""} ${proposal.organizerInfo.middle_name || ""} ${proposal.organizerInfo.last_name || ""}`.trim()
+                                    : "Unknown Organizer";
+                                const fileName = proposal.fileName || getFileNameFromUrl(proposal.fileUrl);
+                                const isExpanded = expandedRow === proposal._id;
+
+                                return (
+                                    <div
+                                        key={proposal._id}
+                                        className={`rounded-lg border ${statusConfig.bg} dark:border-gray-700`}
+                                    >
+                                        <div className="p-3">
+                                            <div className="flex flex-col gap-2">
+                                                <div className="flex justify-between items-start">
+                                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2">
+                                                        {proposal.title || "Untitled Proposal"}
+                                                    </h3>
+                                                    <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${statusConfig.badge}`}>
+                                                        {proposal.status?.charAt(0).toUpperCase() + proposal.status?.slice(1) || "Pending"}
+                                                    </span>
+                                                </div>
+                                                <div className="text-[10px] text-gray-600 dark:text-gray-400">
+                                                    <div className="flex items-center gap-1">
+                                                        <Clock size={10} />
+                                                        <span>
+                                                            {proposal.created_at
+                                                                ? new Date(proposal.created_at).toLocaleDateString("en-US", {
+                                                                      month: "short",
+                                                                      day: "numeric",
+                                                                      year: "numeric",
+                                                                  })
+                                                                : "Recently"}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1 mt-1">
+                                                        <User size={10} />
+                                                        <span className="truncate">{organizerName}</span>
+                                                    </div>
+                                                </div>
+                                                {proposal.fileUrl && (
+                                                    <div className="flex items-center gap-1 text-[10px] text-purple-600 dark:text-purple-400 mt-1">
+                                                        <File size={10} />
+                                                        <span>PDF Attached</span>
+                                                    </div>
+                                                )}
+                                                <div className="flex flex-wrap gap-1 mt-2">
+                                                    <button
+                                                        onClick={() => openEditModal(proposal)}
+                                                        className="flex items-center gap-1 rounded bg-blue-50 px-1.5 py-0.5 text-[10px] text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400"
+                                                    >
+                                                        <PencilLine size={10} /> Edit
+                                                    </button>
+                                                    {role === "admin" && (
+                                                        <button
+                                                            onClick={() => handleDeleteProposal(proposal._id)}
+                                                            className="flex items-center gap-1 rounded bg-red-50 px-1.5 py-0.5 text-[10px] text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400"
+                                                        >
+                                                            <Trash size={10} /> Delete
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        onClick={() => toggleRowExpansion(proposal._id)}
+                                                        className="flex items-center gap-1 rounded bg-gray-50 px-1.5 py-0.5 text-[10px] text-gray-600 hover:bg-gray-100 dark:bg-gray-800/30 dark:text-gray-400"
+                                                    >
+                                                        {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />} Details
+                                                    </button>
+                                                </div>
+                                                {isExpanded && (
+                                                    <div className="mt-3 pt-2 border-t border-gray-200 dark:border-gray-600 space-y-2">
+                                                        <div>
+                                                            <h4 className="text-[10px] font-medium text-gray-900 dark:text-white">Description</h4>
+                                                            <p className="mt-1 text-[10px] text-gray-600 dark:text-gray-300">
+                                                                {proposal.description || "No description provided"}
+                                                            </p>
+                                                        </div>
+                                                        {proposal.fileUrl && (
+                                                            <div>
+                                                                <h4 className="text-[10px] font-medium text-gray-900 dark:text-white">Attached File</h4>
+                                                                <a
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleViewFile(proposal._id, proposal);
+                                                                    }}
+                                                                    className="mt-1 inline-flex items-center gap-1 text-[10px] text-purple-600 dark:text-purple-400 hover:underline"
+                                                                >
+                                                                    <Eye size={10} /> {fileName}
+                                                                </a>
+                                                            </div>
+                                                        )}
+                                                        {proposal.remarks && (
+                                                            <div>
+                                                                <h4 className="text-[10px] font-medium text-gray-900 dark:text-white">Remarks</h4>
+                                                                <p className="mt-1 text-[10px] text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800/50 p-1 rounded">
+                                                                    {proposal.remarks}
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="rounded-lg border border-gray-200 bg-white p-4 text-center dark:border-gray-700 dark:bg-gray-800">
+                            <Database className="mx-auto h-6 w-6 text-purple-500" />
+                            <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">No proposals found</p>
+                            <button
+                                onClick={openAddModal}
+                                className="mt-2 text-[10px] text-purple-600 underline"
+                            >
+                                Add your first proposal
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {totalPages > 1 && (
+                    <div className="sticky bottom-0 border-t border-gray-200 bg-white/90 px-3 py-2 dark:border-gray-700 dark:bg-slate-900/90">
+                        <div className="flex flex-col items-center gap-2">
+                            <p className="text-[10px] text-gray-600 dark:text-gray-400">
+                                Showing {showingStart}–{showingEnd} of {isTotalProposal}
+                            </p>
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={() => goToPage(currentPage - 1)}
+                                    disabled={currentPage === 1}
+                                    className="rounded border border-gray-200 bg-white px-1.5 py-0.5 text-[10px] text-gray-600 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                                >
+                                    Prev
+                                </button>
+                                <div>{renderPageNumbers()}</div>
+                                <button
+                                    onClick={() => goToPage(currentPage + 1)}
+                                    disabled={currentPage === totalPages}
+                                    className="rounded border border-gray-200 bg-white px-1.5 py-0.5 text-[10px] text-gray-600 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* DESKTOP VIEW */}
+            <div className="hidden md:block min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-pink-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
                 <div className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/80">
                     <div className="px-4 py-4 sm:p-6">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -274,9 +472,7 @@ const ProposalTable = () => {
                                     Review and manage proposal submissions
                                 </p>
                             </div>
-
                             <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
-                                {/* Search */}
                                 <div className="relative w-full sm:w-auto">
                                     <input
                                         type="text"
@@ -313,8 +509,6 @@ const ProposalTable = () => {
                                         </svg>
                                     </button>
                                 </div>
-
-                                {/* Date Filters */}
                                 <div className="flex gap-1.5 sm:gap-2">
                                     <input
                                         type="date"
@@ -329,20 +523,12 @@ const ProposalTable = () => {
                                         className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:px-3 sm:py-2.5 sm:text-sm"
                                     />
                                 </div>
-
-                                {/* Add Button */}
                                 <button
                                     onClick={openAddModal}
-                                    style={{
-                                        background: bgtheme,
-                                        color: FontColor,
-                                    }}
+                                    style={{ background: bgtheme, color: FontColor }}
                                     className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium shadow-sm transition-all hover:bg-purple-700 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
                                 >
-                                    <Plus
-                                        size={14}
-                                        className="sm:size-4"
-                                    />
+                                    <Plus size={14} className="sm:size-4" />
                                     Add Proposal
                                 </button>
                             </div>
@@ -350,7 +536,6 @@ const ProposalTable = () => {
                     </div>
                 </div>
 
-                {/* Content Section */}
                 <div className="px-4 py-4 sm:p-6">
                     {isProposal && isProposal.length > 0 ? (
                         <div className="flex flex-col gap-3 sm:gap-4">
@@ -359,7 +544,6 @@ const ProposalTable = () => {
                                 const organizerName = proposal.organizerInfo
                                     ? `${proposal.organizerInfo.first_name || ""} ${proposal.organizerInfo.middle_name || ""} ${proposal.organizerInfo.last_name || ""}`.trim()
                                     : "Unknown Organizer";
-
                                 const fileName = proposal.fileName || getFileNameFromUrl(proposal.fileUrl);
 
                                 return (
@@ -367,7 +551,6 @@ const ProposalTable = () => {
                                         key={proposal._id}
                                         className={`overflow-hidden rounded-xl border bg-white shadow-sm transition-all duration-300 hover:shadow-md ${statusConfig.bg} dark:bg-gray-800 sm:rounded-2xl`}
                                     >
-                                        {/* Card Header */}
                                         <div className="p-4 pb-3 sm:p-6 sm:pb-4">
                                             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                                                 <div className="min-w-0 flex-1">
@@ -376,10 +559,7 @@ const ProposalTable = () => {
                                                     </h3>
                                                     <div className="flex flex-col gap-1 text-xs text-gray-600 dark:text-gray-400 sm:flex-row sm:items-center sm:gap-3 sm:text-sm">
                                                         <div className="flex items-center gap-1">
-                                                            <Clock
-                                                                size={12}
-                                                                className="sm:size-4"
-                                                            />
+                                                            <Clock size={12} className="sm:size-4" />
                                                             <span>
                                                                 Submitted{" "}
                                                                 {proposal.created_at
@@ -392,10 +572,7 @@ const ProposalTable = () => {
                                                             </span>
                                                         </div>
                                                         <div className="flex items-center gap-1">
-                                                            <User
-                                                                size={12}
-                                                                className="sm:size-4"
-                                                            />
+                                                            <User size={12} className="sm:size-4" />
                                                             <span className="font-medium text-gray-800 dark:text-gray-200">Organizer:</span>
                                                             <span className="truncate">{organizerName}</span>
                                                         </div>
@@ -412,16 +589,11 @@ const ProposalTable = () => {
                                             </div>
                                         </div>
 
-                                        {/* Card Content */}
                                         <div className="px-4 pb-3 sm:px-6 sm:pb-4">
                                             <div className="space-y-4 sm:space-y-6">
-                                                {/* Description */}
                                                 <div>
                                                     <div className="mb-2 flex items-center gap-1.5 sm:gap-2">
-                                                        <FileText
-                                                            size={14}
-                                                            className="text-blue-500 sm:size-4"
-                                                        />
+                                                        <FileText size={14} className="text-blue-500 sm:size-4" />
                                                         <h4 className="text-sm font-medium text-gray-900 dark:text-white sm:text-base">
                                                             Description
                                                         </h4>
@@ -433,14 +605,10 @@ const ProposalTable = () => {
                                                     </div>
                                                 </div>
 
-                                                {/* File Attachment */}
                                                 {proposal.fileUrl && (
                                                     <div>
                                                         <div className="mb-2 flex items-center gap-1.5 sm:gap-2">
-                                                            <File
-                                                                size={14}
-                                                                className="text-purple-500 sm:size-4"
-                                                            />
+                                                            <File size={14} className="text-purple-500 sm:size-4" />
                                                             <h4 className="text-sm font-medium text-gray-900 dark:text-white sm:text-base">
                                                                 Attached File
                                                             </h4>
@@ -453,24 +621,17 @@ const ProposalTable = () => {
                                                                 }}
                                                                 className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 sm:gap-2 sm:px-3 sm:py-2 sm:text-sm"
                                                             >
-                                                                <Eye
-                                                                    size={12}
-                                                                    className="sm:size-4"
-                                                                />
+                                                                <Eye size={12} className="sm:size-4" />
                                                                 {fileName}
                                                             </a>
                                                         </div>
                                                     </div>
                                                 )}
 
-                                                {/* Remarks */}
                                                 {proposal.remarks && (
                                                     <div>
                                                         <div className="mb-2 flex items-center gap-1.5 sm:gap-2">
-                                                            <MessageSquare
-                                                                size={14}
-                                                                className="text-blue-500 sm:size-4"
-                                                            />
+                                                            <MessageSquare size={14} className="text-blue-500 sm:size-4" />
                                                             <h4 className="text-sm font-medium text-gray-900 dark:text-white sm:text-base">
                                                                 Remarks
                                                             </h4>
@@ -487,7 +648,6 @@ const ProposalTable = () => {
                                             </div>
                                         </div>
 
-                                        {/* Card Actions */}
                                         <div className="border-t border-gray-100 bg-gray-50/50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/50 sm:px-6 sm:py-4">
                                             <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                                                 <div className="flex items-center gap-1.5">
@@ -505,10 +665,7 @@ const ProposalTable = () => {
                                                         className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 sm:gap-1.5 sm:rounded-lg sm:px-3 sm:py-2 sm:text-sm"
                                                         title="Edit Proposal"
                                                     >
-                                                        <PencilLine
-                                                            size={14}
-                                                            className="sm:size-4"
-                                                        />
+                                                        <PencilLine size={14} className="sm:size-4" />
                                                         Edit
                                                     </button>
                                                     {role === "admin" && (
@@ -517,10 +674,7 @@ const ProposalTable = () => {
                                                             className="inline-flex items-center gap-1 rounded-md bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 sm:gap-1.5 sm:rounded-lg sm:px-3 sm:py-2 sm:text-sm"
                                                             title="Delete Proposal"
                                                         >
-                                                            <Trash
-                                                                size={14}
-                                                                className="sm:size-4"
-                                                            />
+                                                            <Trash size={14} className="sm:size-4" />
                                                             Delete
                                                         </button>
                                                     )}
@@ -545,10 +699,7 @@ const ProposalTable = () => {
                                     onClick={openAddModal}
                                     className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-purple-700 sm:mt-6 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
                                 >
-                                    <Plus
-                                        size={14}
-                                        className="sm:size-4"
-                                    />
+                                    <Plus size={14} className="sm:size-4" />
                                     Add First Proposal
                                 </button>
                             </div>
@@ -556,7 +707,6 @@ const ProposalTable = () => {
                     )}
                 </div>
 
-                {/* Pagination */}
                 {totalPages > 1 && (
                     <div className="border-t border-gray-200 bg-white/80 px-4 py-3 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/80 sm:px-6 sm:py-4">
                         <div className="flex flex-col items-center justify-between gap-3 sm:flex-row sm:gap-4">
@@ -564,7 +714,6 @@ const ProposalTable = () => {
                                 Showing <span className="font-semibold">{showingStart}</span> to <span className="font-semibold">{showingEnd}</span>{" "}
                                 of <span className="font-semibold">{isTotalProposal}</span> results
                             </div>
-
                             <div className="flex items-center gap-1.5 sm:gap-2">
                                 <button
                                     onClick={() => goToPage(currentPage - 1)}
@@ -573,9 +722,7 @@ const ProposalTable = () => {
                                 >
                                     Previous
                                 </button>
-
                                 <div className="flex">{renderPageNumbers()}</div>
-
                                 <button
                                     onClick={() => goToPage(currentPage + 1)}
                                     disabled={currentPage === totalPages}
@@ -587,78 +734,73 @@ const ProposalTable = () => {
                         </div>
                     </div>
                 )}
+            </div>
 
-                {/* Modals */}
-                <AddFormModal
-                    isOpen={isFormModalOpen}
-                    onClose={closeFormModal}
-                    onSubmit={handleFormSubmit}
-                    formData={formData}
-                    setFormData={setFormData}
-                    isEditing={isEditing}
-                    FontColor={FontColor}
-                    bgtheme={bgtheme}
-                />
-
-                <SuccessFailed
-                    isOpen={showModal}
-                    onClose={() => setShowModal(false)}
-                    status={modalStatus}
-                    errorMessage={customError}
-                />
-
-                <StatusVerification
-                    isOpen={isVerification}
-                    onConfirmDelete={handleConfirmDelete}
-                    onClose={handleCloseModal}
-                />
-
-                {isRejectModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-                        <div className="w-full max-w-md rounded-lg bg-white p-4 shadow-xl dark:bg-gray-800 sm:p-6">
-                            <h3 className="text-base font-medium text-gray-900 dark:text-white sm:text-lg">Reject Proposal</h3>
-                            <p className="mt-1 text-xs text-gray-600 dark:text-gray-400 sm:mt-2 sm:text-sm">
-                                Please provide a reason for rejecting this proposal.
-                            </p>
-
-                            <textarea
-                                value={rejectNotes}
-                                onChange={(e) => {
-                                    setRejectNotes(e.target.value);
-                                    if (e.target.value.trim() && notesError) {
-                                        setNotesError("");
-                                    }
+            <AddFormModal
+                isOpen={isFormModalOpen}
+                onClose={closeFormModal}
+                onSubmit={handleFormSubmit}
+                formData={formData}
+                setFormData={setFormData}
+                isEditing={isEditing}
+                FontColor={FontColor}
+                bgtheme={bgtheme}
+                linkId={linkId}
+            />
+            <SuccessFailed
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                status={modalStatus}
+                errorMessage={customError}
+            />
+            <StatusVerification
+                isOpen={isVerification}
+                onConfirmDelete={handleConfirmDelete}
+                onClose={handleCloseModal}
+            />
+            {isRejectModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+                    <div className="w-full max-w-md rounded-lg bg-white p-4 shadow-xl dark:bg-gray-800 sm:p-6">
+                        <h3 className="text-base font-medium text-gray-900 dark:text-white sm:text-lg">Reject Proposal</h3>
+                        <p className="mt-1 text-xs text-gray-600 dark:text-gray-400 sm:mt-2 sm:text-sm">
+                            Please provide a reason for rejecting this proposal.
+                        </p>
+                        <textarea
+                            value={rejectNotes}
+                            onChange={(e) => {
+                                setRejectNotes(e.target.value);
+                                if (e.target.value.trim() && notesError) {
+                                    setNotesError("");
+                                }
+                            }}
+                            className={`mt-3 w-full rounded-lg border ${notesError ? "border-red-500" : "border-gray-200"} bg-white px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm`}
+                            rows={3}
+                            placeholder="Enter reason for rejection..."
+                            required
+                        />
+                        {notesError && <p className="mt-1 text-xs text-red-500">{notesError}</p>}
+                        <div className="mt-4 flex justify-end gap-2 sm:mt-6 sm:gap-3">
+                            <button
+                                onClick={() => {
+                                    setRejectModalOpen(false);
+                                    setRejectNotes("");
+                                    setNotesError("");
                                 }}
-                                className={`mt-3 w-full rounded-lg border ${notesError ? "border-red-500" : "border-gray-200"} bg-white px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:text-sm`}
-                                rows={3}
-                                placeholder="Enter reason for rejection..."
-                                required
-                            />
-                            {notesError && <p className="mt-1 text-xs text-red-500">{notesError}</p>}
-
-                            <div className="mt-4 flex justify-end gap-2 sm:mt-6 sm:gap-3">
-                                <button
-                                    onClick={() => {
-                                        setRejectModalOpen(false);
-                                        setRejectNotes("");
-                                        setNotesError("");
-                                    }}
-                                    className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 sm:rounded-lg sm:px-4 sm:py-2 sm:text-sm"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleConfirmReject}
-                                    className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-1 focus:ring-red-500 disabled:opacity-50 sm:rounded-lg sm:px-4 sm:py-2 sm:text-sm"
-                                    disabled={!rejectNotes.trim()}
-                                >
-                                    Confirm Reject
-                                </button>
-                            </div>
+                                className="rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 sm:rounded-lg sm:px-4 sm:py-2 sm:text-sm"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleConfirmReject}
+                                className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-1 focus:ring-red-500 disabled:opacity-50 sm:rounded-lg sm:px-4 sm:py-2 sm:text-sm"
+                                disabled={!rejectNotes.trim()}
+                            >
+                                Confirm Reject
+                            </button>
                         </div>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </>
     );
 };

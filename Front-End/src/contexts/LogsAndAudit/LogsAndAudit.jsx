@@ -1,8 +1,7 @@
 import React, { createContext, useState, useEffect, useContext,useCallback } from "react";
 import axios from "axios";
-import { toast } from "react-toastify";
 import { AuthContext } from "../AuthContext";
-import axiosInstance from "../../ReusableFolder/axiosInstance";
+import axiosInstance from "../../ReusableFolder/axioxInstance";
 export const LogsDisplayContext = createContext();
 
 export const LogsDisplayProvider = ({ children }) => {

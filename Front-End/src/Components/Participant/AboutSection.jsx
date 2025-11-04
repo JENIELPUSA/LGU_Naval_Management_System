@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "../../assets/Bannerpic.jpg";
-import { useAccessibility } from "./NavHeader"; // Import the accessibility hook
+import { useAccessibility } from "./NavHeader";
 
 const fadeIn = {
   hidden: { opacity: 0, y: 30 },
@@ -13,7 +13,21 @@ const staggerChildren = {
 };
 
 const AboutSection = ({ aboutRef }) => {
-  const accessibility = useAccessibility(); // Use the accessibility hook
+  const accessibility = useAccessibility();
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  // Window resize handler
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Mobile detection
+  const isMobile = windowWidth < 1024;
+  const isSmallMobile = windowWidth < 640;
 
   // Translation function for this component
   const t = (key) => {
@@ -64,9 +78,9 @@ const AboutSection = ({ aboutRef }) => {
       ref={aboutRef}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, amount: 0.2 }}
+      viewport={{ once: true, amount: 0.1 }}
       variants={staggerChildren}
-      className="relative overflow-hidden py-16 sm:py-20 lg:py-24"
+      className="relative overflow-hidden py-8 sm:py-12 lg:py-16"
       style={{
         fontFamily: accessibility.fontType === "dyslexia" ? "'OpenDyslexic', Arial, sans-serif" : "'Bernard MT Condensed', 'Anton', Impact, sans-serif",
         letterSpacing: "0.5px",
@@ -85,21 +99,21 @@ const AboutSection = ({ aboutRef }) => {
         <div className="absolute inset-0 bg-black/20 backdrop-blur-sm"></div>
       </div>
 
-      <div className="relative z-10 mx-auto max-w-6xl px-4 text-gray-800 sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto max-w-6xl px-3 text-gray-800 sm:px-4 lg:px-6">
         <div className="overflow-hidden">
-          <div className="px-4 py-8 sm:px-6 sm:py-12 md:px-8">
+          <div className="px-2 py-6 sm:px-4 sm:py-8 md:px-6">
             {/* Section Heading for Screen Readers */}
             <h2 id="about-section-heading" className="sr-only">
               {t('aboutNavalLGU')}
             </h2>
             
-            <div className="grid grid-cols-1 gap-10 sm:gap-12 lg:grid-cols-2">
+            <div className={`grid grid-cols-1 gap-6 sm:gap-8 ${isMobile ? '' : 'lg:grid-cols-2 lg:gap-10'}`}>
               {/* LEFT COLUMN */}
-              <motion.div variants={fadeIn} className="space-y-10">
+              <motion.div variants={fadeIn} className="space-y-6 sm:space-y-8">
                 {/* THE LGU IN NAVAL */}
                 <motion.div 
                   variants={fadeIn} 
-                  className="rounded-2xl border border-white/20 bg-white/90 p-6 shadow-xl backdrop-blur-sm"
+                  className="rounded-xl border border-white/20 bg-white/90 p-4 shadow-lg backdrop-blur-sm sm:rounded-2xl sm:p-6"
                   onFocus={() => accessibility.speakText(`${t('theLGUInNaval')}. ${t('lguDescription')}`)}
                   tabIndex={0}
                   role="article"
@@ -107,11 +121,15 @@ const AboutSection = ({ aboutRef }) => {
                 >
                   <h3 
                     id="lgu-heading"
-                    className="mb-4 text-3xl font-bold uppercase tracking-wider bg-gradient-to-r from-blue-500 to-pink-400 bg-clip-text text-transparent"
+                    className={`mb-3 font-bold uppercase tracking-wider bg-gradient-to-r from-blue-500 to-pink-400 bg-clip-text text-transparent ${
+                      isSmallMobile ? 'text-xl' : 'text-2xl sm:text-3xl'
+                    }`}
                   >
                     {t('theLGUInNaval')}
                   </h3>
-                  <p className="text-lg leading-relaxed text-gray-700">
+                  <p className={`leading-relaxed text-gray-700 ${
+                    isSmallMobile ? 'text-sm' : 'text-base sm:text-lg'
+                  }`}>
                     {t('lguDescription')}
                   </p>
                 </motion.div>
@@ -119,7 +137,7 @@ const AboutSection = ({ aboutRef }) => {
                 {/* VISION */}
                 <motion.div 
                   variants={fadeIn} 
-                  className="rounded-2xl border border-white/20 bg-white/90 p-6 shadow-xl backdrop-blur-sm"
+                  className="rounded-xl border border-white/20 bg-white/90 p-4 shadow-lg backdrop-blur-sm sm:rounded-2xl sm:p-6"
                   onFocus={() => accessibility.speakText(`${t('vision')}. ${t('visionDescription')}`)}
                   tabIndex={0}
                   role="article"
@@ -127,22 +145,26 @@ const AboutSection = ({ aboutRef }) => {
                 >
                   <h3 
                     id="vision-heading"
-                    className="mb-4 text-3xl font-bold uppercase tracking-wider bg-gradient-to-r from-blue-500 to-pink-400 bg-clip-text text-transparent"
+                    className={`mb-3 font-bold uppercase tracking-wider bg-gradient-to-r from-blue-500 to-pink-400 bg-clip-text text-transparent ${
+                      isSmallMobile ? 'text-xl' : 'text-2xl sm:text-3xl'
+                    }`}
                   >
                     {t('vision')}
                   </h3>
-                  <p className="text-lg leading-relaxed text-gray-700">
+                  <p className={`leading-relaxed text-gray-700 ${
+                    isSmallMobile ? 'text-sm' : 'text-base sm:text-lg'
+                  }`}>
                     {t('visionDescription')}
                   </p>
                 </motion.div>
               </motion.div>
 
               {/* RIGHT COLUMN */}
-              <motion.div variants={fadeIn} className="space-y-10">
+              <motion.div variants={fadeIn} className="space-y-6 sm:space-y-8">
                 {/* MISSION */}
                 <motion.div 
                   variants={fadeIn} 
-                  className="rounded-2xl border border-white/20 bg-white/90 p-6 shadow-xl backdrop-blur-sm"
+                  className="rounded-xl border border-white/20 bg-white/90 p-4 shadow-lg backdrop-blur-sm sm:rounded-2xl sm:p-6"
                   onFocus={() => accessibility.speakText(`${t('mission')}. ${t('missionDescription')}`)}
                   tabIndex={0}
                   role="article"
@@ -150,11 +172,15 @@ const AboutSection = ({ aboutRef }) => {
                 >
                   <h3 
                     id="mission-heading"
-                    className="mb-4 text-3xl font-bold uppercase tracking-wider bg-gradient-to-r from-blue-500 to-pink-400 bg-clip-text text-transparent"
+                    className={`mb-3 font-bold uppercase tracking-wider bg-gradient-to-r from-blue-500 to-pink-400 bg-clip-text text-transparent ${
+                      isSmallMobile ? 'text-xl' : 'text-2xl sm:text-3xl'
+                    }`}
                   >
                     {t('mission')}
                   </h3>
-                  <p className="text-lg text-gray-700 leading-relaxed">
+                  <p className={`text-gray-700 leading-relaxed ${
+                    isSmallMobile ? 'text-sm' : 'text-base sm:text-lg'
+                  }`}>
                     {t('missionDescription')}
                   </p>
                 </motion.div>
@@ -162,7 +188,7 @@ const AboutSection = ({ aboutRef }) => {
                 {/* OBJECTIVE */}
                 <motion.div 
                   variants={fadeIn} 
-                  className="rounded-2xl border border-white/20 bg-white/90 p-6 shadow-xl backdrop-blur-sm"
+                  className="rounded-xl border border-white/20 bg-white/90 p-4 shadow-lg backdrop-blur-sm sm:rounded-2xl sm:p-6"
                   onFocus={() => accessibility.speakText(`${t('objective')}. ${t('objectives')}`)}
                   tabIndex={0}
                   role="article"
@@ -170,12 +196,14 @@ const AboutSection = ({ aboutRef }) => {
                 >
                   <h3 
                     id="objective-heading"
-                    className="mb-4 text-3xl font-bold uppercase tracking-wider bg-gradient-to-r from-blue-500 to-pink-400 bg-clip-text text-transparent"
+                    className={`mb-3 font-bold uppercase tracking-wider bg-gradient-to-r from-blue-500 to-pink-400 bg-clip-text text-transparent ${
+                      isSmallMobile ? 'text-xl' : 'text-2xl sm:text-3xl'
+                    }`}
                   >
                     {t('objective')}
                   </h3>
                   <ul 
-                    className="space-y-4 text-lg text-gray-700 leading-relaxed"
+                    className="space-y-3 text-gray-700 leading-relaxed sm:space-y-4"
                     aria-label={t('objectives')}
                   >
                     {objectives.map((objective, index) => (
@@ -187,16 +215,39 @@ const AboutSection = ({ aboutRef }) => {
                         tabIndex={0}
                         role="listitem"
                       >
-                        {index + 1}. {objective}
+                        <span className={`${isSmallMobile ? 'text-sm' : 'text-base sm:text-lg'}`}>
+                          {index + 1}. {objective}
+                        </span>
                       </motion.li>
                     ))}
                   </ul>
                 </motion.div>
               </motion.div>
             </div>
+
+            {/* Mobile Navigation Helper */}
+            {isMobile && (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.8 }}
+                className="mt-6 text-center"
+              >
+                <p className="text-sm text-white/80 bg-black/30 rounded-lg p-3 backdrop-blur-sm">
+                  💡 <strong>Tip:</strong> Swipe up to continue reading
+                </p>
+              </motion.div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Mobile Layout Indicator (for debugging) */}
+      {process.env.NODE_ENV === "development" && isMobile && (
+        <div className="fixed bottom-2 right-2 rounded bg-purple-500 px-2 py-1 text-xs text-white">
+          ABOUT: {windowWidth}px
+        </div>
+      )}
 
       {/* Accessibility focus indicators for high contrast mode */}
       <style jsx>{`

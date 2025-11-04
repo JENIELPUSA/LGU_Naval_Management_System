@@ -472,7 +472,7 @@ exports.UpdateParticipant = AsyncErrorHandler(async (req, res) => {
     const newAttendance = {
       participantId: participant._id,
       name: `${participant.first_name} ${participant.last_name}`,
-      action: participant.attendance_status
+      action: participant.attendance_status,
     };
     const io = req.app.get("io");
     io.emit("newAttendance", newAttendance);
@@ -517,6 +517,12 @@ exports.getParticipantsCountPerEvent = async (req, res) => {
   try {
     const currentDate = new Date();
 
+    // Optional filter para sa organizer
+    let createdByFilter = {};
+    if (role === "organizer" && mongoose.Types.ObjectId.isValid(userId)) {
+      createdByFilter["eventDetails.created_by"] = new mongoose.Types.ObjectId(userId);
+    }
+
     const pipeline = [
       // Group participants by event_id
       {
@@ -534,12 +540,12 @@ exports.getParticipantsCountPerEvent = async (req, res) => {
           as: "eventDetails",
         },
       },
-      { $unwind: { path: "$eventDetails", preserveNullAndEmptyArrays: true } },
+      {
+        $unwind: { path: "$eventDetails", preserveNullAndEmptyArrays: true },
+      },
 
-      // Optional: filter for organizer role
-      ...(role === "organizer"
-        ? [{ $match: { "eventDetails.created_by": mongoose.Types.ObjectId(userId) } }]
-        : []),
+      // Apply organizer filter if needed
+      ...(Object.keys(createdByFilter).length > 0 ? [{ $match: createdByFilter }] : []),
 
       // Join with proposals
       {
@@ -552,12 +558,10 @@ exports.getParticipantsCountPerEvent = async (req, res) => {
       },
       { $unwind: { path: "$proposalInfo", preserveNullAndEmptyArrays: true } },
 
-      // Only include approved proposals and past/future events if needed
+      // Only approved proposals
       {
         $match: {
           "proposalInfo.status": "approved",
-          // If you want only past events, uncomment:
-          // "eventDetails.eventDate": { $lte: currentDate }
         },
       },
 
@@ -573,14 +577,15 @@ exports.getParticipantsCountPerEvent = async (req, res) => {
           eventDate: "$eventDetails.eventDate",
           venue: "$eventDetails.venue",
           created_by: "$eventDetails.created_by",
+          isUpcoming: { $gt: ["$eventDetails.eventDate", currentDate] },
         },
       },
 
-      { $sort: { eventDate: -1 } }, // latest first
+      { $sort: { eventDate: -1 } },
     ];
 
     const result = await ParticipantModel.aggregate(pipeline);
-      const totalUpcoming = result.filter((event) => event.isUpcoming).length;
+    const totalUpcoming = result.filter((event) => event.isUpcoming).length;
 
     res.status(200).json({
       status: "success",
@@ -589,6 +594,6 @@ exports.getParticipantsCountPerEvent = async (req, res) => {
     });
   } catch (error) {
     console.error("Error getting participants count per event:", error);
-    res.status(500).json({ message: "Server Error" });
+    res.status(500).json({ message: "Server Error", error: error.message });
   }
 };

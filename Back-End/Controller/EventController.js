@@ -6,19 +6,19 @@ const Notification = require("./../Models/NotificationSchema");
 const LGUResponse = require("./../Models/LGUResponse");
 const Proposal = require("./../Models/Proposal");
 const Participant = require("./../Models/Participant");
-
+const LogActionAudit = require("./../Models/LogActionAudit");
 exports.createEvent = async (req, res) => {
   try {
     const lguId = req.body.lgu;
     const userId = req.user?.linkId;
-
     if (!userId) {
       return res.status(401).json({ status: "error", message: "Unauthorized" });
     }
 
     const { proposalId } = req.body;
+    let proposalTitle = "Untitled Event";
 
-    // Check if the proposalId is already used in another event
+    // Check if proposal is already assigned
     if (proposalId) {
       const existingEvent = await EventModel.findOne({ proposalId });
       if (existingEvent) {
@@ -27,31 +27,45 @@ exports.createEvent = async (req, res) => {
           message: `Proposal ${proposalId} is already assigned to another event.`,
         });
       }
+
+      // Fetch proposal details for title reference
+      const proposal = await Proposal.findById(proposalId);
+      if (proposal) {
+        proposalTitle = proposal.title || "Untitled Event";
+      } else {
+        return res.status(404).json({
+          status: "fail",
+          message: `Proposal with ID ${proposalId} not found.`,
+        });
+      }
     }
 
+    // Prepare event data
     const eventData = {
       ...req.body,
+      eventTitle: proposalTitle, // ← event title comes from proposal.title
       created_at: new Date(),
       created_by: userId,
     };
 
-    const inserted = await EventModel.create(eventData);
+    const insertedEvent = await EventModel.create(eventData);
 
-    const registerUrl = `${process.env.FRONTEND_URL}/registerEvent/${inserted._id}`;
-    inserted.registerUrl = registerUrl;
-    await inserted.save();
+    // Generate registration link
+    const registerUrl = `${process.env.FRONTEND_URL}/registerEvent/${insertedEvent._id}`;
+    insertedEvent.registerUrl = registerUrl;
+    await insertedEvent.save();
 
-    // Mark the proposal as assigned
+    // Mark proposal as assigned
     if (proposalId) {
       await Proposal.findByIdAndUpdate(
         proposalId,
         { $set: { assigned: true } },
         { new: true }
       );
-      console.log(`Proposal ${proposalId} marked as assigned`);
+      console.log(`✅ Proposal ${proposalId} marked as assigned.`);
     }
 
-    // Update resources if present
+    // Update resource availability
     if (Array.isArray(req.body.resources) && req.body.resources.length > 0) {
       await Resources.updateMany(
         { _id: { $in: req.body.resources } },
@@ -59,27 +73,26 @@ exports.createEvent = async (req, res) => {
       );
     }
 
+    // Send LGU notification
     const io = req.app.get("io");
-
     if (lguId) {
       const invitationMessage = {
-        message: "A new Invitation has been generated for you.",
-        data: inserted,
+        message: `You have a new event invitation: ${proposalTitle}`,
+        data: insertedEvent,
       };
 
-      // Emit socket notification if online
       const targetUser = global.connectedUsers?.[lguId.toString()];
       if (targetUser) {
         io.to(targetUser.socketId).emit("Invitation", invitationMessage);
         console.log(`📨 Sent Invitation to LGU (${lguId})`);
       } else {
-        console.log(`LGU (${lguId}) is offline, saving notification...`);
+        console.log(`📭 LGU (${lguId}) is offline, saving notification...`);
       }
 
       await Notification.create({
         message: invitationMessage.message,
         title: "Invitation For Upcoming Event",
-        category: "Proposal",
+        category: "Event",
         priority: "high",
         viewers: [
           {
@@ -91,12 +104,29 @@ exports.createEvent = async (req, res) => {
         created_at: new Date(),
       });
 
-      await LGUResponse.create({ lguDataID: lguId, eventID: inserted._id });
+      await LGUResponse.create({
+        lguDataID: lguId,
+        eventID: insertedEvent._id,
+      });
     }
 
+    // Audit Log (only after success)
+    await LogActionAudit.create({
+      action_type: "CREATE",
+      performed_by: userId,
+      module: "Event",
+      reference_id: insertedEvent._id,
+      description: `Created new event based on proposal titled "${proposalTitle}"`,
+      new_data: insertedEvent,
+      ip_address:
+        req.headers["x-forwarded-for"]?.split(",").shift() ||
+        req.socket?.remoteAddress,
+    });
+
+    // Send response
     res.status(201).json({
       status: "success",
-      data: inserted,
+      data: insertedEvent,
     });
   } catch (error) {
     console.error("Error creating event:", error);
@@ -106,7 +136,6 @@ exports.createEvent = async (req, res) => {
     });
   }
 };
-
 
 exports.DisplayEvent = AsyncErrorHandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
@@ -267,7 +296,6 @@ exports.DisplayEvent = AsyncErrorHandler(async (req, res) => {
   });
 });
 
-
 exports.DisplayDropdownEvent = AsyncErrorHandler(async (req, res) => {
   const role = req.user.role;
   const userId = req.user.linkId;
@@ -336,22 +364,38 @@ exports.DisplayDropdownEvent = AsyncErrorHandler(async (req, res) => {
   });
 });
 
-
 exports.UpdateEvent = AsyncErrorHandler(async (req, res, next) => {
   console.log("Request body:", req.body);
-  const updated = await EventModel.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-  });
 
-  if (!updated) {
+  const userId = req.user?.linkId;
+  if (!userId) {
+    return res.status(401).json({
+      status: "fail",
+      message: "Unauthorized user",
+    });
+  }
+
+  // --- Get old data before update ---
+  const oldEvent = await EventModel.findById(req.params.id).populate(
+    "proposalId"
+  );
+  if (!oldEvent) {
     return res.status(404).json({
       status: "fail",
       message: "Event not found",
     });
   }
 
+  // --- Update the event ---
+  const updatedEvent = await EventModel.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    { new: true }
+  ).populate("proposalId");
+
+  // --- Aggregate with organizer info for response ---
   const updatedWithOrganizer = await EventModel.aggregate([
-    { $match: { _id: updated._id } },
+    { $match: { _id: updatedEvent._id } },
     {
       $lookup: {
         from: "organizers",
@@ -360,33 +404,49 @@ exports.UpdateEvent = AsyncErrorHandler(async (req, res, next) => {
         as: "organizer",
       },
     },
-    {
-      $unwind: {
-        path: "$organizer",
-        preserveNullAndEmptyArrays: true,
-      },
-    },
+    { $unwind: { path: "$organizer", preserveNullAndEmptyArrays: true } },
     {
       $project: {
         _id: 1,
-        event_name: 1,
         event_date: 1,
         venue: 1,
         description: 1,
         status: 1,
         created_at: 1,
+        proposalId: 1,
         "organizer._id": 1,
         "organizer.first_name": 1,
-        "organizer.middle_name": 1,
         "organizer.last_name": 1,
-        "organizer.gender": 1,
-        "organizer.contact_number": 1,
         "organizer.email": 1,
+        "organizer.contact_number": 1,
         "organizer.avatar": 1,
       },
     },
   ]);
 
+  // --- Get proposal title for logs ---
+  const proposalTitle =
+    updatedEvent?.proposalId?.title ||
+    oldEvent?.proposalId?.title ||
+    "Untitled Proposal";
+
+  // --- Audit Log ---
+  await LogActionAudit.create({
+    action_type: "UPDATE",
+    performed_by: userId,
+    module: "Event",
+    reference_id: updatedEvent._id,
+    description: `Updated event for proposal titled "${proposalTitle}" (Status: ${
+      updatedEvent.status || "No status"
+    })`,
+    old_data: oldEvent,
+    new_data: updatedEvent,
+    ip_address:
+      req.headers["x-forwarded-for"]?.split(",").shift() ||
+      req.socket?.remoteAddress,
+  });
+
+  // --- Response ---
   res.status(200).json({
     status: "success",
     data: updatedWithOrganizer[0],
@@ -395,12 +455,57 @@ exports.UpdateEvent = AsyncErrorHandler(async (req, res, next) => {
 
 // Delete Event
 exports.deleteEvent = AsyncErrorHandler(async (req, res, next) => {
-  await EventModel.findByIdAndDelete(req.params.id);
+  try {
+    const userId = req.user?.linkId;
+    if (!userId) {
+      return res.status(401).json({
+        status: "fail",
+        message: "Unauthorized user",
+      });
+    }
 
-  res.status(200).json({
-    status: "success",
-    data: null,
-  });
+    //Hanapin muna ang event bago i-delete (para may old_data sa logs)
+    const event = await EventModel.findById(req.params.id).populate(
+      "proposalId"
+    );
+    if (!event) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Event not found",
+      });
+    }
+
+    //Kunin ang proposal title (galing sa linked proposal)
+    const proposalTitle = event?.proposalId?.title || "Untitled Proposal";
+
+    // I-delete ang event
+    await EventModel.findByIdAndDelete(req.params.id);
+
+    // Audit log (after successful delete)
+    await LogActionAudit.create({
+      action_type: "DELETE",
+      performed_by: userId,
+      module: "Event",
+      reference_id: event._id,
+      description: `Deleted event linked to proposal titled "${proposalTitle}"`,
+      old_data: event, // full event data bago ma-delete
+      ip_address:
+        req.headers["x-forwarded-for"]?.split(",").shift() ||
+        req.socket?.remoteAddress,
+    });
+
+    //Success response
+    res.status(200).json({
+      status: "success",
+      message: "Event deleted successfully.",
+    });
+  } catch (err) {
+    console.error("Error deleting event:", err);
+    res.status(500).json({
+      status: "error",
+      message: "Something went wrong while deleting the event.",
+    });
+  }
 });
 
 exports.DisplayUpcomingEvent = AsyncErrorHandler(async (req, res) => {
@@ -564,9 +669,3 @@ exports.DisplayUpcomingEvent = AsyncErrorHandler(async (req, res) => {
     });
   }
 });
-
-
-
-
-
-

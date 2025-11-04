@@ -25,7 +25,7 @@ const EvenTable = () => {
     } = useContext(EventDisplayContext);
     const { bgtheme, FontColor } = useContext(PersonilContext);
     const { isResourcesDropdown } = useContext(ResourcesDisplayContext);
-    const { role } = useContext(AuthContext);
+    const { role, linkId } = useContext(AuthContext);
 
     const [isDeleteID, setDeleteID] = useState(null);
     const [tempSearchTerm, setTempSearchTerm] = useState("");
@@ -58,7 +58,7 @@ const EvenTable = () => {
         if (url) {
             navigator.clipboard.writeText(url);
             setCopiedEventId(eventId);
-            setTimeout(() => setCopiedEventId(null), 2000); // reset after 2s
+            setTimeout(() => setCopiedEventId(null), 2000);
         }
     };
 
@@ -86,7 +86,6 @@ const EvenTable = () => {
         setIsFormModalOpen(false);
         setIsEditing(false);
         setEditingEventId(null);
-        // I-reset ang form data sa default values
         setFormData({
             title: "",
             description: "",
@@ -127,10 +126,8 @@ const EvenTable = () => {
         setIsEditing(true);
         setEditingEventId(event._id);
 
-        // I-format ang data para sa form
         const formattedData = {
             ...event,
-            // Siguraduhin na ang mga field na kailangan ng form ay narito
             title: event.proposal?.title || "",
             description: event.proposal?.description || "",
             proposalId: event.proposal?._id || "",
@@ -152,7 +149,7 @@ const EvenTable = () => {
     const renderPageNumbers = () => {
         if (totalPages <= 1) return null;
 
-        const maxPagesToShow = 5;
+        const maxPagesToShow = window.innerWidth < 640 ? 3 : 5;
         let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
         let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
 
@@ -167,7 +164,7 @@ const EvenTable = () => {
                     key={pageNum}
                     onClick={() => goToPage(pageNum)}
                     aria-label={`Go to page ${pageNum}`}
-                    className={`mx-1 h-10 min-w-[40px] rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                    className={`mx-1 h-8 min-w-[35px] rounded-lg px-2 py-1.5 text-sm font-medium transition-all sm:h-10 sm:min-w-[40px] sm:px-3 sm:py-2 sm:text-sm ${
                         currentPage === pageNum
                             ? "bg-blue-600 text-white shadow-lg shadow-blue-200 dark:bg-blue-500 dark:shadow-blue-800"
                             : "border border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
@@ -187,7 +184,7 @@ const EvenTable = () => {
         setSearchTerm("");
         setTempSearchTerm("");
         setCurrentPage(1);
-        FetchProposalDisplay(1, limit, "", dateFrom, dateTo); // fetch lahat ng data ulit
+        FetchProposalDisplay(1, limit, "", dateFrom, dateTo);
     };
 
     const handleDeleteEvent = (id) => {
@@ -255,78 +252,46 @@ const EvenTable = () => {
         <>
             {isLoading && <LoadingOverlay />}
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
-                {/* Header Section */}
+                {/* Header Section - Mobile: denser, Desktop: unchanged */}
                 <div className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/80">
-                    <div className="p-6">
-                        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Event Management</h1>
-                                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Manage and organize your events efficiently</p>
+                    <div className="p-3 sm:p-5 lg:p-6">
+                        {" "}
+                        {/* p-3 only on mobile */}
+                        <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
+                            <div className="text-center lg:text-left">
+                                <h1 className="text-lg font-bold text-gray-900 dark:text-white sm:text-2xl">Event Management</h1>
+                                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400 sm:text-base">
+                                    Manage and organize your events efficiently
+                                </p>
                             </div>
 
-                            <div className="flex flex-col gap-3 sm:flex-row">
-                                {/* Search Input */}
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        placeholder="Search..."
-                                        className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 pl-10 text-slate-700 shadow-sm transition focus:border-pink-400 focus:outline-none focus:ring-1 focus:ring-pink-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:focus:border-pink-500 dark:focus:ring-pink-500"
-                                        value={tempSearchTerm}
-                                        onChange={(e) => {
-                                            const value = e.target.value;
-                                            setTempSearchTerm(value);
-
-                                            if (value === "") {
-                                                // Kapag walang laman, auto refresh/reset
-                                                handleRefresh();
-                                            }
-                                        }}
-                                        onKeyDown={handleKeyDown}
-                                    />
-                                    <button
-                                        onClick={handleSearch}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 focus:outline-none"
-                                        aria-label="Search"
-                                    >
-                                        <svg
-                                            className="h-4 w-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                            />
-                                        </svg>
-                                    </button>
-                                </div>
-
-                                {/* Date Filters */}
-                                <div className="flex gap-2">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                                {/* Date Filters - Mobile: smaller padding */}
+                                <div className="flex gap-1.5">
                                     <input
                                         type="date"
                                         value={dateFrom}
                                         onChange={(e) => setDateFrom(e.target.value)}
-                                        className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                        className="flex-1 rounded-xl border border-gray-200 bg-white px-2.5 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:px-3 sm:py-2.5 sm:text-sm"
                                     />
                                     <input
                                         type="date"
                                         value={dateTo}
                                         onChange={(e) => setDateTo(e.target.value)}
-                                        className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                        className="flex-1 rounded-xl border border-gray-200 bg-white px-2.5 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:px-3 sm:py-2.5 sm:text-sm"
                                     />
                                 </div>
 
-                                {/* Add Button */}
+                                {/* Add Button - Mobile: smaller */}
                                 <button
                                     onClick={openAddModal}
                                     style={{ background: bgtheme, color: FontColor }}
-                                    className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium shadow-lg transition-all hover:bg-blue-700 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                                    className="inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium shadow-lg transition-all hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
                                 >
-                                    <Plus size={16} />
+                                    <Plus
+                                        size={16}
+                                        className="sm:size-4"
+                                    />
                                     Add Event
                                 </button>
                             </div>
@@ -334,28 +299,31 @@ const EvenTable = () => {
                     </div>
                 </div>
 
-                {/* Content Section */}
-                <div className="p-6">
+                {/* Content Section - Mobile: tighter cards */}
+                <div className="p-3 sm:p-5 lg:p-6">
                     {isEvent && isEvent.length > 0 ? (
-                        <div className="grid gap-6">
-                            {isEvent.map((event, index) => {
+                        <div className="grid gap-3 sm:gap-5 lg:gap-6">
+                            {isEvent.map((event) => {
                                 const statusConfig = getStatusConfig(event.status);
 
                                 return (
                                     <div
                                         key={event._id}
-                                        className={`overflow-hidden rounded-2xl border bg-white shadow-sm transition-all duration-300 hover:shadow-lg ${statusConfig.bg} dark:bg-gray-800`}
+                                        className={`overflow-hidden rounded-xl border bg-white shadow-sm transition-all duration-300 hover:shadow-lg ${statusConfig.bg} dark:bg-gray-800`}
                                     >
-                                        {/* Card Header */}
-                                        <div className="p-6 pb-4">
-                                            <div className="flex items-start justify-between gap-4">
+                                        {/* Card Header - Mobile: less padding */}
+                                        <div className="p-3 sm:p-5 lg:p-6 lg:pb-4">
+                                            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                                                 <div className="min-w-0 flex-1">
-                                                    <h3 className="mb-2 line-clamp-2 text-xl font-semibold text-gray-900 dark:text-white">
+                                                    <h3 className="mb-2 line-clamp-2 text-base font-semibold text-gray-900 dark:text-white sm:text-xl">
                                                         {event.proposal?.title || "Untitled Event"}
                                                     </h3>
-                                                    <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                                                        <div className="flex items-center gap-1">
-                                                            <Calendar size={14} />
+                                                    <div className="flex flex-col gap-1.5 text-xs text-gray-600 dark:text-gray-400 sm:flex-row sm:items-center sm:gap-4">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <Calendar
+                                                                size={14}
+                                                                className="sm:size-4"
+                                                            />
                                                             <span>
                                                                 {new Date(event.eventDate).toLocaleDateString("en-US", {
                                                                     weekday: "short",
@@ -365,12 +333,18 @@ const EvenTable = () => {
                                                                 })}
                                                             </span>
                                                         </div>
-                                                        <div className="flex items-center gap-1">
-                                                            <MapPin size={14} />
+                                                        <div className="flex items-center gap-1.5">
+                                                            <MapPin
+                                                                size={14}
+                                                                className="sm:size-4"
+                                                            />
                                                             <span className="truncate">{event.venue || "TBD"}</span>
                                                         </div>
-                                                        <div className="flex items-center gap-1">
-                                                            <Clock8 size={14} />
+                                                        <div className="flex items-center gap-1.5">
+                                                            <Clock8
+                                                                size={14}
+                                                                className="sm:size-4"
+                                                            />
                                                             <span className="truncate">{event.startTime || "TBD"}</span>
                                                         </div>
                                                     </div>
@@ -378,7 +352,7 @@ const EvenTable = () => {
 
                                                 {event.status && (
                                                     <div
-                                                        className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold ${statusConfig.badge}`}
+                                                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:py-1.5 sm:text-sm ${statusConfig.badge}`}
                                                     >
                                                         {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
                                                     </div>
@@ -386,87 +360,95 @@ const EvenTable = () => {
                                             </div>
                                         </div>
 
-                                        {/* Card Content */}
-                                        <div className="px-6 pb-4">
-                                            <div className="grid gap-6 md:grid-cols-2">
-                                                {/* Event Details */}
-                                                <div className="space-y-4">
+                                        {/* Card Content - Mobile: tighter */}
+                                        <div className="px-3 pb-3 sm:px-5 lg:px-6 lg:pb-4">
+                                            <div className="grid gap-3 sm:gap-5 lg:grid-cols-2 lg:gap-6">
+                                                <div className="space-y-2.5 sm:space-y-4">
                                                     <div>
-                                                        <div className="mb-2 flex items-center gap-2">
+                                                        <div className="mb-2 flex items-center gap-1.5">
                                                             <FileText
                                                                 size={16}
-                                                                className="text-blue-500"
+                                                                className="text-blue-500 sm:size-4"
                                                             />
-                                                            <h4 className="font-medium text-gray-900 dark:text-white">Event Description</h4>
+                                                            <h4 className="text-sm font-medium text-gray-900 dark:text-white sm:text-lg">
+                                                                Event Description
+                                                            </h4>
                                                         </div>
-                                                        <p className="line-clamp-3 pl-6 text-sm text-gray-600 dark:text-gray-300">
+                                                        <p className="line-clamp-3 pl-6 text-xs text-gray-600 dark:text-gray-300 sm:pl-7 sm:text-base">
                                                             {event.proposal?.description || "No description available"}
                                                         </p>
                                                     </div>
                                                 </div>
 
-                                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                                    {/* Organizer Details */}
+                                                <div className="grid grid-cols-1 gap-3 sm:gap-5 lg:grid-cols-2">
                                                     {event.organizer && (
-                                                        <div className="space-y-4">
+                                                        <div className="space-y-2.5 sm:space-y-4">
                                                             <div>
-                                                                <div className="mb-3 flex items-center gap-2">
+                                                                <div className="mb-2 flex items-center gap-1.5">
                                                                     <User
                                                                         size={16}
-                                                                        className="text-purple-500"
+                                                                        className="text-purple-500 sm:size-4"
                                                                     />
-                                                                    <h4 className="font-medium text-gray-900 dark:text-white">Organizer Details</h4>
+                                                                    <h4 className="text-sm font-medium text-gray-900 dark:text-white sm:text-lg">
+                                                                        Organizer
+                                                                    </h4>
                                                                 </div>
-                                                                <div className="space-y-2 pl-6">
-                                                                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                                                <div className="space-y-1.5 pl-6 sm:pl-7">
+                                                                    <p className="text-xs font-medium text-gray-900 dark:text-white sm:text-base">
                                                                         {`${event.organizer.first_name || ""} ${event.organizer.middle_name || ""} ${event.organizer.last_name || ""}`.trim()}
                                                                     </p>
-                                                                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                                                                        <Phone size={14} />
+                                                                    <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 sm:text-base">
+                                                                        <Phone
+                                                                            size={14}
+                                                                            className="sm:size-4"
+                                                                        />
                                                                         <span>{event.organizer.contact_number || "N/A"}</span>
                                                                     </div>
-                                                                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                                                                        <Mail size={14} />
-                                                                        <span>{event.organizer.email || "N/A"}</span>
+                                                                    <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 sm:text-base">
+                                                                        <Mail
+                                                                            size={14}
+                                                                            className="sm:size-4"
+                                                                        />
+                                                                        <span className="break-all">{event.organizer.email || "N/A"}</span>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     )}
 
-                                                    {/* Resources */}
                                                     {event.resources && event.resources.length > 0 && (
-                                                        <div className="space-y-4">
+                                                        <div className="space-y-2.5 sm:space-y-4">
                                                             <div>
-                                                                <div className="mb-3 flex items-center gap-2">
+                                                                <div className="mb-2 flex items-center gap-1.5">
                                                                     <Database
                                                                         size={16}
-                                                                        className="text-green-500"
+                                                                        className="text-green-500 sm:size-4"
                                                                     />
-                                                                    <h4 className="font-medium text-gray-900 dark:text-white">Resources</h4>
+                                                                    <h4 className="text-sm font-medium text-gray-900 dark:text-white sm:text-lg">
+                                                                        Resources
+                                                                    </h4>
                                                                 </div>
-                                                                <div className="space-y-3 pl-6">
-                                                                    {/* Scrollable container for resources */}
-                                                                    <div className="max-h-48 overflow-y-auto pr-2">
+                                                                <div className="pl-6 sm:pl-7">
+                                                                    <div className="max-h-32 overflow-y-auto pr-1 sm:max-h-40 sm:pr-2">
                                                                         {event.resources.map((resource, idx) => (
                                                                             <div
                                                                                 key={idx}
-                                                                                className="mb-3 text-sm text-gray-600 last:mb-0 dark:text-gray-300"
+                                                                                className="mb-2 text-xs text-gray-600 last:mb-0 dark:text-gray-300 sm:text-base"
                                                                             >
                                                                                 <div className="font-medium text-gray-900 dark:text-white">
                                                                                     {resource.resource_name}
                                                                                 </div>
-                                                                                <div className="mt-1 flex items-center gap-2">
+                                                                                <div className="mt-1 flex items-center gap-1.5">
                                                                                     <span
-                                                                                        className={`inline-block h-2 w-2 rounded-full ${resource.availability ? "bg-green-500" : "bg-red-500"}`}
+                                                                                        className={`inline-block h-1.5 w-1.5 rounded-full ${resource.availability ? "bg-green-500" : "bg-red-500"}`}
                                                                                     ></span>
-                                                                                    <span>
+                                                                                    <span className="text-[10px] sm:text-xs">
                                                                                         {resource.resource_type} •{" "}
                                                                                         {resource.availability ? "Available" : "Unavailable"}
                                                                                     </span>
                                                                                 </div>
                                                                                 {resource.description && (
-                                                                                    <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                                                    <div className="mt-1 text-[10px] text-gray-500 dark:text-gray-400 sm:text-sm">
                                                                                         {resource.description}
                                                                                     </div>
                                                                                 )}
@@ -481,25 +463,29 @@ const EvenTable = () => {
                                             </div>
                                         </div>
 
-                                        {/* Card Actions */}
-                                        <div className="border-t border-gray-100 bg-gray-50/50 px-6 py-4 dark:border-gray-700 dark:bg-gray-800/50">
-                                            <div className="flex items-center justify-end gap-2">
+                                        {/* Card Actions - Mobile: smaller buttons */}
+                                        <div className="border-t border-gray-100 bg-gray-50/50 px-3 py-2.5 dark:border-gray-700 dark:bg-gray-800/50 sm:px-5 sm:py-4 lg:px-6">
+                                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
                                                 <button
                                                     onClick={() => openEditModal(event)}
-                                                    className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+                                                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
                                                     title="Edit Event"
                                                 >
-                                                    <PencilLine size={16} />
-                                                    Edit
+                                                    <PencilLine
+                                                        size={16}
+                                                        className="sm:size-4"
+                                                    />
                                                 </button>
                                                 {role === "admin" && (
                                                     <button
                                                         onClick={() => handleDeleteEvent(event._id)}
-                                                        className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+                                                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-red-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
                                                         title="Delete Event"
                                                     >
-                                                        <Trash size={16} />
-                                                        Delete
+                                                        <Trash
+                                                            size={16}
+                                                            className="sm:size-4"
+                                                        />
                                                     </button>
                                                 )}
                                             </div>
@@ -510,19 +496,22 @@ const EvenTable = () => {
                         </div>
                     ) : (
                         <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                            <div className="flex flex-col items-center justify-center py-20">
+                            <div className="flex flex-col items-center justify-center py-12 sm:py-20">
                                 <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700">
                                     <Database className="h-8 w-8 text-gray-400" />
                                 </div>
-                                <h3 className="mb-2 text-lg font-medium text-gray-900 dark:text-white">No events found</h3>
-                                <p className="max-w-sm text-center text-gray-500 dark:text-gray-400">
+                                <h3 className="mb-3 text-lg font-medium text-gray-900 dark:text-white sm:text-xl">No events found</h3>
+                                <p className="max-w-md px-4 text-center text-xs text-gray-500 dark:text-gray-400 sm:text-base">
                                     There are no events matching your current filters. Try adjusting your search criteria or add a new event.
                                 </p>
                                 <button
                                     onClick={openAddModal}
-                                    className="mt-6 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                                    className="mt-6 inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-700 sm:gap-2 sm:px-5 sm:py-2.5 sm:text-sm"
                                 >
-                                    <Plus size={16} />
+                                    <Plus
+                                        size={16}
+                                        className="sm:size-4"
+                                    />
                                     Add First Event
                                 </button>
                             </div>
@@ -530,30 +519,36 @@ const EvenTable = () => {
                     )}
                 </div>
 
-                {/* Pagination */}
+                {/* Pagination - Mobile: tighter */}
                 {totalPages > 1 && (
-                    <div className="border-t border-gray-200 bg-white/80 px-6 py-4 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/80">
-                        <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-                            <div className="text-sm text-gray-700 dark:text-gray-300">
+                    <div className="border-t border-gray-200 bg-white/80 px-3 py-3 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/80 sm:px-5 lg:px-6">
+                        <div className="flex flex-col items-center justify-between gap-3 sm:flex-row sm:gap-4">
+                            <div className="text-xs text-gray-700 dark:text-gray-300 sm:text-base">
                                 Showing <span className="font-semibold">{showingStart}</span> to <span className="font-semibold">{showingEnd}</span>{" "}
                                 of <span className="font-semibold">{isTotalEvent}</span> results
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5 sm:gap-2">
                                 <button
                                     onClick={() => goToPage(currentPage - 1)}
                                     disabled={currentPage === 1}
-                                    className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+                                    className="inline-flex items-center rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white sm:px-4 sm:py-2.5 sm:text-sm"
                                 >
                                     Previous
                                 </button>
+
+                                <div className="flex sm:hidden">
+                                    <span className="mx-1.5 flex items-center text-xs text-gray-500">
+                                        Page {currentPage} of {totalPages}
+                                    </span>
+                                </div>
 
                                 <div className="hidden sm:flex">{renderPageNumbers()}</div>
 
                                 <button
                                     onClick={() => goToPage(currentPage + 1)}
                                     disabled={currentPage === totalPages}
-                                    className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+                                    className="inline-flex items-center rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white sm:px-4 sm:py-2.5 sm:text-sm"
                                 >
                                     Next
                                 </button>
@@ -562,7 +557,7 @@ const EvenTable = () => {
                     </div>
                 )}
 
-                {/* Modals */}
+                {/* Modals - no change needed */}
                 <AddFormModal
                     isOpen={isFormModalOpen}
                     onClose={closeFormModal}
@@ -573,6 +568,7 @@ const EvenTable = () => {
                     editingData={isEditing ? formData : null}
                     bgtheme={bgtheme}
                     FontColor={FontColor}
+                    linkId={linkId}
                 />
 
                 <SuccessFailed

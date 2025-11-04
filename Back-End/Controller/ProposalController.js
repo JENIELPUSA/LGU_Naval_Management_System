@@ -8,10 +8,17 @@ const axios = require("axios");
 const Notification = require("../Models/NotificationSchema");
 const UserLoginSchema = require("../Models/LogInSchema");
 const sendEmail = require("./../Utils/email");
+const LogActionAudit = require("./../Models/LogActionAudit");
 
 exports.createProposal = AsyncErrorHandler(async (req, res) => {
   try {
-    const { title, description, remarks, status = "pending" } = req.body;
+    const {
+      title,
+      description,
+      remarks,
+      status = "pending",
+      linkId,
+    } = req.body;
 
     let fileData = {};
     if (req.file) {
@@ -53,13 +60,10 @@ exports.createProposal = AsyncErrorHandler(async (req, res) => {
 
     const inserted = await ProposalModel.create(proposalData);
 
-    // --- Prepare Socket.io ---
+    // --- Send notifications to admins ---
     const io = req.app.get("io");
-
-    // Hanapin lahat ng admins
     const recipients = await UserLoginSchema.find({ role: "admin" }).lean();
 
-    // I-build yung viewers array gamit ang linkedId
     const viewers = recipients
       .filter((admin) => admin.linkedId)
       .map((admin) => ({
@@ -67,7 +71,6 @@ exports.createProposal = AsyncErrorHandler(async (req, res) => {
         isRead: false,
       }));
 
-    // Gumawa ng isang notification document na may lahat ng viewers
     const notificationDoc = await Notification.create({
       title: inserted.title,
       message: `New proposal submitted: ${inserted.title}`,
@@ -76,19 +79,17 @@ exports.createProposal = AsyncErrorHandler(async (req, res) => {
       viewers,
     });
 
-    // Ihanda data para sa socket emit
     const SendMessage = {
       message: notificationDoc.message,
       proposal: inserted,
       notificationId: notificationDoc._id,
     };
 
-    // I-loop lahat ng recipients para mag send ng socket + email
     for (const admin of recipients) {
       if (!admin.linkedId) continue;
       const adminIdStr = admin.linkedId.toString();
 
-      // --- Socket notification kung online
+      // Socket notification
       const targetUser = global.connectedUsers?.[adminIdStr];
       if (targetUser) {
         io.to(targetUser.socketId).emit("NewProposalNotification", SendMessage);
@@ -99,7 +100,6 @@ exports.createProposal = AsyncErrorHandler(async (req, res) => {
         console.log(`📭 Admin (${adminIdStr}) is OFFLINE — saved in DB only.`);
       }
 
-      // --- Email notification (assuming username is email)
       if (admin.username) {
         await sendEmail({
           email: admin.username,
@@ -113,6 +113,19 @@ exports.createProposal = AsyncErrorHandler(async (req, res) => {
         console.log(`📧 Email sent to ${admin.username}`);
       }
     }
+
+    // --- Audit Log (only after success) ---
+    await LogActionAudit.create({
+      action_type: "CREATE",
+      performed_by: linkId,
+      module: "Proposal",
+      reference_id: inserted._id,
+      description: `Created a new proposal titled "${inserted.title}"`,
+      new_data: inserted,
+      ip_address:
+        req.headers["x-forwarded-for"]?.split(",").shift() ||
+        req.socket?.remoteAddress,
+    });
 
     res.status(201).json({ status: "success", data: inserted });
   } catch (err) {
@@ -254,41 +267,46 @@ exports.DisplayProposal = AsyncErrorHandler(async (req, res) => {
 
 exports.UpdateProposal = async (req, res) => {
   try {
-    const { status, submitted_by } = req.body;
+    const { status, submitted_by, linkId } = req.body;
+    const proposalId = req.params.id;
 
-    const updated = await ProposalModel.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
-
-    if (!updated) {
+    // Kunin muna ang old data bago i-update
+    const oldProposal = await ProposalModel.findById(proposalId);
+    if (!oldProposal) {
       return res.status(404).json({
         status: "fail",
         message: "Proposal not found",
       });
     }
 
-    const io = req.app.get("io");
+    // I-update ang proposal
+    const updatedProposal = await ProposalModel.findByIdAndUpdate(
+      proposalId,
+      req.body,
+      { new: true, runValidators: true }
+    );
 
+    // Send socket + notification sa nag-submit
+    const io = req.app.get("io");
     const invitationMessage = {
-      message: `A new Proposal ${status}`,
-      data: updated,
+      message: `Your proposal has been ${status}`,
+      data: updatedProposal,
     };
 
-    // Emit socket notification kung online
     if (submitted_by) {
       const targetUser = global.connectedUsers?.[submitted_by.toString()];
       if (targetUser) {
         io.to(targetUser.socketId).emit("ApprovedProposal", invitationMessage);
-        console.log(`📨 Sent Invitation to LGU (${submitted_by})`);
+        console.log(`📨 Sent socket notification to (${submitted_by})`);
       } else {
-        console.log(`LGU (${submitted_by}) is offline, saving notification...`);
+        console.log(
+          `📭 User (${submitted_by}) is offline, saving notification...`
+        );
       }
 
       await Notification.create({
         message: invitationMessage.message,
-        title: "Approved Proposal",
+        title: "Proposal Status Update",
         category: "Proposal",
         priority: "high",
         viewers: [
@@ -302,9 +320,24 @@ exports.UpdateProposal = async (req, res) => {
       });
     }
 
+    // Audit log (after successful update)
+    await LogActionAudit.create({
+      action_type: "UPDATE",
+      performed_by: linkId,
+      module: "Proposal",
+      reference_id: updatedProposal._id,
+      description: `Updated proposal titled "${updatedProposal.title}" (status: ${status})`,
+      old_data: oldProposal,
+      new_data: updatedProposal,
+      ip_address:
+        req.headers["x-forwarded-for"]?.split(",").shift() ||
+        req.socket?.remoteAddress,
+    });
+
+    // Response
     res.status(200).json({
       status: "success",
-      data: updated,
+      data: updatedProposal,
     });
   } catch (error) {
     console.error("Error updating proposal:", error);
@@ -317,20 +350,48 @@ exports.UpdateProposal = async (req, res) => {
 };
 
 exports.deleteProposal = AsyncErrorHandler(async (req, res, next) => {
-  const hasCategory = await ProposalModel.exists({ Category: req.params.id });
+  try {
+    const { linkId } = req.body;
+    const proposalId = req.params.id;
 
-  if (hasCategory) {
-    return res.status(400).json({
-      status: "fail",
-      message: "Cannot delete Category: there are existing related records.",
+    // Hanapin muna ang proposal bago i-delete (para sa audit data)
+    const proposal = await ProposalModel.findById(proposalId);
+
+    if (!proposal) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Proposal not found.",
+      });
+    }
+
+    // I-delete ang proposal
+    await ProposalModel.findByIdAndDelete(proposalId);
+
+    // Gumawa ng audit log pagkatapos ng successful delete
+    await LogActionAudit.create({
+      action_type: "DELETE",
+      performed_by: linkId,
+      module: "Proposal",
+      reference_id: proposal._id,
+      description: `Deleted proposal titled "${proposal.title}"`,
+      old_data: proposal, // dati niyang data bago i-delete
+      ip_address:
+        req.headers["x-forwarded-for"]?.split(",").shift() ||
+        req.socket?.remoteAddress,
+    });
+
+    // Response
+    res.status(200).json({
+      status: "success",
+      message: "Proposal deleted successfully.",
+    });
+  } catch (err) {
+    console.error("Error deleting proposal:", err);
+    res.status(500).json({
+      status: "error",
+      message: "Internal server error.",
     });
   }
-  await ProposalModel.findByIdAndDelete(req.params.id);
-
-  res.status(200).json({
-    status: "success",
-    data: null,
-  });
 });
 
 exports.UpdateMetaDataProposal = AsyncErrorHandler(async (req, res, next) => {
@@ -611,4 +672,3 @@ exports.DisplayDropdownProposal = AsyncErrorHandler(async (req, res) => {
     data: result,
   });
 });
-

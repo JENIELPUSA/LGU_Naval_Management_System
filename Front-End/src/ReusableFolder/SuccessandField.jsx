@@ -21,6 +21,43 @@ export default function StatusModal({
     }
   }, [isOpen]);
 
+  // Voice command handler for closing the modal
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleVoiceCommand = (event) => {
+      const command = event.detail?.command?.toLowerCase().trim();
+      if (!command) return;
+
+      console.log(`🗣️ StatusModal Close Command: "${command}"`);
+
+      // Close command for the modal
+      if (
+        command.includes("close") || 
+        command.includes("isara") || 
+        command.includes("exit") ||
+        command.includes("back") ||
+        command.includes("tapos") ||
+        command.includes("ok") ||
+        command.includes("sige") ||
+        command.includes("continue") ||
+        command.includes("try again")
+      ) {
+        onClose();
+        // You can also trigger a speech feedback if needed
+        window.dispatchEvent(new CustomEvent("speak-text", { 
+          detail: { text: "Closing status modal" } 
+        }));
+      }
+    };
+
+    window.addEventListener("voice-command", handleVoiceCommand, { capture: true });
+    
+    return () => {
+      window.removeEventListener("voice-command", handleVoiceCommand, { capture: true });
+    };
+  }, [isOpen, onClose]);
+
   // Animation variants
   const backdropVariants = {
     hidden: { opacity: 0 },
@@ -149,6 +186,11 @@ export default function StatusModal({
           </span>
           <div className="absolute inset-0 bg-white opacity-0 hover:opacity-10 transition-opacity"></div>
         </motion.button>
+
+        {/* Voice Command Hint */}
+        <div className="mt-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 p-3 text-center text-xs text-blue-800 dark:text-blue-200">
+          <p>💡 <strong>Voice Command:</strong> Say "close" or "isara" to close this modal</p>
+        </div>
       </motion.div>
     </motion.div>
   ) : null;

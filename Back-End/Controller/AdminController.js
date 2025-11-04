@@ -3,6 +3,94 @@ const Admin = require("../Models/AdminSchema");
 const Apifeatures = require("../Utils/ApiFeatures");
 const UserLoginSchema = require("../Models/LogInSchema");
 const cloudinary = require("../Utils/cloudinary");
+const LogInSchema = require("../Models/LogInSchema");
+
+exports.updateAdmin = async (req, res) => {
+  const adminId = req.params.id;
+
+  console.log(req.body);
+  try {
+    const admin = await Admin.findById(adminId);
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    let avatar = admin.avatar;
+    if (req.file) {
+      if (admin.avatar?.public_id) {
+        try {
+          await cloudinary.uploader.destroy(admin.avatar.public_id);
+        } catch (err) {
+          console.error("Failed to delete old image from Cloudinary", err);
+        }
+      }
+
+      const base64Image = `data:${
+        req.file.mimetype
+      };base64,${req.file.buffer.toString("base64")}`;
+      const uploadedResponse = await cloudinary.uploader.upload(base64Image, {
+        folder: "LGU_EVENT_MANAGEMENT/Profile",
+      });
+      avatar = {
+        public_id: uploadedResponse.public_id,
+        url: uploadedResponse.secure_url,
+      };
+    }
+
+    // Build update object dynamically, only include fields with values
+    const adminUpdate = { avatar }; // always include avatar if changed
+    const fields = [
+      "first_name",
+      "middle_name",
+      "last_name",
+      "email",
+      "gender",
+      "contact_number",
+    ];
+    fields.forEach((field) => {
+      if (
+        req.body[field] !== undefined &&
+        req.body[field] !== null &&
+        req.body[field].trim() !== ""
+      ) {
+        adminUpdate[field] = req.body[field];
+      }
+    });
+
+    const updatedAdmin = await Admin.findByIdAndUpdate(adminId, adminUpdate, {
+      new: true,
+    });
+
+    // Update corresponding LogInSchema document
+    const loginUpdate = {};
+    ["first_name", "last_name", "contact_number"].forEach((field) => {
+      if (
+        req.body[field] !== undefined &&
+        req.body[field] !== null &&
+        req.body[field].trim() !== ""
+      ) {
+        loginUpdate[field] = req.body[field];
+      }
+    });
+    if (avatar) loginUpdate.avatar = avatar; // optional avatar update
+
+    const updatedLogIn = await LogInSchema.findOneAndUpdate(
+      { linkedId: adminId },
+      loginUpdate,
+      { new: true }
+    );
+
+    res.json({
+      status: "success",
+      admin: updatedAdmin,
+      login: updatedLogIn,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Something went wrong." });
+  }
+};
+
 exports.deleteAdmin = AsyncErrorHandler(async (req, res, next) => {
   const AdminID = req.params.id;
 
@@ -141,59 +229,3 @@ exports.DisplayProfile = AsyncErrorHandler(async (req, res) => {
     data: admin,
   });
 });
-
-exports.updateAdmin = async (req, res) => {
-  const adminId = req.params.id;
-
-  try {
-    const admin = await Admin.findById(adminId);
-    if (!admin) {
-      return res.status(404).json({ error: "Admin not found" });
-    }
-
-    let avatar = admin.avatar; // Default is the existing avatar object
-
-    // If there's a new image uploaded
-    if (req.file) {
-      // Delete old image from Cloudinary if it has public_id
-      if (admin.avatar?.public_id) {
-        try {
-          await cloudinary.uploader.destroy(admin.avatar.public_id);
-        } catch (err) {
-          console.error("Failed to delete old image from Cloudinary", err);
-        }
-      }
-
-      // Upload new image
-      const base64Image = `data:${
-        req.file.mimetype
-      };base64,${req.file.buffer.toString("base64")}`;
-      const uploadedResponse = await cloudinary.uploader.upload(base64Image, {
-        folder: "LGU_EVENT_MANAGEMENT/Profile",
-      });
-      avatar = {
-        public_id: uploadedResponse.public_id,
-        url: uploadedResponse.secure_url,
-      };
-    }
-
-    const updatedAdmin = await Admin.findByIdAndUpdate(
-      adminId,
-      {
-        first_name: req.body.first_name,
-        last_name: req.body.last_name,
-        middle_name: req.body.middle_name,
-        email: req.body.email,
-        gender: req.body.gender,
-        contact_number: req.body.contact_number,
-        avatar, 
-      },
-      { new: true }
-    );
-
-    res.json({ status: "success", data: updatedAdmin });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Something went wrong." });
-  }
-};

@@ -1,10 +1,11 @@
-import React, { useState, forwardRef, useContext } from "react";
+import React, { useState, forwardRef, useContext, useEffect } from "react";
 import { ContactContext } from "../../contexts/ContactContext/ContactInfoContext";
-import { useAccessibility } from "./NavHeader"; // Import the accessibility hook
+import { useAccessibility } from "./NavHeader";
 
-const ContactUsForm = forwardRef((props, ref, bgtheme, FontColor) => {
+const ContactUsForm = forwardRef((props, ref) => {
     const { displayContact } = useContext(ContactContext);
-    const accessibility = useAccessibility(); // Use the accessibility hook
+    const accessibility = useAccessibility();
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
     const [formData, setFormData] = useState({
         fullName: "",
@@ -13,6 +14,20 @@ const ContactUsForm = forwardRef((props, ref, bgtheme, FontColor) => {
         subject: "",
         message: "",
     });
+
+    // Window resize handler
+    useEffect(() => {
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+        };
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    // Mobile detection
+    const isMobile = windowWidth < 1024;
+    const isSmallMobile = windowWidth < 640;
+
     const t = (key) => {
         const translations = {
             en: {
@@ -144,7 +159,7 @@ const ContactUsForm = forwardRef((props, ref, bgtheme, FontColor) => {
                 border: "border-gray-700",
                 sectionBackground: "bg-white",
                 cardBackground: "bg-white",
-                shadow: "shadow-md",
+                shadow: isMobile ? "shadow-sm" : "shadow-md",
                 inputBackground: "bg-white",
                 inputBorder: "border-2 border-gray-800",
                 inputFocusBorder: "border-2 border-black",
@@ -166,14 +181,14 @@ const ContactUsForm = forwardRef((props, ref, bgtheme, FontColor) => {
             border: "border-gray-200",
             sectionBackground: "bg-white",
             cardBackground: "bg-white",
-            shadow: "shadow-lg",
+            shadow: isMobile ? "shadow-md" : "shadow-lg",
             inputBackground: "bg-white",
             inputBorder: "border border-gray-400",
             inputFocusBorder: "border-2 border-blue-500",
             inputText: "text-gray-700",
             labelText: "text-gray-700",
-            buttonBackground: bgtheme,
-            buttonText: FontColor,
+            buttonBackground: props.bgtheme,
+            buttonText: props.FontColor,
             iconBackground: "bg-blue-50",
             iconText: "text-blue-700",
         };
@@ -184,40 +199,42 @@ const ContactUsForm = forwardRef((props, ref, bgtheme, FontColor) => {
     return (
         <div
             ref={ref}
-            className={`min-h-screen ${colors.background} py-8`}
+            className={`min-h-screen ${colors.background} py-4 sm:py-6 lg:py-8`}
             style={{
                 fontFamily: accessibility.fontType === "dyslexia" ? "'OpenDyslexic', Arial, sans-serif" : "inherit",
             }}
         >
-            <div className="mx-auto max-w-6xl px-4">
+            <div className="mx-auto max-w-6xl px-3 sm:px-4 lg:px-6">
                 {/* Title */}
-                <div className="mb-8 text-center">
+                <div className="mb-6 sm:mb-8 text-center">
                     <h2
-                        className={`mb-2 text-3xl font-bold ${colors.textPrimary} ${
+                        className={`mb-2 font-bold ${colors.textPrimary} ${
                             accessibility.isHighContrast ? "" : "bg-gradient-to-r from-blue-500 to-pink-500 bg-clip-text text-transparent"
-                        }`}
+                        } ${isSmallMobile ? 'text-2xl' : 'text-3xl'}`}
                         onFocus={() => accessibility.speakText(t("contactUs"))}
                     >
                         {t("contactUs")}
                     </h2>
-                    <p className={`mx-auto max-w-2xl text-sm md:text-base ${colors.textSecondary}`}>{t("contactDescription")}</p>
+                    <p className={`mx-auto ${colors.textSecondary} ${isSmallMobile ? 'text-xs max-w-md' : 'text-sm md:text-base max-w-2xl'}`}>
+                        {t("contactDescription")}
+                    </p>
                 </div>
 
                 {/* Contact Section */}
-                <div className="flex flex-col gap-6 lg:flex-row">
+                <div className="flex flex-col gap-4 sm:gap-6 lg:flex-row">
                     {/* Contact Info */}
                     <div
-                        className={`flex-1 rounded-xl ${colors.cardBackground} p-5 ${colors.shadow} ${colors.border}`}
+                        className={`flex-1 rounded-lg ${colors.cardBackground} p-4 ${colors.shadow} ${colors.border} sm:rounded-xl sm:p-5`}
                         role="complementary"
                         aria-label={t("contactInformation")}
                     >
                         <h3
-                            className={`mb-4 text-xl font-bold ${colors.textPrimary}`}
+                            className={`mb-3 text-lg font-bold ${colors.textPrimary} sm:text-xl sm:mb-4`}
                             onFocus={() => accessibility.speakText(t("getInTouch"))}
                         >
                             {t("getInTouch")}
                         </h3>
-                        <div className={`space-y-4 text-sm ${colors.textSecondary}`}>
+                        <div className={`space-y-3 ${colors.textSecondary} ${isSmallMobile ? 'text-xs' : 'text-sm'}`}>
                             {/* Office Address */}
                             <div
                                 className="flex items-start"
@@ -226,14 +243,14 @@ const ContactUsForm = forwardRef((props, ref, bgtheme, FontColor) => {
                                 }
                             >
                                 <div
-                                    className={`mr-3 flex h-10 w-10 items-center justify-center rounded-full ${colors.iconBackground} text-lg ${colors.iconText}`}
+                                    className={`mr-3 flex h-8 w-8 items-center justify-center rounded-full ${colors.iconBackground} text-base ${colors.iconText} sm:h-10 sm:w-10 sm:text-lg`}
                                     aria-hidden="true"
                                 >
                                     📍
                                 </div>
                                 <div>
-                                    <h4 className={`font-semibold ${colors.textPrimary}`}>{t("ourOffice")}</h4>
-                                    <p>
+                                    <h4 className={`font-semibold ${colors.textPrimary} ${isSmallMobile ? 'text-sm' : ''}`}>{t("ourOffice")}</h4>
+                                    <p className={isSmallMobile ? 'text-xs' : ''}>
                                         {hasContactData ? (
                                             <>
                                                 {displayContact.officeName}
@@ -258,14 +275,14 @@ const ContactUsForm = forwardRef((props, ref, bgtheme, FontColor) => {
                                 }
                             >
                                 <div
-                                    className={`mr-3 flex h-10 w-10 items-center justify-center rounded-full ${colors.iconBackground} text-lg ${colors.iconText}`}
+                                    className={`mr-3 flex h-8 w-8 items-center justify-center rounded-full ${colors.iconBackground} text-base ${colors.iconText} sm:h-10 sm:w-10 sm:text-lg`}
                                     aria-hidden="true"
                                 >
                                     📞
                                 </div>
                                 <div>
-                                    <h4 className={`font-semibold ${colors.textPrimary}`}>{t("phone")}</h4>
-                                    <p>
+                                    <h4 className={`font-semibold ${colors.textPrimary} ${isSmallMobile ? 'text-sm' : ''}`}>{t("phone")}</h4>
+                                    <p className={isSmallMobile ? 'text-xs' : ''}>
                                         {hasContactData && displayContact.phones && displayContact.phones.length > 0 ? (
                                             <>
                                                 {displayContact.phones.map((phone, index) => (
@@ -289,16 +306,16 @@ const ContactUsForm = forwardRef((props, ref, bgtheme, FontColor) => {
                                     onFocus={() => accessibility.speakText(`${t("hotlines")}: ${displayContact.hotlines.join(", ")}`)}
                                 >
                                     <div
-                                        className={`mr-3 flex h-10 w-10 items-center justify-center rounded-full ${
+                                        className={`mr-3 flex h-8 w-8 items-center justify-center rounded-full ${
                                             accessibility.isHighContrast ? "bg-gray-200" : "bg-red-50"
-                                        } text-lg ${accessibility.isHighContrast ? "text-black" : "text-red-700"}`}
+                                        } text-base ${accessibility.isHighContrast ? "text-black" : "text-red-700"} sm:h-10 sm:w-10 sm:text-lg`}
                                         aria-hidden="true"
                                     >
                                         🆘
                                     </div>
                                     <div>
-                                        <h4 className={`font-semibold ${colors.textPrimary}`}>{t("hotlines")}</h4>
-                                        <p>
+                                        <h4 className={`font-semibold ${colors.textPrimary} ${isSmallMobile ? 'text-sm' : ''}`}>{t("hotlines")}</h4>
+                                        <p className={isSmallMobile ? 'text-xs' : ''}>
                                             {displayContact.hotlines.map((hotline, index) => (
                                                 <span key={index}>
                                                     {hotline}
@@ -320,14 +337,14 @@ const ContactUsForm = forwardRef((props, ref, bgtheme, FontColor) => {
                                 }
                             >
                                 <div
-                                    className={`mr-3 flex h-10 w-10 items-center justify-center rounded-full ${colors.iconBackground} text-lg ${colors.iconText}`}
+                                    className={`mr-3 flex h-8 w-8 items-center justify-center rounded-full ${colors.iconBackground} text-base ${colors.iconText} sm:h-10 sm:w-10 sm:text-lg`}
                                     aria-hidden="true"
                                 >
                                     ✉️
                                 </div>
                                 <div>
-                                    <h4 className={`font-semibold ${colors.textPrimary}`}>{t("email")}</h4>
-                                    <p>
+                                    <h4 className={`font-semibold ${colors.textPrimary} ${isSmallMobile ? 'text-sm' : ''}`}>{t("email")}</h4>
+                                    <p className={isSmallMobile ? 'text-xs' : ''}>
                                         {hasContactData && displayContact.emails && displayContact.emails.length > 0 ? (
                                             <>
                                                 {displayContact.emails.map((email, index) => (
@@ -350,9 +367,9 @@ const ContactUsForm = forwardRef((props, ref, bgtheme, FontColor) => {
                         </div>
 
                         {/* Office Hours */}
-                        <div className={`mt-5 border-t ${colors.border} pt-4 text-sm`}>
+                        <div className={`mt-4 border-t ${colors.border} pt-3 ${isSmallMobile ? 'text-xs' : 'text-sm'} sm:mt-5 sm:pt-4`}>
                             <h4
-                                className={`mb-2 font-bold ${colors.textPrimary}`}
+                                className={`mb-2 font-bold ${colors.textPrimary} ${isSmallMobile ? 'text-sm' : ''}`}
                                 onFocus={() => accessibility.speakText(t("officeHours"))}
                             >
                                 {t("officeHours")}
@@ -390,26 +407,26 @@ const ContactUsForm = forwardRef((props, ref, bgtheme, FontColor) => {
 
                     {/* Contact Form */}
                     <div
-                        className={`flex-1 rounded-xl ${colors.cardBackground} p-5 ${colors.shadow} ${colors.border}`}
+                        className={`flex-1 rounded-lg ${colors.cardBackground} p-4 ${colors.shadow} ${colors.border} sm:rounded-xl sm:p-5`}
                         role="form"
                         aria-label={t("contactForm")}
                     >
                         <h3
-                            className={`mb-4 text-xl font-bold ${colors.textPrimary}`}
+                            className={`mb-3 text-lg font-bold ${colors.textPrimary} sm:text-xl sm:mb-4`}
                             onFocus={() => accessibility.speakText(t("sendMessage"))}
                         >
                             {t("sendMessage")}
                         </h3>
                         <form
                             onSubmit={handleSubmit}
-                            className="space-y-3 text-sm"
+                            className={`space-y-3 ${isSmallMobile ? 'text-xs' : 'text-sm'}`}
                             noValidate
                         >
                             {formFields.map((field, index) => (
                                 <div key={index}>
                                     <label
                                         htmlFor={field.name}
-                                        className={`mb-1 block font-medium ${colors.labelText}`}
+                                        className={`mb-1 block font-medium ${colors.labelText} ${isSmallMobile ? 'text-xs' : ''}`}
                                     >
                                         {field.label}
                                         {field.required && (
@@ -429,7 +446,7 @@ const ContactUsForm = forwardRef((props, ref, bgtheme, FontColor) => {
                                         onChange={handleChange}
                                         placeholder={field.placeholder}
                                         required={field.required}
-                                        className={`w-full rounded ${colors.inputBorder} ${colors.inputBackground} px-3 py-2 ${colors.inputText} transition-all focus:${colors.inputFocusBorder} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                                        className={`w-full rounded ${colors.inputBorder} ${colors.inputBackground} px-3 py-2 ${colors.inputText} transition-all focus:${colors.inputFocusBorder} focus:outline-none focus:ring-2 focus:ring-blue-500 ${isSmallMobile ? 'text-xs py-1.5' : ''}`}
                                         aria-required={field.required}
                                         aria-invalid={field.required && !formData[field.name] ? "true" : "false"}
                                     />
@@ -439,7 +456,7 @@ const ContactUsForm = forwardRef((props, ref, bgtheme, FontColor) => {
                             <div>
                                 <label
                                     htmlFor="subject"
-                                    className={`mb-1 block font-medium ${colors.labelText}`}
+                                    className={`mb-1 block font-medium ${colors.labelText} ${isSmallMobile ? 'text-xs' : ''}`}
                                 >
                                     {t("subject")}
                                     <span
@@ -455,7 +472,7 @@ const ContactUsForm = forwardRef((props, ref, bgtheme, FontColor) => {
                                     value={formData.subject}
                                     onChange={handleChange}
                                     required
-                                    className={`w-full rounded ${colors.inputBorder} ${colors.inputBackground} px-3 py-2 ${colors.inputText} transition-all focus:${colors.inputFocusBorder} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                                    className={`w-full rounded ${colors.inputBorder} ${colors.inputBackground} px-3 py-2 ${colors.inputText} transition-all focus:${colors.inputFocusBorder} focus:outline-none focus:ring-2 focus:ring-blue-500 ${isSmallMobile ? 'text-xs py-1.5' : ''}`}
                                     aria-required="true"
                                     aria-invalid={!formData.subject ? "true" : "false"}
                                 >
@@ -479,7 +496,7 @@ const ContactUsForm = forwardRef((props, ref, bgtheme, FontColor) => {
                             <div>
                                 <label
                                     htmlFor="message"
-                                    className={`mb-1 block font-medium ${colors.labelText}`}
+                                    className={`mb-1 block font-medium ${colors.labelText} ${isSmallMobile ? 'text-xs' : ''}`}
                                 >
                                     {t("message")}
                                     <span
@@ -494,10 +511,10 @@ const ContactUsForm = forwardRef((props, ref, bgtheme, FontColor) => {
                                     name="message"
                                     value={formData.message}
                                     onChange={handleChange}
-                                    rows="4"
+                                    rows={isSmallMobile ? "3" : "4"}
                                     placeholder={t("enterMessage")}
                                     required
-                                    className={`w-full rounded ${colors.inputBorder} ${colors.inputBackground} px-3 py-2 ${colors.inputText} transition-all focus:${colors.inputFocusBorder} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                                    className={`w-full rounded ${colors.inputBorder} ${colors.inputBackground} px-3 py-2 ${colors.inputText} transition-all focus:${colors.inputFocusBorder} focus:outline-none focus:ring-2 focus:ring-blue-500 ${isSmallMobile ? 'text-xs' : ''}`}
                                     aria-required="true"
                                     aria-invalid={!formData.message ? "true" : "false"}
                                 ></textarea>
@@ -505,8 +522,8 @@ const ContactUsForm = forwardRef((props, ref, bgtheme, FontColor) => {
 
                             <button
                                 type="submit"
-                                style={{ background: bgtheme, color: FontColor }}
-                                className="w-full rounded py-2 font-semibold shadow transition-all hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                style={{ background: props.bgtheme, color: props.FontColor }}
+                                className={`w-full rounded py-2 font-semibold shadow transition-all hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${isSmallMobile ? 'text-sm py-1.5' : ''}`}
                                 onFocus={() => accessibility.speakText(t("send"))}
                             >
                                 {t("send")}
@@ -514,9 +531,27 @@ const ContactUsForm = forwardRef((props, ref, bgtheme, FontColor) => {
                         </form>
                     </div>
                 </div>
+
+                {/* Mobile Helper Text */}
+                {isMobile && (
+                    <div className="mt-4 text-center">
+                        <p className={`text-xs ${colors.textSecondary} bg-black/10 rounded-lg p-2 backdrop-blur-sm`}>
+                            📱 <strong>Tip:</strong> All fields with * are required
+                        </p>
+                    </div>
+                )}
             </div>
+
+            {/* Mobile Layout Indicator (for debugging) */}
+            {process.env.NODE_ENV === "development" && isMobile && (
+                <div className="fixed bottom-2 left-2 rounded bg-blue-500 px-2 py-1 text-xs text-white">
+                    CONTACT: {windowWidth}px
+                </div>
+            )}
         </div>
     );
 });
+
+ContactUsForm.displayName = 'ContactUsForm';
 
 export default ContactUsForm;

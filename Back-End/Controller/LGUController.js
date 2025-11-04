@@ -6,6 +6,7 @@ const sendEmail = require("../Utils/email");
 const Team = require("../Models/TeamSchema");
 const UserLoginSchema = require("../Models/LogInSchema");
 const Notification = require("./../Models/NotificationSchema");
+const LogInSchema = require("./../Models/LogInSchema");
 
 exports.deleteLGU = AsyncErrorHandler(async (req, res, next) => {
   const LGUID = req.params.id;
@@ -159,9 +160,9 @@ exports.updateLGU = async (req, res) => {
 
     let avatar = existingLGU.avatar; // Use existing avatar by default
 
-    // Check if there's a new image uploaded
+    // ✅ Handle image upload
     if (req.file) {
-      // Delete the old image if exists
+      // Delete old Cloudinary image if exists
       if (existingLGU.avatar?.public_id) {
         try {
           await cloudinary.uploader.destroy(existingLGU.avatar.public_id);
@@ -177,31 +178,64 @@ exports.updateLGU = async (req, res) => {
       const uploadedResponse = await cloudinary.uploader.upload(base64Image, {
         folder: "LGU_EVENT_MANAGEMENT/Profile",
       });
-
       avatar = {
         public_id: uploadedResponse.public_id,
         url: uploadedResponse.secure_url,
       };
     }
 
-    // Perform update
-    const updatedLGU = await LGU.findByIdAndUpdate(
-      LGUId,
-      {
-        first_name: req.body.first_name,
-        last_name: req.body.last_name,
-        middle_name: req.body.middle_name,
-        email: req.body.email,
-        gender: req.body.gender,
-        contact_number: req.body.contact_number,
-        task: req.body.task,
-        teamId: req.body.teamId,
-        avatar,
-      },
-      { new: true }
-    );
+    // ✅ Build dynamic update (skip null, undefined, or empty string)
+    const allowedFields = [
+      "first_name",
+      "middle_name",
+      "last_name",
+      "email",
+      "gender",
+      "contact_number",
+      "task",
+      "teamId",
+    ];
+    const updateData = { avatar };
 
-    return res.status(200).json({ status: "success", data: updatedLGU });
+    allowedFields.forEach((field) => {
+      const value = req.body[field];
+      if (
+        value !== undefined &&
+        value !== null &&
+        (typeof value !== "string" || value.trim() !== "")
+      ) {
+        updateData[field] = value;
+      }
+    });
+
+    // ✅ Update LGU info
+    const updatedLGU = await LGU.findByIdAndUpdate(LGUId, updateData, {
+      new: true,
+    });
+
+    // ✅ Update corresponding Login document
+    const loginUpdate = {};
+    ["first_name", "last_name", "contact_number"].forEach((field) => {
+      const value = req.body[field];
+      if (
+        value !== undefined &&
+        value !== null &&
+        (typeof value !== "string" || value.trim() !== "")
+      ) {
+        loginUpdate[field] = value;
+      }
+    });
+
+    if (avatar) loginUpdate.avatar = avatar;
+
+    await LogInSchema.findOneAndUpdate({ linkedId: LGUId }, loginUpdate, {
+      new: true,
+    });
+
+    return res.status(200).json({
+      status: "success",
+      data: updatedLGU,
+    });
   } catch (error) {
     console.error("Update failed:", error);
     return res.status(500).json({ error: "Something went wrong." });

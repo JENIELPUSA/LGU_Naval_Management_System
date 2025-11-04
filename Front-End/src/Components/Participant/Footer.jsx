@@ -1,14 +1,28 @@
-import React, { useContext } from "react";
+import React, { useState, useEffect } from "react";
 import { Mail, Facebook, Youtube, Instagram, Phone, MapPin } from "lucide-react";
 import Dilg from "../../assets/Dilg.png";
 import republic from "../../assets/republic.png";
 import transparency from "../../assets/transparency.png";
 import biliran from "../../assets/logo-login.png";
 import Bagong from "../../assets/BagongPilipinas.png";
-import { useAccessibility } from "./NavHeader"; // Import the accessibility hook
+import { useAccessibility } from "./NavHeader";
 
 const Footer = ({ FontColor, bgtheme }) => {
-    const accessibility = useAccessibility(); // Use the accessibility hook
+    const accessibility = useAccessibility();
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    // Window resize handler
+    useEffect(() => {
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+        };
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    // Mobile detection
+    const isMobile = windowWidth < 1024;
+    const isSmallMobile = windowWidth < 640;
 
     // Translation function for this component
     const t = (key) => {
@@ -120,37 +134,46 @@ const Footer = ({ FontColor, bgtheme }) => {
             className="w-full border-t border-gray-200 bg-gray-50"
             role="contentinfo"
             aria-label={t('navigation')}
+            style={{
+                fontFamily: accessibility.fontType === "dyslexia" ? "'OpenDyslexic', Arial, sans-serif" : "inherit",
+            }}
         >
             {/* Top Section: Contact + Logos */}
             <div className="grid grid-cols-1 gap-0 lg:grid-cols-4">
                 {/* Left Section: Emergency Hotlines */}
                 <div
                     style={{ background: bgtheme }}
-                    className={`flex flex-col justify-center p-8 text-white`}
+                    className={`flex flex-col justify-center p-4 sm:p-6 lg:p-8 text-white`}
                     role="region"
                     aria-labelledby="emergency-hotlines-heading"
                 >
                     <h3
                         id="emergency-hotlines-heading"
                         style={{ color: FontColor }}
-                        className="mb-5 flex items-center gap-2 text-lg font-semibold tracking-wide"
+                        className={`mb-3 sm:mb-4 lg:mb-5 flex items-center gap-2 font-semibold tracking-wide ${
+                            isSmallMobile ? 'text-base' : 'text-lg'
+                        }`}
                         onFocus={() => accessibility.speakText(t('emergencyHotlines'))}
                     >
                         <div className="h-5 w-1" aria-hidden="true"></div>
                         {t('emergencyHotlines')}
                     </h3>
 
-                    <div className="space-y-4 text-xs sm:text-sm">
+                    <div className={`space-y-2 sm:space-y-3 lg:space-y-4 ${
+                        isSmallMobile ? 'text-xs' : 'text-sm'
+                    }`}>
                         {emergencyHotlines.map((hotline, index) => (
                             <div 
                                 key={index}
-                                className="flex items-center justify-between border-b border-white/20 pb-1"
+                                className={`flex items-center justify-between border-b border-white/20 pb-2 ${
+                                    isMobile ? 'flex-col items-start gap-1' : 'flex-row'
+                                }`}
                                 role="listitem"
                             >
                                 <div className="flex items-center gap-2">
                                     <Phone
                                         style={{ color: FontColor }}
-                                        className="h-4 w-4"
+                                        className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'}`}
                                         aria-hidden="true"
                                     />
                                     <span 
@@ -162,7 +185,9 @@ const Footer = ({ FontColor, bgtheme }) => {
                                 </div>
                                 <p
                                     style={{ color: FontColor }}
-                                    className="text-sm font-medium tracking-tight"
+                                    className={`font-medium tracking-tight ${
+                                        isMobile ? 'text-xs ml-5' : 'text-sm'
+                                    }`}
                                     aria-label={`${t('phoneNumber')}: ${hotline.number}`}
                                 >
                                     {hotline.number}
@@ -174,7 +199,7 @@ const Footer = ({ FontColor, bgtheme }) => {
 
                 {/* Right White Section: Logos */}
                 <div 
-                    className="col-span-3 flex flex-wrap items-center justify-center gap-8 bg-white p-8 lg:gap-12"
+                    className="col-span-3 flex flex-wrap items-center justify-center gap-4 sm:gap-6 lg:gap-8 bg-white p-4 sm:p-6 lg:p-8"
                     role="region"
                     aria-labelledby="government-seals-heading"
                 >
@@ -190,9 +215,15 @@ const Footer = ({ FontColor, bgtheme }) => {
                             <img
                                 src={logo.src}
                                 alt={logo.alt}
-                                className="mb-2 h-[150px] w-auto object-contain"
+                                className={`mb-1 sm:mb-2 w-auto object-contain ${
+                                    isSmallMobile ? 'h-12' : isMobile ? 'h-16' : 'h-[150px]'
+                                }`}
                             />
-                            <p className="max-w-[120px] text-xs text-gray-600">
+                            <p className={`text-gray-600 ${
+                                isSmallMobile ? 'text-xs max-w-[80px]' : 
+                                isMobile ? 'text-xs max-w-[100px]' : 
+                                'text-xs max-w-[120px]'
+                            }`}>
                                 {logo.description}
                             </p>
                         </div>
@@ -207,30 +238,44 @@ const Footer = ({ FontColor, bgtheme }) => {
             >
                 {/* Left: Province Info */}
                 <div 
-                    className="flex items-center justify-center border-b border-blue-600 p-8 lg:justify-start lg:border-b-0 lg:border-r"
+                    className={`flex items-center justify-center border-b border-blue-600 p-4 sm:p-6 lg:p-8 ${
+                        isMobile ? 'flex-col text-center' : 'lg:justify-start lg:border-b-0 lg:border-r'
+                    }`}
                     role="region"
                     aria-labelledby="province-info-heading"
                 >
-                    <div className="flex items-center space-x-4">
+                    <div className={`flex items-center ${
+                        isMobile ? 'flex-col space-y-3' : 'sm:flex-row sm:space-x-4'
+                    }`}>
                         <img
                             src={biliran}
                             alt={t('provinceOfBiliran')}
-                            className="h-[150px] w-auto object-contain"
+                            className={`w-auto object-contain ${
+                                isSmallMobile ? 'h-16' : isMobile ? 'h-20' : 'h-[150px]'
+                            }`}
                         />
                         <div
                             style={{ color: FontColor }}
-                            className="space-y-1"
+                            className={`space-y-1 ${isMobile ? 'text-center' : 'text-left'}`}
                         >
-                            <p className="text-xs">{t('republicOfPhilippines')}</p>
+                            <p className={`${isSmallMobile ? 'text-xs' : 'text-sm'}`}>
+                                {t('republicOfPhilippines')}
+                            </p>
                             <p 
-                                className="text-sm font-bold"
+                                className={`font-bold ${
+                                    isSmallMobile ? 'text-sm' : 'text-base'
+                                }`}
                                 onFocus={() => accessibility.speakText(t('provinceOfBiliran'))}
                             >
                                 {t('provinceOfBiliran')}
                             </p>
-                            <p className="text-xs">{t('naval')}</p>
+                            <p className={`${isSmallMobile ? 'text-xs' : 'text-sm'}`}>
+                                {t('naval')}
+                            </p>
                             <p 
-                                className="text-sm font-bold"
+                                className={`font-bold ${
+                                    isSmallMobile ? 'text-sm' : 'text-base'
+                                }`}
                                 onFocus={() => accessibility.speakText(t('navalLguOffice'))}
                             >
                                 {t('navalLguOffice')}
@@ -242,29 +287,37 @@ const Footer = ({ FontColor, bgtheme }) => {
                 {/* Middle: About Gov.ph */}
                 <div
                     style={{ color: FontColor }}
-                    className="border-b border-blue-600 p-8 lg:border-b-0 lg:border-r"
+                    className={`border-b border-blue-600 p-4 sm:p-6 lg:p-8 ${
+                        isMobile ? '' : 'lg:border-b-0 lg:border-r'
+                    }`}
                     role="region"
                     aria-labelledby="about-govph-heading"
                 >
                     <h4 
                         id="about-govph-heading"
-                        className="mb-4 text-lg font-bold"
+                        className={`mb-2 sm:mb-3 lg:mb-4 font-bold ${
+                            isSmallMobile ? 'text-base' : 'text-lg'
+                        }`}
                         onFocus={() => accessibility.speakText(t('aboutGovPh'))}
                     >
                         {t('aboutGovPh')}
                     </h4>
                     <p 
-                        className="mb-4 text-sm leading-relaxed"
+                        className={`mb-2 sm:mb-3 lg:mb-4 leading-relaxed ${
+                            isSmallMobile ? 'text-xs' : 'text-sm'
+                        }`}
                         onFocus={() => accessibility.speakText(t('aboutGovPhDescription'))}
                     >
                         {t('aboutGovPhDescription')}
                     </p>
-                    <div className="space-y-2">
+                    <div className="space-y-1 sm:space-y-2">
                         <a
                             href="https://www.gov.ph"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="block text-sm transition-colors hover:text-yellow-400 hover:underline focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-blue-800"
+                            className={`block transition-colors hover:text-yellow-400 hover:underline focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-blue-800 ${
+                                isSmallMobile ? 'text-xs' : 'text-sm'
+                            }`}
                             aria-label={`${t('govPh')} - ${t('externalLink')}`}
                             onFocus={() => accessibility.speakText(`${t('govPh')} - ${t('externalLink')}`)}
                         >
@@ -274,7 +327,9 @@ const Footer = ({ FontColor, bgtheme }) => {
                             href="https://www.gov.ph/official-gazette/"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="block text-sm transition-colors hover:text-yellow-400 hover:underline focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-blue-800"
+                            className={`block transition-colors hover:text-yellow-400 hover:underline focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 focus:ring-offset-blue-800 ${
+                                isSmallMobile ? 'text-xs' : 'text-sm'
+                            }`}
                             aria-label={`${t('officialGazette')} - ${t('externalLink')}`}
                             onFocus={() => accessibility.speakText(`${t('officialGazette')} - ${t('externalLink')}`)}
                         >
@@ -286,20 +341,26 @@ const Footer = ({ FontColor, bgtheme }) => {
                 {/* Right: Government Links */}
                 <div
                     style={{ color: FontColor }}
-                    className="border-b border-blue-600 p-8 lg:border-b-0 lg:border-r"
+                    className={`border-b border-blue-600 p-4 sm:p-6 lg:p-8 ${
+                        isMobile ? '' : 'lg:border-b-0'
+                    }`}
                     role="region"
                     aria-labelledby="government-links-heading"
                 >
                     <h4 
                         id="government-links-heading"
-                        className="mb-4 text-lg font-bold"
+                        className={`mb-2 sm:mb-3 lg:mb-4 font-bold ${
+                            isSmallMobile ? 'text-base' : 'text-lg'
+                        }`}
                         onFocus={() => accessibility.speakText(t('governmentLinks'))}
                     >
                         {t('governmentLinks')}
                     </h4>
                     <ul
                         style={{ color: FontColor }}
-                        className="space-y-2 text-sm"
+                        className={`space-y-1 sm:space-y-2 ${
+                            isMobile ? 'grid grid-cols-2 gap-x-4' : ''
+                        } ${isSmallMobile ? 'text-xs' : 'text-sm'}`}
                         role="list"
                     >
                         {governmentLinks.map((link, index) => (
@@ -323,19 +384,26 @@ const Footer = ({ FontColor, bgtheme }) => {
 
             {/* Copyright Section */}
             <div 
-                className="bg-blue-950 px-8 py-4 text-blue-200"
+                className="bg-blue-950 px-4 sm:px-6 lg:px-8 py-3 sm:py-4 text-blue-200"
                 role="region"
                 aria-label="Copyright information"
             >
                 <div className="mx-auto max-w-7xl text-center">
                     <p 
-                        className="text-sm"
+                        className={`${isSmallMobile ? 'text-xs' : 'text-sm'}`}
                         onFocus={() => accessibility.speakText(t('copyright'))}
                     >
                         © {new Date().getFullYear()} {t('copyright')}
                     </p>
                 </div>
             </div>
+
+            {/* Mobile Layout Indicator (for debugging) */}
+            {process.env.NODE_ENV === "development" && isMobile && (
+                <div className="fixed bottom-2 right-2 rounded bg-gray-800 px-2 py-1 text-xs text-white">
+                    FOOTER: {windowWidth}px
+                </div>
+            )}
         </footer>
     );
 };

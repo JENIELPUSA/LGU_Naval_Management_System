@@ -1,140 +1,96 @@
-const mongoose = require("mongoose");
 const LogActionAudit = require("../Models/LogActionAudit");
+const mongoose = require("mongoose");
 const AsyncErrorHandler = require("../Utils/AsyncErrorHandler");
 
 exports.displayAuditLogs = AsyncErrorHandler(async (req, res) => {
-  const limit = parseInt(req.query.limit) || 10;
-  const page = parseInt(req.query.page) || 1;
-  const skip = (page - 1) * limit;
+  const { search = "", from, to, limit = 8, page = 1, action_type } = req.query;
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+  const matchStage = {};
+  if (from || to) {
+    matchStage.timestamp = {};
+    if (from) matchStage.timestamp.$gte = new Date(from);
+    if (to) matchStage.timestamp.$lte = new Date(to);
+  }
+  if (action_type && action_type !== "All") {
+    matchStage.action_type = { $regex: new RegExp(`^${action_type}$`, "i") };
+  }
 
-  const { type, dateFrom, dateTo } = req.query;
-  const matchFilter = {};
-  if (type) matchFilter.type = type;
+  if (search.trim()) {
+    const searchTerms = search.trim().split(/\s+/);
+    const searchConditions = searchTerms.map((term) => ({
+      $or: [
+        { action_type: { $regex: term, $options: "i" } },
+        { module: { $regex: term, $options: "i" } },
+        { description: { $regex: term, $options: "i" } },
+        { "user_info.first_name": { $regex: term, $options: "i" } },
+        { "user_info.last_name": { $regex: term, $options: "i" } },
+      ],
+    }));
 
-  if (dateFrom || dateTo) {
-    matchFilter.createdAt = {};
-    if (dateFrom) matchFilter.createdAt.$gte = new Date(dateFrom);
-    if (dateTo) {
-      const dateToEnd = new Date(dateTo);
-      dateToEnd.setHours(23, 59, 59, 999);
-      matchFilter.createdAt.$lte = dateToEnd;
+    // Combine existing matchStage with $and search logic safely
+    if (Object.keys(matchStage).length > 0) {
+      matchStage.$and = [...(matchStage.$and || []), ...searchConditions];
+    } else {
+      matchStage.$and = searchConditions;
     }
   }
 
-  const logs = await LogActionAudit.aggregate([
-    { $match: matchFilter },
-
+  const pipeline = [
     {
-      $facet: {
-        officerLogs: [
-          { $match: { performedByModel: "Officer" } },
-          {
-            $lookup: {
-              from: "officers",
-              localField: "performedBy",
-              foreignField: "_id",
-              as: "user_info",
-              pipeline: [{ $project: { first_name: 1, last_name: 1 } }],
-            },
-          },
-          {
-            $lookup: {
-              from: "files",
-              localField: "file",
-              foreignField: "_id",
-              as: "file_info",
-              pipeline: [{ $project: { title: 1 } }],
-            },
-          },
-          {
-            $addFields: {
-              file_title: {
-                $ifNull: [{ $arrayElemAt: ["$file_info.title", 0] }, ""],
-              },
-              performed_by_name: {
-                $cond: [
-                  { $gt: [{ $size: "$user_info" }, 0] },
-                  {
-                    $concat: [
-                      { $ifNull: [{ $arrayElemAt: ["$user_info.first_name", 0] }, ""] },
-                      " ",
-                      { $ifNull: [{ $arrayElemAt: ["$user_info.last_name", 0] }, ""] },
-                    ],
-                  },
-                  "Unknown",
-                ],
-              },
-            },
-          },
-        ],
-        adminLogs: [
-          { $match: { performedByModel: "Admin" } },
-          {
-            $lookup: {
-              from: "admins",
-              localField: "performedBy",
-              foreignField: "_id",
-              as: "user_info",
-              pipeline: [{ $project: { first_name: 1, last_name: 1 } }],
-            },
-          },
-          {
-            $lookup: {
-              from: "files",
-              localField: "file",
-              foreignField: "_id",
-              as: "file_info",
-              pipeline: [{ $project: { title: 1 } }],
-            },
-          },
-          {
-            $addFields: {
-              file_title: {
-                $ifNull: [{ $arrayElemAt: ["$file_info.title", 0] }, ""],
-              },
-              performed_by_name: {
-                $cond: [
-                  { $gt: [{ $size: "$user_info" }, 0] },
-                  {
-                    $concat: [
-                      { $ifNull: [{ $arrayElemAt: ["$user_info.first_name", 0] }, ""] },
-                      " ",
-                      { $ifNull: [{ $arrayElemAt: ["$user_info.last_name", 0] }, ""] },
-                    ],
-                  },
-                  "Unknown",
-                ],
-              },
-            },
-          },
-        ],
+      $lookup: {
+        from: "userloginschemas",
+        localField: "performed_by",
+        foreignField: "linkedId",
+        as: "user_info",
       },
     },
+    {
+      $unwind: {
+        path: "$user_info",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    { $match: matchStage },
     {
       $project: {
-        mergedLogs: { $concatArrays: ["$officerLogs", "$adminLogs"] },
+        _id: 1,
+        action_type: 1,
+        module: 1,
+        description: 1,
+        reference_id: 1,
+        old_data: 1,
+        new_data: 1,
+        ip_address: 1,
+        timestamp: 1,
+        performed_by: "$performed_by",
+        performed_by_name: {
+          $concat: [
+            { $ifNull: ["$user_info.first_name", ""] },
+            " ",
+            { $ifNull: ["$user_info.last_name", ""] },
+          ],
+        },
+        role: "$user_info.role",
       },
     },
-    { $unwind: "$mergedLogs" },
-    { $replaceRoot: { newRoot: "$mergedLogs" } },
-    { $sort: { createdAt: -1 } },
+    { $sort: { timestamp: -1 } },
     {
       $facet: {
-        metadata: [{ $count: "total" }],
-        data: [{ $skip: skip }, { $limit: limit }],
+        data: [{ $skip: skip }, { $limit: parseInt(limit) }],
+        totalCount: [{ $count: "count" }],
       },
     },
-  ]);
+  ];
 
-  const totalCount = logs[0]?.metadata[0]?.total || 0;
-  const totalPages = Math.ceil(totalCount / limit);
+  const results = await LogActionAudit.aggregate(pipeline);
+  const data = results[0]?.data || [];
+  const totalLogs = results[0]?.totalCount[0]?.count || 0;
 
   res.status(200).json({
-    currentPage: page,
-    totalPages,
     status: "success",
-    results: logs[0].data.length,
-    data: logs[0].data,
+    data,
+    totalLogs,
+    totalPages: Math.ceil(totalLogs / parseInt(limit)),
+    currentPage: parseInt(page),
   });
 });
-

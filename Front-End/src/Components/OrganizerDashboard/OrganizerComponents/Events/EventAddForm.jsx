@@ -2,7 +2,6 @@ import React, { useContext, useState, useEffect, useRef } from "react";
 import { Calendar, MapPin, Users, List, CircleDot, X, Clock, Search, Filter, ChevronDown } from "lucide-react";
 import { EventDisplayContext } from "../../../../contexts/EventContext/EventContext";
 import { ProposalDisplayContext } from "../../../../contexts/ProposalContext/ProposalContext";
-import { AuthContext } from "../../../../contexts/AuthContext";
 import { LguDisplayContext } from "../../../../contexts/LguContext/LguContext";
 import { ResourcesDisplayContext } from "../../../../contexts/ResourcesContext/ResourcesContext";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
@@ -10,9 +9,8 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import axios from "axios";
 
-const AddEventModal = ({ isOpen, onClose, isEditing, editingData, bgtheme, FontColor }) => {
+const AddEventModal = ({ isOpen, onClose, isEditing, editingData, bgtheme, FontColor, linkId }) => {
     const { AddEvent, UpdateEvent } = useContext(EventDisplayContext);
-    const { linkId } = useContext(AuthContext);
     const { isLgu } = useContext(LguDisplayContext);
     const { isDropdownProposal, DropdownProposal } = useContext(ProposalDisplayContext);
     const { isResourcesDropdown, FetchResourcesDropdownData } = useContext(ResourcesDisplayContext);
@@ -180,6 +178,7 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData, bgtheme, FontC
 
         const dataToSend = {
             ...formData,
+            linkId,
             eventDate: formData.eventDate ? new Date(formData.eventDate).toISOString() : "",
             resources: formData.resources,
         };

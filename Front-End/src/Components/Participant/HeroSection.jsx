@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useContext, useCallback, useMemo } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Calendar, ChevronDown, ChevronUp } from "lucide-react";
 import heroBG1 from "../../assets/hero-image.png";
 import heroBG2 from "../../assets/hero-image2.png";
 import heroBG3 from "../../assets/hero-image1.png";
@@ -14,10 +14,12 @@ const HeroSection = ({ setShowModal, showModal, setShowPersonel, bgtheme, FontCo
     const heroRef = useRef(null);
     const [currentBgIndex, setCurrentBgIndex] = useState(0);
     const [windowHeight, setWindowHeight] = useState(window.innerHeight);
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const [loadingButton, setLoadingButton] = useState(null);
     const [debugInfo, setDebugInfo] = useState("");
     const [voiceCommandLog, setVoiceCommandLog] = useState("");
     const [performanceMetrics, setPerformanceMetrics] = useState({});
+    const [showCalendar, setShowCalendar] = useState(false);
     
     // OPTIMIZED: Preload images for faster switching
     const backgroundImages = useMemo(() => [heroBG1, heroBG3, heroBG2, heroBG4], []);
@@ -65,6 +67,7 @@ const HeroSection = ({ setShowModal, showModal, setShowPersonel, bgtheme, FontCo
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(() => {
                 setWindowHeight(window.innerHeight);
+                setWindowWidth(window.innerWidth);
             }, 100);
         };
         window.addEventListener("resize", handleResize);
@@ -237,12 +240,9 @@ const HeroSection = ({ setShowModal, showModal, setShowPersonel, bgtheme, FontCo
         },
     ], [handleMeetButtonClick, handleRegisterEvent]);
 
+    // SIMPLIFIED: Plain calendar days without marks
     const calendarDays = useMemo(() => 
-        Array.from({ length: 30 }, (_, i) => {
-            const day = i + 1;
-            const isMarked = [3, 10, 17, 25].includes(day);
-            return { day, isMarked };
-        }), []);
+        Array.from({ length: 30 }, (_, i) => i + 1), []);
 
     const testButtonStyle = useCallback((color) => ({
         background: color,
@@ -255,14 +255,17 @@ const HeroSection = ({ setShowModal, showModal, setShowPersonel, bgtheme, FontCo
         width: "100%",
     }), []);
 
+    // Mobile detection
+    const isMobile = windowWidth < 1024;
+
     return (
         <motion.section
             ref={heroRef}
-            style={{ y, opacity, height: getHeroHeight() }}
+            style={{ y, opacity, height: isMobile ? "auto" : getHeroHeight() }}
             className="relative flex w-full max-w-7xl flex-col gap-2 overflow-hidden rounded-3xl lg:flex-row"
         >
-            {/* LEFT SIDE: Slideshow */}
-            <div className="relative flex h-[75vh] w-full items-center justify-center overflow-hidden rounded-3xl text-white shadow-md lg:h-auto lg:w-2/3">
+            {/* SLIDESHOW SECTION - Full width on mobile, 2/3 on desktop */}
+            <div className="relative flex h-[50vh] w-full items-center justify-center overflow-hidden rounded-3xl text-white shadow-md lg:h-auto lg:w-2/3">
                 {backgroundImages.map((image, i) => (
                     <motion.div
                         key={i}
@@ -273,15 +276,16 @@ const HeroSection = ({ setShowModal, showModal, setShowPersonel, bgtheme, FontCo
                     />
                 ))}
 
+                {/* Navigation Arrows - Smaller on mobile */}
                 <button
                     onClick={() => {
                         setCurrentBgIndex(currentBgIndex === 0 ? backgroundImages.length - 1 : currentBgIndex - 1);
                         accessibility.speakText("Previous image");
                     }}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-3 backdrop-blur-sm hover:bg-white/40"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2 backdrop-blur-sm hover:bg-white/40 lg:left-4 lg:p-3"
                     aria-label="Previous image"
                 >
-                    <ChevronLeft className="h-6 w-6 text-white" />
+                    <ChevronLeft className="h-4 w-4 text-white lg:h-6 lg:w-6" />
                 </button>
 
                 <button
@@ -289,100 +293,122 @@ const HeroSection = ({ setShowModal, showModal, setShowPersonel, bgtheme, FontCo
                         setCurrentBgIndex(currentBgIndex === backgroundImages.length - 1 ? 0 : currentBgIndex + 1);
                         accessibility.speakText("Next image");
                     }}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-3 backdrop-blur-sm hover:bg-white/40"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2 backdrop-blur-sm hover:bg-white/40 lg:right-4 lg:p-3"
                     aria-label="Next image"
                 >
-                    <ChevronRight className="h-6 w-6 text-white" />
+                    <ChevronRight className="h-4 w-4 text-white lg:h-6 lg:w-6" />
                 </button>
 
                 {/* Image counter */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-sm text-white backdrop-blur-sm">
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-2 py-1 text-xs text-white backdrop-blur-sm lg:bottom-4 lg:px-3 lg:text-sm">
                     {currentBgIndex + 1} / {backgroundImages.length}
                 </div>
             </div>
 
-            {/* RIGHT SIDE: Calendar + Buttons */}
-            <div className="relative z-10 mt-4 flex w-full flex-col items-center justify-center gap-8 rounded-3xl bg-white/80 p-8 backdrop-blur-md sm:p-12 lg:mt-0 lg:w-1/3">
-                {/* Calendar */}
-                <div className="w-full max-w-xs rounded-xl border border-gray-200 bg-gray-50 p-5 shadow-sm">
-                    <div className="mb-3 flex items-center justify-between">
-                        <h3 className="text-lg font-bold text-gray-700">Event Calendar</h3>
+            {/* CONTENT SECTION - Stacked on mobile, sidebar on desktop */}
+            <div className="relative z-10 flex w-full flex-col items-center justify-center gap-4 rounded-3xl bg-white/80 p-4 backdrop-blur-md lg:mt-0 lg:w-1/3 lg:gap-8 lg:p-8">
+                
+                {/* Calendar Section - Collapsible on mobile */}
+                <div className="w-full lg:max-w-xs">
+                    {/* Mobile Calendar Header - Collapsible */}
+                    {isMobile && (
                         <button
-                            className="rounded-md p-1 hover:bg-gray-100"
-                            aria-label="Calendar"
-                            onClick={() => accessibility.speakText("Event calendar showing current month with marked events")}
+                            onClick={() => setShowCalendar(!showCalendar)}
+                            className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-gray-50 p-3 shadow-sm lg:hidden"
                         >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5 text-gray-500"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M6 2v2M18 2v2M4 10h16M5 22h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"
-                                />
-                            </svg>
-                        </button>
-                    </div>
-
-                    <div className="mb-2 grid grid-cols-7 text-center text-xs font-medium text-gray-600">
-                        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-                            <div key={d}>{d}</div>
-                        ))}
-                    </div>
-
-                    <div className="grid grid-cols-7 gap-y-1 text-center text-sm">
-                        {calendarDays.map(({ day, isMarked }) => (
-                            <div
-                                key={day}
-                                className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full transition-all ${
-                                    isMarked ? "bg-blue-500 font-bold text-white" : "text-gray-700 hover:bg-gray-100"
-                                }`}
-                            >
-                                {day}
-                                {isMarked && <span className="absolute bottom-0 right-1 h-1.5 w-1.5 rounded-full bg-pink-400" />}
+                            <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4 text-gray-600" />
+                                <h3 className="text-sm font-bold text-gray-700">Calendar</h3>
                             </div>
-                        ))}
+                            {showCalendar ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        </button>
+                    )}
+
+                    {/* Calendar Content */}
+                    <div className={`${isMobile ? (showCalendar ? 'block' : 'hidden') : 'block'} rounded-xl border border-gray-200 bg-gray-50 p-4 shadow-sm lg:p-5`}>
+                        <div className="mb-3 flex items-center justify-between">
+                            <h3 className="text-base font-bold text-gray-700 lg:text-lg">Calendar</h3>
+                            {!isMobile && (
+                                <button
+                                    className="rounded-md p-1 hover:bg-gray-100"
+                                    aria-label="Calendar"
+                                    onClick={() => accessibility.speakText("Calendar showing current month")}
+                                >
+                                    <Calendar className="h-4 w-4 text-gray-500 lg:h-5 lg:w-5" />
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="mb-2 grid grid-cols-7 text-center text-xs font-medium text-gray-600">
+                            {["S", "M", "T", "W", "T", "F", "S"].map((d) => (
+                                <div key={d}>{d}</div>
+                            ))}
+                        </div>
+
+                        <div className="grid grid-cols-7 gap-1 text-center text-xs lg:gap-y-1 lg:text-sm">
+                            {calendarDays.map((day) => (
+                                <div
+                                    key={day}
+                                    className="mx-auto flex h-6 w-6 items-center justify-center rounded-full text-gray-700 transition-all hover:bg-gray-100 lg:h-8 lg:w-8"
+                                >
+                                    {day}
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
-                {/* Buttons with Spinner */}
-                {buttons.map((item, idx) => (
-                    <motion.button
-                        key={item.label}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 + idx * 0.1 }}
-                        onClick={item.action}
-                        disabled={loadingButton === item.label}
-                        style={{
-                            background: loadingButton === item.label ? "#9CA3AF" : bgtheme,
-                        }}
-                        className={`group flex w-full max-w-xs items-center justify-center rounded-full px-6 py-3 font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-lg ${
-                            loadingButton === item.label ? "cursor-not-allowed" : "cursor-pointer"
-                        }`}
-                        aria-label={item.label}
-                    >
-                        {loadingButton === item.label ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Loading...
-                            </>
-                        ) : (
-                            <span
-                                style={{ color: FontColor }}
-                                className="text-sm sm:text-base"
-                            >
-                                {item.label}
-                            </span>
-                        )}
-                    </motion.button>
-                ))}
+                {/* Buttons Section - Stacked vertically */}
+                <div className="w-full space-y-3 lg:space-y-4">
+                    {buttons.map((item, idx) => (
+                        <motion.button
+                            key={item.label}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3 + idx * 0.1 }}
+                            onClick={item.action}
+                            disabled={loadingButton === item.label}
+                            style={{
+                                background: loadingButton === item.label ? "#9CA3AF" : bgtheme,
+                            }}
+                            className={`group flex w-full items-center justify-center rounded-full px-4 py-3 font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-lg lg:max-w-xs lg:px-6 ${
+                                loadingButton === item.label ? "cursor-not-allowed" : "cursor-pointer"
+                            }`}
+                            aria-label={item.label}
+                        >
+                            {loadingButton === item.label ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    <span className="text-sm">Loading...</span>
+                                </>
+                            ) : (
+                                <span
+                                    style={{ color: FontColor }}
+                                    className="text-sm lg:text-base"
+                                >
+                                    {item.label}
+                                </span>
+                            )}
+                        </motion.button>
+                    ))}
+                </div>
+
+                {/* Mobile Voice Command Helper */}
+                {isMobile && process.env.NODE_ENV === "development" && (
+                    <div className="mt-4 w-full rounded-lg bg-yellow-50 p-3">
+                        <p className="text-xs text-yellow-800">
+                            <strong>Voice Commands:</strong> Try saying "Mayor", "Vice Mayor", or "Register"
+                        </p>
+                    </div>
+                )}
             </div>
+
+            {/* Mobile Layout Indicator (for debugging) */}
+            {process.env.NODE_ENV === "development" && isMobile && (
+                <div className="fixed bottom-2 left-2 rounded bg-red-500 px-2 py-1 text-xs text-white">
+                    MOBILE VIEW: {windowWidth}px
+                </div>
+            )}
         </motion.section>
     );
 };

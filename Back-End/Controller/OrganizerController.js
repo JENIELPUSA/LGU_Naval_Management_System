@@ -2,6 +2,7 @@ const AsyncErrorHandler = require("../Utils/AsyncErrorHandler");
 const OrganizerData = require("../Models/OrganizerModel");
 const UserLoginSchema = require("../Models/LogInSchema");
 const cloudinary = require("../Utils/cloudinary");
+const LogInSchema = require("./../Models/LogInSchema");
 exports.deleteOrganizer = AsyncErrorHandler(async (req, res, next) => {
   const OrganizerID = req.params.id;
 
@@ -126,8 +127,6 @@ exports.DisplayOrganizer = AsyncErrorHandler(async (req, res) => {
   }
 });
 
-
-
 exports.DisplayProfile = AsyncErrorHandler(async (req, res) => {
   const loggedInOrganizerId = req.user.linkId;
   const Organizer = await OrganizerData.findById(loggedInOrganizerId);
@@ -144,21 +143,19 @@ exports.DisplayProfile = AsyncErrorHandler(async (req, res) => {
   });
 });
 
-
 exports.updateOrganizer = async (req, res) => {
   const OrganizerID = req.params.id;
 
   try {
     const organz = await OrganizerData.findById(OrganizerID);
     if (!organz) {
-      return res.status(404).json({ error: "organz not found" });
+      return res.status(404).json({ error: "Organizer not found" });
     }
 
-    let avatar = organz.avatar; // Default is the existing avatar object
+    let avatar = organz.avatar; // keep existing avatar by default
 
-    // If there's a new image uploaded
+    // Handle new uploaded image
     if (req.file) {
-      // Delete old image from Cloudinary if it has public_id
       if (organz.avatar?.public_id) {
         try {
           await cloudinary.uploader.destroy(organz.avatar.public_id);
@@ -167,39 +164,77 @@ exports.updateOrganizer = async (req, res) => {
         }
       }
 
-      // Upload new image
-      const base64Image = `data:${
-        req.file.mimetype
-      };base64,${req.file.buffer.toString("base64")}`;
+      const base64Image = `data:${req.file.mimetype};base64,${req.file.buffer.toString(
+        "base64"
+      )}`;
       const uploadedResponse = await cloudinary.uploader.upload(base64Image, {
         folder: "LGU_EVENT_MANAGEMENT/Profile",
       });
+
       avatar = {
         public_id: uploadedResponse.public_id,
         url: uploadedResponse.secure_url,
       };
     }
 
-    const updateOrganized = await OrganizerData.findByIdAndUpdate(
+    // Build dynamic update (skip null/empty fields safely)
+    const allowedFields = [
+      "first_name",
+      "middle_name",
+      "last_name",
+      "email",
+      "gender",
+      "contact_number",
+    ];
+    const updateData = { avatar };
+
+    allowedFields.forEach((field) => {
+      const value = req.body[field];
+      if (
+        value !== undefined &&
+        value !== null &&
+        (typeof value !== "string" || value.trim() !== "")
+      ) {
+        updateData[field] = value;
+      }
+    });
+
+    // Update Organizer document
+    const updatedOrganizer = await OrganizerData.findByIdAndUpdate(
       OrganizerID,
-      {
-        first_name: req.body.first_name,
-        last_name: req.body.last_name,
-        middle_name: req.body.middle_name,
-        email: req.body.email,
-        gender: req.body.gender,
-        contact_number: req.body.contact_number,
-        avatar, 
-      },
+      updateData,
       { new: true }
     );
 
-    res.json({ status: "success", data: updateOrganized });
+    // Update corresponding LogInSchema document
+    const loginUpdate = {};
+    ["first_name", "last_name", "contact_number"].forEach((field) => {
+      const value = req.body[field];
+      if (
+        value !== undefined &&
+        value !== null &&
+        (typeof value !== "string" || value.trim() !== "")
+      ) {
+        loginUpdate[field] = value;
+      }
+    });
+
+    if (avatar) loginUpdate.avatar = avatar;
+
+    const updatedLogin = await LogInSchema.findOneAndUpdate(
+      { linkedId: OrganizerID },
+      loginUpdate,
+      { new: true }
+    );
+
+    res.json({
+      status: "success",
+      organizer: updatedOrganizer,
+      login: updatedLogin,
+    });
   } catch (error) {
-    console.error(error);
+    console.error("Update Organizer failed:", error);
     res.status(500).json({ error: "Something went wrong." });
   }
 };
-
-
 

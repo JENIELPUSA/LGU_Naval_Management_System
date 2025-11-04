@@ -3,11 +3,11 @@ import axios from "axios";
 import { AuthContext } from "../AuthContext";
 import SuccessFailed from "../../ReusableFolder/SuccessandField";
 import axiosInstance from "../../ReusableFolder/axioxInstance";
-
+import WarningLogoutModal from "../../ReusableFolder/WarningLogOutModal";
 export const LguDisplayContext = createContext();
 
 export const LguDisplayProvider = ({ children }) => {
-    const { authToken } = useContext(AuthContext);
+    const { authToken, logout } = useContext(AuthContext);
     const [customError, setCustomError] = useState("");
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -22,8 +22,9 @@ export const LguDisplayProvider = ({ children }) => {
     const [dateFrom, setDateFrom] = useState("");
     const [dateTo, setDateTo] = useState("");
     const [isSummary, setSummary] = useState("");
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-    const limit = 5; 
+    const limit = 5;
     const FetchLguData = async (page = 1, limit, searchTerm = "", fromDate = "", toDate = "") => {
         if (!authToken) return;
 
@@ -148,6 +149,9 @@ export const LguDisplayProvider = ({ children }) => {
             });
 
             if (response.data?.status === "success") {
+                if (values.setting == "Yes") {
+                    setShowLogoutModal(true);
+                }
                 return { success: true, data: response.data.data };
             } else {
                 return { success: false, error: "Unexpected response from server." };
@@ -197,16 +201,13 @@ export const LguDisplayProvider = ({ children }) => {
 
             try {
                 setIsLoading(true);
-                const res = await axios.get(
-                    `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/LGU/GetAssignEventSummary?eventId=${eventId}`,
-                    {
-                        withCredentials: true,
-                        headers: {
-                            Authorization: `Bearer ${authToken}`,
-                            "Cache-Control": "no-cache",
-                        },
+                const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/LGU/GetAssignEventSummary?eventId=${eventId}`, {
+                    withCredentials: true,
+                    headers: {
+                        Authorization: `Bearer ${authToken}`,
+                        "Cache-Control": "no-cache",
                     },
-                );
+                });
 
                 const { data } = res.data;
 
@@ -284,6 +285,16 @@ export const LguDisplayProvider = ({ children }) => {
                 onClose={() => setShowModal(false)}
                 status={modalStatus}
                 errorMessage={customError}
+            />
+
+            {/* Warning Logout Modal */}
+            <WarningLogoutModal
+                isOpen={showLogoutModal}
+                onClose={() => setShowLogoutModal(false)}
+                onLogout={() => {
+                    logout();
+                }}
+                message="Please log out your dashboard to complete your action."
             />
         </LguDisplayContext.Provider>
     );

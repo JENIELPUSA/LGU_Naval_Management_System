@@ -153,6 +153,7 @@ const FetchUpcomingEvent = useCallback(async (page = 1, limit = 5, searchTerm = 
                     lgu: values.lguId,
                     startTime: values.startTime,
                     venue: values.venue,
+                    linkId: values.linkId,
                 },
                 {
                     headers: { Authorization: `Bearer ${authToken}` },

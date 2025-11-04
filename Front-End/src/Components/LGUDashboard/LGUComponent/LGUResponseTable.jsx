@@ -26,8 +26,21 @@ import { AuthContext } from "../../../contexts/AuthContext";
 
 const LGUResponseTable = () => {
     const { role } = useContext(AuthContext);
-    const { isLguResponse,DeleteParticipant, currentPage, isTotalResponse,totalPages, customError, FetchLguResponse, UpdateResponse,limit,setCurrentPage,isLoading, setIsLoading, } =
-        useContext(LguResponseContext);
+    const {
+        isLguResponse,
+        DeleteParticipant,
+        currentPage,
+        isTotalResponse,
+        totalPages,
+        customError,
+        FetchLguResponse,
+        UpdateResponse,
+        limit,
+        setCurrentPage,
+        isLoading,
+        setIsLoading,
+    } = useContext(LguResponseContext);
+
     const [isDeleteID, setDeleteID] = useState(null);
     const [tempSearchTerm, setTempSearchTerm] = useState("");
     const [searchTerm, setSearchTerm] = useState("");
@@ -43,6 +56,7 @@ const LGUResponseTable = () => {
     const [currentRejectResponse, setCurrentRejectResponse] = useState(null);
     const [rejectNotes, setRejectNotes] = useState("");
     const [notesError, setNotesError] = useState("");
+
     const showingStart = (currentPage - 1) * limit + 1;
     const showingEnd = Math.min(currentPage * limit, isTotalResponse);
 
@@ -61,14 +75,16 @@ const LGUResponseTable = () => {
         }
     };
 
+    // ✅ FIXED: Use eventInfo (lowercase) consistently
     const handleApprove = async (response) => {
-        const submittedBy = response.EventInfo.created_by;
+        const submittedBy = response.eventInfo?.created_by; // ✅ lowercase + optional chaining
         const id = response._id;
         const values = {
             status: "approved",
             submitted_by: submittedBy,
         };
         await UpdateResponse(id, values);
+        FetchLguResponse(currentPage, limit, searchTerm, dateFrom, dateTo); // Optional: refresh
     };
 
     const handleReject = (response) => {
@@ -82,16 +98,14 @@ const LGUResponseTable = () => {
             setNotesError("Notes are required for rejection");
             return;
         }
-
         if (currentRejectResponse) {
-            const submittedBy = currentRejectResponse.EventInfo.created_by;
+            const submittedBy = currentRejectResponse.eventInfo?.created_by; // ✅ fixed here too
             const id = currentRejectResponse._id;
             const values = {
                 status: "rejected",
                 submitted_by: submittedBy,
                 note: rejectNotes,
             };
-
             await UpdateResponse(id, values);
             setRejectModalOpen(false);
             setRejectNotes("");
@@ -103,32 +117,26 @@ const LGUResponseTable = () => {
 
     const renderPageNumbers = () => {
         if (totalPages <= 1) return null;
-
         const maxPagesToShow = 5;
         let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
         let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
-
         if (endPage - startPage + 1 < maxPagesToShow) {
             startPage = Math.max(1, endPage - maxPagesToShow + 1);
         }
-
-        return Array.from({ length: endPage - startPage + 1 }, (_, i) => {
-            const pageNum = startPage + i;
-            return (
-                <button
-                    key={pageNum}
-                    onClick={() => goToPage(pageNum)}
-                    aria-label={`Go to page ${pageNum}`}
-                    className={`mx-1 h-10 min-w-[40px] rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-                        currentPage === pageNum
-                            ? "bg-blue-600 text-white shadow-lg shadow-blue-200 dark:bg-blue-500 dark:shadow-blue-800"
-                            : "border border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-                    }`}
-                >
-                    {pageNum}
-                </button>
-            );
-        });
+        return (
+            <div className="relative flex items-center">
+                {Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i).map((pageNum) => (
+                    <button
+                        key={pageNum}
+                        onClick={() => goToPage(pageNum)}
+                        aria-label={`Go to page ${pageNum}`}
+                        className="mx-0.5 h-7 min-w-[28px] rounded px-1.5 py-0.5 text-[10px] font-medium sm:h-8 sm:min-w-[32px] sm:rounded-md sm:px-2 sm:py-1 sm:text-xs"
+                    >
+                        {pageNum}
+                    </button>
+                ))}
+            </div>
+        );
     };
 
     const handleCloseModal = () => {
@@ -146,7 +154,6 @@ const LGUResponseTable = () => {
             setIsLoading(true);
             const result = await DeleteParticipant(isDeleteID);
             setIsLoading(false);
-
             if (result?.success) {
                 setModalStatus("success");
                 setDeleteID(null);
@@ -167,33 +174,13 @@ const LGUResponseTable = () => {
     const getStatusConfig = (status) => {
         switch (status?.toLowerCase()) {
             case "approved":
-                return {
-                    bg: "bg-emerald-50 dark:bg-emerald-900/20",
-                    text: "text-emerald-700 dark:text-emerald-300",
-                    badge: "bg-emerald-500 text-white",
-                    icon: "text-emerald-500",
-                };
+                return { bg: "bg-emerald-50 dark:bg-emerald-900/20", badge: "bg-emerald-500 text-white" };
             case "pending":
-                return {
-                    bg: "bg-amber-50 dark:bg-amber-900/20",
-                    text: "text-amber-700 dark:text-amber-300",
-                    badge: "bg-amber-500 text-white",
-                    icon: "text-amber-500",
-                };
+                return { bg: "bg-amber-50 dark:bg-amber-900/20", badge: "bg-amber-500 text-white" };
             case "rejected":
-                return {
-                    bg: "bg-red-50 dark:bg-red-900/20",
-                    text: "text-red-700 dark:text-red-300",
-                    badge: "bg-red-500 text-white",
-                    icon: "text-red-500",
-                };
+                return { bg: "bg-red-50 dark:bg-red-900/20", badge: "bg-red-500 text-white" };
             default:
-                return {
-                    bg: "bg-gray-50 dark:bg-gray-800",
-                    text: "text-gray-700 dark:text-gray-300",
-                    badge: "bg-gray-500 text-white",
-                    icon: "text-gray-500",
-                };
+                return { bg: "bg-gray-50 dark:bg-gray-800", badge: "bg-gray-500 text-white" };
         }
     };
 
@@ -221,7 +208,195 @@ const LGUResponseTable = () => {
     return (
         <>
             {isLoading && <LoadingOverlay />}
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
+            {/* Mobile View */}
+            <div className="block md:hidden min-h-screen bg-slate-50 dark:bg-slate-900">
+                {/* ... (mobile header and content remain unchanged, but note the fixes below) ... */}
+                <div className="px-2 py-3">
+                    {isLguResponse && isLguResponse.length > 0 ? (
+                        <div className="space-y-2">
+                            {isLguResponse.map((event, index) => {
+                                const statusConfig = getStatusConfig(event.status);
+                                const isExpanded = expandedRow === event._id;
+                                return (
+                                    <div
+                                        key={event._id}
+                                        className={`rounded-lg border ${statusConfig.bg} dark:border-gray-700`}
+                                    >
+                                        <div className="p-2.5">
+                                            <div className="flex flex-col gap-1.5">
+                                                <div className="flex flex-wrap items-start justify-between gap-2">
+                                                    <h3 className="line-clamp-2 text-sm font-semibold text-gray-900 dark:text-white">
+                                                        {event.proposalInfo?.title || "Untitled Event"}
+                                                    </h3>
+                                                    <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${statusConfig.badge} whitespace-nowrap`}>
+                                                        {event.status?.charAt(0).toUpperCase() + event.status?.slice(1) || "Unknown"}
+                                                    </span>
+                                                </div>
+                                                <div className="flex flex-wrap items-center gap-2 text-[10px] text-gray-600 dark:text-gray-400">
+                                                    <div className="flex items-center gap-1">
+                                                        <Calendar size={10} />
+                                                        <span>
+                                                            {new Date(event.eventInfo?.eventDate).toLocaleDateString("en-US", {
+                                                                month: "short",
+                                                                day: "numeric",
+                                                            })}
+                                                        </span>
+                                                    </div>
+                                                    <span>•</span>
+                                                    <div className="flex items-center gap-1">
+                                                        <Clock8 size={10} />
+                                                        <span>{event.eventInfo?.startTime || "TBD"}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-wrap items-center gap-2 text-[10px] text-gray-600 dark:text-gray-400">
+                                                    <div className="flex items-center gap-1">
+                                                        <User size={10} />
+                                                        <span className="truncate">
+                                                            {event.organizer ? `${event.organizer.first_name || ""} ${event.organizer.last_name || ""}`.trim() : "N/A"}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-wrap items-center gap-2 text-[10px] text-gray-600 dark:text-gray-400">
+                                                    <div className="flex items-center gap-1">
+                                                        <MapPin size={10} />
+                                                        <span className="truncate">{event.eventInfo?.venue || "TBD"}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-wrap items-center gap-2 text-[10px] text-gray-600 dark:text-gray-400">
+                                                    <div className="flex items-center gap-1">
+                                                        <Database size={10} />
+                                                        <span>{event.resources ? event.resources.length : 0} resources</span>
+                                                    </div>
+                                                </div>
+                                                {/* Actions */}
+                                                <div className="mt-2 flex flex-wrap gap-1">
+                                                    {role !== "organizer" && (
+                                                        <>
+                                                            {event.status !== "approved" && event.status !== "rejected" && (
+                                                                <button
+                                                                    onClick={() => handleApprove(event)}
+                                                                    className="flex items-center gap-1 rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                                                >
+                                                                    <CircleCheckBig size={10} /> Approve
+                                                                </button>
+                                                            )}
+                                                            {event.status !== "rejected" && event.status !== "approved" && (
+                                                                <button
+                                                                    onClick={() => handleReject(event)}
+                                                                    className="flex items-center gap-1 rounded bg-red-50 px-1.5 py-0.5 text-[10px] text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400"
+                                                                >
+                                                                    <CircleX size={10} /> Reject
+                                                                </button>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                    <button
+                                                        onClick={() => handleDeleteEvent(event._id)}
+                                                        className="flex items-center gap-1 rounded bg-red-50 px-1.5 py-0.5 text-[10px] text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400"
+                                                    >
+                                                        <Trash size={10} /> Delete
+                                                    </button>
+                                                    <button
+                                                        onClick={() => toggleRowExpansion(event._id)}
+                                                        className="flex items-center gap-1 rounded bg-blue-50 px-1.5 py-0.5 text-[10px] text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400"
+                                                    >
+                                                        {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />} Details
+                                                    </button>
+                                                </div>
+                                                {/* Expanded Details */}
+                                                {isExpanded && (
+                                                    <div className="mt-3 border-t border-gray-200 pt-3 dark:border-gray-600">
+                                                        <div className="space-y-3">
+                                                            <div>
+                                                                <h4 className="text-[10px] font-medium text-gray-900 dark:text-white">Event Description</h4>
+                                                                <p className="mt-1 text-[10px] text-gray-600 dark:text-gray-300">
+                                                                    {event.eventInfo?.description || "No description available"}
+                                                                </p>
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="text-[10px] font-medium text-gray-900 dark:text-white">Respondent</h4>
+                                                                <p className="mt-1 text-[10px] text-gray-600 dark:text-gray-300">
+                                                                    {event.LGUInfo
+                                                                        ? `${event.LGUInfo.first_name || ""} ${event.LGUInfo.middle_name || ""} ${event.LGUInfo.last_name || ""}`.trim()
+                                                                        : "No respondent information available"}
+                                                                </p>
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="text-[10px] font-medium text-gray-900 dark:text-white">Notes</h4>
+                                                                <p className="mt-1 text-[10px] text-gray-600 dark:text-gray-300">
+                                                                    {event.note || "N/A"}
+                                                                </p>
+                                                            </div>
+                                                            {event.resources && event.resources.length > 0 && (
+                                                                <div>
+                                                                    <h4 className="text-[10px] font-medium text-gray-900 dark:text-white">Resources</h4>
+                                                                    <div className="mt-2 space-y-2">
+                                                                        {event.resources.map((resource, idx) => (
+                                                                            <div key={idx} className="text-[10px] text-gray-600 dark:text-gray-300">
+                                                                                <div className="flex items-center gap-1">
+                                                                                    <div className={`h-1.5 w-1.5 rounded-full ${resource.availability ? "bg-green-500" : "bg-red-500"}`}></div>
+                                                                                    <span className="font-medium">{resource.resource_name}</span>
+                                                                                </div>
+                                                                                <div className="ml-2.5">
+                                                                                    {resource.resource_type} • {resource.availability ? "Available" : "Unavailable"}
+                                                                                </div>
+                                                                                {resource.description && (
+                                                                                    <div className="ml-2.5 text-[9px] text-gray-500 dark:text-gray-400">
+                                                                                        {resource.description}
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="rounded-lg border border-gray-200 bg-white p-4 text-center dark:border-gray-700 dark:bg-gray-800">
+                            <Database className="mx-auto h-6 w-6 text-purple-500" />
+                            <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">No events found</p>
+                        </div>
+                    )}
+                </div>
+                {/* Mobile Pagination */}
+                {totalPages > 1 && (
+                    <div className="sticky bottom-0 border-t border-gray-200 bg-white/90 px-2 py-2 dark:border-gray-700 dark:bg-slate-900/90">
+                        <div className="flex flex-col items-center gap-2">
+                            <p className="text-[10px] text-gray-600 dark:text-gray-400">
+                                Showing {showingStart}–{showingEnd} of {isTotalResponse}
+                            </p>
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={() => goToPage(currentPage - 1)}
+                                    disabled={currentPage === 1}
+                                    className="rounded border border-gray-200 bg-white px-1.5 py-0.5 text-[10px] text-gray-600 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                                >
+                                    Prev
+                                </button>
+                                {renderPageNumbers()}
+                                <button
+                                    onClick={() => goToPage(currentPage + 1)}
+                                    disabled={currentPage === totalPages}
+                                    className="rounded border border-gray-200 bg-white px-1.5 py-0.5 text-[10px] text-gray-600 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Desktop View */}
+            <div className="hidden md:block min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
                 {/* Header Section */}
                 <div className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/80">
                     <div className="p-6">
@@ -233,9 +408,7 @@ const LGUResponseTable = () => {
                                 </h1>
                                 <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Manage and organize LGU responses efficiently</p>
                             </div>
-
                             <div className="flex flex-col gap-3 sm:flex-row">
-                                {/* Search Input */}
                                 <div className="relative w-full sm:max-w-xs">
                                     <input
                                         type="text"
@@ -252,7 +425,6 @@ const LGUResponseTable = () => {
                                         }}
                                         onKeyDown={handleKeyDown}
                                     />
-
                                     <button
                                         onClick={handleSearch}
                                         className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 hover:bg-pink-100 hover:text-pink-600 dark:hover:bg-pink-900 dark:hover:text-pink-200"
@@ -274,8 +446,6 @@ const LGUResponseTable = () => {
                                         </svg>
                                     </button>
                                 </div>
-
-                                {/* Date Filters */}
                                 <div className="flex gap-2">
                                     <div className="relative">
                                         <input
@@ -336,36 +506,30 @@ const LGUResponseTable = () => {
                                         {isLguResponse?.map((event, index) => {
                                             const statusConfig = getStatusConfig(event.status);
                                             const isExpanded = expandedRow === event._id;
-
                                             return (
                                                 <>
                                                     <tr
                                                         key={event._id}
                                                         className={`${isExpanded ? "bg-gray-50 dark:bg-gray-700" : "hover:bg-gray-50 dark:hover:bg-gray-700"} transition-colors`}
                                                     >
-                                                        {/* Event Details - WITH CLAMP */}
                                                         <td className="px-4 py-4">
                                                             <div className="flex items-start">
                                                                 <div className="h-10 w-10 flex-shrink-0">
                                                                     <FileText className="h-10 w-10 rounded-full text-blue-500" />
                                                                 </div>
                                                                 <div className="ml-3 min-w-0 flex-1">
-                                                                    {/* Title with line clamp */}
                                                                     <div className="line-clamp-2 text-sm font-medium text-gray-900 dark:text-white break-words">
                                                                         {event.proposalInfo?.title || "Untitled Event"}
                                                                     </div>
-                                                                    {/* Venue with line clamp */}
                                                                     <div className="line-clamp-1 text-sm text-gray-500 dark:text-gray-400 mt-1 break-words">
-                                                                        {event.EventInfo?.venue || "TBD"}
+                                                                        {event.eventInfo?.venue || "TBD"} {/* ✅ lowercase */}
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </td>
-
-                                                        {/* Date & Time */}
                                                         <td className="px-4 py-4">
                                                             <div className="text-sm text-gray-900 dark:text-white whitespace-nowrap">
-                                                                {new Date(event.EventInfo?.eventDate).toLocaleDateString("en-US", {
+                                                                {new Date(event.eventInfo?.eventDate).toLocaleDateString("en-US", {
                                                                     weekday: "short",
                                                                     year: "numeric",
                                                                     month: "short",
@@ -373,19 +537,15 @@ const LGUResponseTable = () => {
                                                                 })}
                                                             </div>
                                                             <div className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                                                                {event.EventInfo?.startTime || "TBD"}
+                                                                {event.eventInfo?.startTime || "TBD"}
                                                             </div>
                                                         </td>
-
-                                                        {/* Organizer - WITH CLAMP */}
                                                         <td className="px-4 py-4">
                                                             {event.organizer ? (
                                                                 <div className="min-w-0">
-                                                                    {/* Organizer name with line clamp */}
                                                                     <div className="line-clamp-2 text-sm font-medium text-gray-900 dark:text-white break-words">
                                                                         {`${event.organizer.first_name || ""} ${event.organizer.last_name || ""}`.trim()}
                                                                     </div>
-                                                                    {/* Email with line clamp */}
                                                                     <div className="line-clamp-1 text-sm text-gray-500 dark:text-gray-400 break-words mt-1">
                                                                         {event.organizer.email || "N/A"}
                                                                     </div>
@@ -394,8 +554,6 @@ const LGUResponseTable = () => {
                                                                 <span className="text-sm text-gray-500 dark:text-gray-400">N/A</span>
                                                             )}
                                                         </td>
-
-                                                        {/* Resources */}
                                                         <td className="px-4 py-4">
                                                             <div className="text-sm text-gray-900 dark:text-white">
                                                                 {event.resources ? event.resources.length : 0} resources
@@ -406,8 +564,6 @@ const LGUResponseTable = () => {
                                                                     : "0 available"}
                                                             </div>
                                                         </td>
-
-                                                        {/* Status */}
                                                         <td className="px-4 py-4">
                                                             <span
                                                                 className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusConfig.badge}`}
@@ -415,8 +571,6 @@ const LGUResponseTable = () => {
                                                                 {event.status?.charAt(0).toUpperCase() + event.status?.slice(1) || "Unknown"}
                                                             </span>
                                                         </td>
-
-                                                        {/* Actions */}
                                                         <td className="px-4 py-4">
                                                             <div className="flex items-center space-x-2">
                                                                 {role !== "organizer" && (
@@ -450,8 +604,6 @@ const LGUResponseTable = () => {
                                                                 </button>
                                                             </div>
                                                         </td>
-
-                                                        {/* Expand Button */}
                                                         <td className="px-4 py-4 text-right">
                                                             <button
                                                                 onClick={() => toggleRowExpansion(event._id)}
@@ -461,13 +613,10 @@ const LGUResponseTable = () => {
                                                             </button>
                                                         </td>
                                                     </tr>
-                                                    
-                                                    {/* Expanded Row */}
                                                     {isExpanded && (
                                                         <tr className="bg-gray-50 dark:bg-gray-700">
                                                             <td colSpan="7" className="px-4 py-4">
                                                                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                                                    {/* Event Details */}
                                                                     <div className="space-y-4">
                                                                         <div>
                                                                             <div className="mb-2 flex items-center gap-2">
@@ -477,7 +626,7 @@ const LGUResponseTable = () => {
                                                                                 </h4>
                                                                             </div>
                                                                             <p className="pl-6 text-sm text-gray-600 dark:text-gray-300 break-words">
-                                                                                {event.eventInfo?.description || "No description available"}
+                                                                                {event.eventInfo?.description || "No description available"} {/* ✅ */}
                                                                             </p>
                                                                         </div>
                                                                         <div>
@@ -503,8 +652,6 @@ const LGUResponseTable = () => {
                                                                             </p>
                                                                         </div>
                                                                     </div>
-
-                                                                    {/* Resources Details */}
                                                                     {event.resources && event.resources.length > 0 && (
                                                                         <div className="space-y-4">
                                                                             <div>
@@ -572,7 +719,6 @@ const LGUResponseTable = () => {
                                 Showing <span className="font-semibold">{showingStart}</span> to <span className="font-semibold">{showingEnd}</span>{" "}
                                 of <span className="font-semibold">{isTotalResponse}</span> results
                             </div>
-
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={() => goToPage(currentPage - 1)}
@@ -581,9 +727,7 @@ const LGUResponseTable = () => {
                                 >
                                     Previous
                                 </button>
-
                                 <div className="hidden sm:flex">{renderPageNumbers()}</div>
-
                                 <button
                                     onClick={() => goToPage(currentPage + 1)}
                                     disabled={currentPage === totalPages}
@@ -595,64 +739,63 @@ const LGUResponseTable = () => {
                         </div>
                     </div>
                 )}
-                <SuccessFailed
-                    isOpen={showModal}
-                    onClose={() => setShowModal(false)}
-                    status={modalStatus}
-                    errorMessage={customError}
-                />
+            </div>
 
-                <StatusVerification
-                    isOpen={isVerification}
-                    onConfirmDelete={handleConfirmDelete}
-                    onClose={handleCloseModal}
-                />
+            {/* Shared Modals */}
+            <SuccessFailed
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                status={modalStatus}
+                errorMessage={customError}
+            />
+            <StatusVerification
+                isOpen={isVerification}
+                onConfirmDelete={handleConfirmDelete}
+                onClose={handleCloseModal}
+            />
 
-                {/* Reject Notes Modal */}
-                {isRejectModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                        <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800">
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Reject LGU Response</h3>
-                            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Please provide a reason for rejecting this LGU response.</p>
-
-                            <textarea
-                                value={rejectNotes}
-                                onChange={(e) => {
-                                    setRejectNotes(e.target.value);
-                                    if (e.target.value.trim() && notesError) {
-                                        setNotesError("");
-                                    }
+            {/* Reject Notes Modal */}
+            {isRejectModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                    <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800">
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">Reject LGU Response</h3>
+                        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Please provide a reason for rejecting this LGU response.</p>
+                        <textarea
+                            value={rejectNotes}
+                            onChange={(e) => {
+                                setRejectNotes(e.target.value);
+                                if (e.target.value.trim() && notesError) {
+                                    setNotesError("");
+                                }
+                            }}
+                            className={`mt-4 w-full rounded-lg border ${notesError ? "border-red-500" : "border-gray-200"} bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white`}
+                            rows={4}
+                            placeholder="Enter reason for rejection..."
+                            required
+                        />
+                        {notesError && <p className="mt-1 text-sm text-red-500">{notesError}</p>}
+                        <div className="mt-6 flex justify-end gap-3">
+                            <button
+                                onClick={() => {
+                                    setRejectModalOpen(false);
+                                    setRejectNotes("");
+                                    setNotesError("");
                                 }}
-                                className={`mt-4 w-full rounded-lg border ${notesError ? "border-red-500" : "border-gray-200"} bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white`}
-                                rows={4}
-                                placeholder="Enter reason for rejection..."
-                                required
-                            />
-                            {notesError && <p className="mt-1 text-sm text-red-500">{notesError}</p>}
-
-                            <div className="mt-6 flex justify-end gap-3">
-                                <button
-                                    onClick={() => {
-                                        setRejectModalOpen(false);
-                                        setRejectNotes("");
-                                        setNotesError("");
-                                    }}
-                                    className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleConfirmReject}
-                                    className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
-                                    disabled={!rejectNotes.trim()}
-                                >
-                                    Confirm Reject
-                                </button>
-                            </div>
+                                className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleConfirmReject}
+                                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
+                                disabled={!rejectNotes.trim()}
+                            >
+                                Confirm Reject
+                            </button>
                         </div>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </>
     );
 };

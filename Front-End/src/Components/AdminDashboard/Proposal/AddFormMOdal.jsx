@@ -6,7 +6,19 @@ import "react-pdf/dist/Page/TextLayer.css";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
-const AddFormModal = ({ isOpen, onClose, onSubmit, formData, setFormData, isEditing, initialFileUrl, initialFileName, FontColor, bgtheme }) => {
+const AddFormModal = ({
+    isOpen,
+    onClose,
+    onSubmit,
+    formData,
+    setFormData,
+    isEditing,
+    initialFileUrl,
+    initialFileName,
+    FontColor,
+    bgtheme,
+    linkId,
+}) => {
     const [file, setFile] = useState(null);
     const [fileName, setFileName] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -127,12 +139,14 @@ const AddFormModal = ({ isOpen, onClose, onSubmit, formData, setFormData, isEdit
                     payload = new FormData();
                     payload.append("title", formData.title);
                     payload.append("description", formData.description);
+                    payload.append("linkId", linkId);
                     payload.append("file", file);
                 } else {
                     // If no new file, send a plain JSON object
                     payload = {
                         title: formData.title,
                         description: formData.description,
+                        linkId: linkId,
                     };
                 }
             } else {
@@ -146,6 +160,7 @@ const AddFormModal = ({ isOpen, onClose, onSubmit, formData, setFormData, isEdit
                 payload.append("title", formData.title);
                 payload.append("description", formData.description);
                 payload.append("file", file);
+                payload.append("linkId", linkId);
             }
 
             await onSubmit(payload, isEditing);
@@ -489,7 +504,7 @@ const AddFormModal = ({ isOpen, onClose, onSubmit, formData, setFormData, isEdit
                                     disabled={isSubmitting}
                                     style={{
                                         background: bgtheme,
-                                        color: FontColor, 
+                                        color: FontColor,
                                     }}
                                     className="rounded-lg px-6 py-2 font-medium text-white transition-all duration-200 hover:from-pink-700 hover:to-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
                                 >

@@ -116,10 +116,11 @@ export const ProposalDisplayProvider = ({ children }) => {
         }
     };
 
-    const DeleteProposal = async (dataID) => {
+    const DeleteProposal = async (dataID, linkId) => {
         try {
             const response = await axios.delete(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/Proposal/${dataID}`, {
                 headers: { Authorization: `Bearer ${authToken}` },
+                data: { linkId },
             });
 
             if (response.data.status === "success") {
@@ -130,7 +131,8 @@ export const ProposalDisplayProvider = ({ children }) => {
                 return { success: false, error: "Unexpected response from server." };
             }
         } catch (error) {
-            console.error("Error deleting user:", error);
+            console.error("Error deleting proposal:", error);
+            return { success: false, error: error.message };
         }
     };
 

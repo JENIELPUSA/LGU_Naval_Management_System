@@ -106,8 +106,8 @@ export const ResourcesDisplayProvider = ({ children }) => {
             const res = await axios.post(
                 `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/Resources`,
                 {
-                    resource_name: values.resource_name,
-                    resource_type: values.resource_type,
+                    resource_name: values.resourceName,
+                    resource_type: values.resourceType,
                     resources: values.resources,
                     description: values.description,
                 },
@@ -160,8 +160,8 @@ export const ResourcesDisplayProvider = ({ children }) => {
         try {
             const payload = {
                 availability: values.availability,
-                resource_name: values.resource_name,
-                resource_type: values.resource_type,
+                resource_name: values.resourceName,
+                resource_type: values.resourceType,
                 resources: values.resources,
                 description: values.description,
             };

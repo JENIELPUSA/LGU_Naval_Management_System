@@ -25,7 +25,7 @@ const translations = {
     events: "Events",
     contactUs: "Contact Us",
     about: "About",
-    feedback: "Feedback",
+    feedback: "Contact Us",
     backToHome: "Back to Home",
     mainNavigation: "Main navigation",
     openMenu: "Open menu",
