@@ -99,7 +99,6 @@ exports.createProposal = AsyncErrorHandler(async (req, res) => {
       } else {
         console.log(`📭 Admin (${adminIdStr}) is OFFLINE — saved in DB only.`);
       }
-
       if (admin.username) {
         await sendEmail({
           email: admin.username,
@@ -203,6 +202,7 @@ exports.DisplayProposal = AsyncErrorHandler(async (req, res) => {
               fileName: 1,
               fileUrl: 1,
               assigned: 1,
+              note: 1,
               submitted_by: 1,
               "organizerInfo._id": 1,
               "organizerInfo.first_name": 1,
@@ -268,9 +268,9 @@ exports.DisplayProposal = AsyncErrorHandler(async (req, res) => {
 exports.UpdateProposal = async (req, res) => {
   try {
     const userId = req.user?.linkId;
-    const { status, submitted_by} = req.body;
+    const { status, submitted_by } = req.body;
     const proposalId = req.params.id;
-
+    console.log("Body", req.body);
     // Kunin muna ang old data bago i-update
     const oldProposal = await ProposalModel.findById(proposalId);
     if (!oldProposal) {

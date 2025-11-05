@@ -511,7 +511,7 @@ exports.deleteEvent = AsyncErrorHandler(async (req, res, next) => {
 exports.DisplayUpcomingEvent = AsyncErrorHandler(async (req, res) => {
   try {
     const { search = "", page = 1 } = req.query;
-    const limit = parseInt(req.query.limit) || 5;
+    const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
     const now = new Date();

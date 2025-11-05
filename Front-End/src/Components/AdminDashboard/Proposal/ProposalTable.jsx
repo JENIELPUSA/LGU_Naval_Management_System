@@ -14,6 +14,7 @@ import {
     File,
     ChevronDown,
     ChevronUp,
+    StickyNote,
 } from "lucide-react";
 import { ProposalDisplayContext } from "../../../contexts/ProposalContext/ProposalContext";
 import LoadingOverlay from "../../../ReusableFolder/LoadingOverlay";
@@ -43,6 +44,9 @@ const ProposalTable = () => {
         isTotalProposal,
     } = useContext(ProposalDisplayContext);
     const { bgtheme, FontColor } = useContext(PersonilContext);
+
+
+    console.log("isProposal",isProposal)
     const navigate = useNavigate();
     const { role, linkId } = useContext(AuthContext);
 
@@ -411,6 +415,18 @@ const ProposalTable = () => {
                                                                 </p>
                                                             </div>
                                                         )}
+                                                        {/* Proposal Note Section - Mobile */}
+                                                        {proposal.note && (
+                                                            <div>
+                                                                <h4 className="text-[10px] font-medium text-gray-900 dark:text-white flex items-center gap-1">
+                                                                    <StickyNote size={10} />
+                                                                    Proposal Note
+                                                                </h4>
+                                                                <p className="mt-1 text-[10px] text-gray-600 dark:text-gray-300 bg-blue-50 dark:bg-blue-900/20 p-1 rounded border-l-2 border-blue-500">
+                                                                    {proposal.note}
+                                                                </p>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
@@ -640,6 +656,25 @@ const ProposalTable = () => {
                                                             <div className="rounded-lg border-l-4 border-pink-500 bg-gray-50 p-2 dark:bg-gray-700/50 sm:p-3">
                                                                 <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-300 sm:text-sm">
                                                                     {proposal.remarks}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Proposal Note Section - Desktop */}
+                                                {proposal.note && (
+                                                    <div>
+                                                        <div className="mb-2 flex items-center gap-1.5 sm:gap-2">
+                                                            <StickyNote size={14} className="text-green-500 sm:size-4" />
+                                                            <h4 className="text-sm font-medium text-gray-900 dark:text-white sm:text-base">
+                                                                Proposal Note
+                                                            </h4>
+                                                        </div>
+                                                        <div className="pl-5 sm:pl-6">
+                                                            <div className="rounded-lg border-l-4 border-green-500 bg-green-50 p-2 dark:bg-green-900/20 sm:p-3">
+                                                                <p className="text-xs leading-relaxed text-gray-700 dark:text-green-200 sm:text-sm">
+                                                                    {proposal.note}
                                                                 </p>
                                                             </div>
                                                         </div>

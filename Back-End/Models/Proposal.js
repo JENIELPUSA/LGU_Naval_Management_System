@@ -12,6 +12,9 @@ const proposalSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  note: {
+    type: String,
+  },
   fileName: {
     type: String,
     default: null,
