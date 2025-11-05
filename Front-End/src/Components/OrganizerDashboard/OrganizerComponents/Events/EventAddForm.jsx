@@ -11,9 +11,10 @@ import axios from "axios";
 
 const AddEventModal = ({ isOpen, onClose, isEditing, editingData, bgtheme, FontColor, linkId }) => {
     const { AddEvent, UpdateEvent } = useContext(EventDisplayContext);
-    const { isLgu } = useContext(LguDisplayContext);
-    const { isDropdownProposal, DropdownProposal } = useContext(ProposalDisplayContext);
-    const { isResourcesDropdown, FetchResourcesDropdownData } = useContext(ResourcesDisplayContext);
+    const { isLgu = [] } = useContext(LguDisplayContext); // Add default value
+    const { isDropdownProposal = [], DropdownProposal } = useContext(ProposalDisplayContext); // Add default value
+    const { isResourcesDropdown = [], FetchResourcesDropdownData } = useContext(ResourcesDisplayContext); // Add default value
+    
     const lguDropdownRef = useRef(null);
     const proposalDropdownRef = useRef(null);
     const resourcesDropdownRef = useRef(null);
@@ -195,21 +196,36 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData, bgtheme, FontC
         }, 1000);
     };
 
+    // FIXED: Added safe access with optional chaining and default values
     const filteredResources = Array.isArray(isResourcesDropdown)
         ? isResourcesDropdown.filter((res) => {
-              const matchesText = res.resource_name.toLowerCase().includes(resourceFilter.toLowerCase());
-              return matchesText && res.availability === true;
+              const resourceName = res?.resource_name || "";
+              const filterText = resourceFilter || "";
+              const matchesText = resourceName.toLowerCase().includes(filterText.toLowerCase());
+              return matchesText && res?.availability === true;
           })
         : [];
 
+    // FIXED: Added safe access with optional chaining and default values
     const filteredProposals = Array.isArray(isDropdownProposal)
-        ? isDropdownProposal.filter((prop) => prop.title.toLowerCase().includes(proposalFilter.toLowerCase()) && !prop.assigned)
+        ? isDropdownProposal.filter((prop) => {
+              const title = prop?.title || "";
+              const filterText = proposalFilter || "";
+              return title.toLowerCase().includes(filterText.toLowerCase()) && !prop?.assigned;
+          })
         : [];
 
-    const filteredLgus = isLgu.filter((lgu) => {
-        const fullName = `${lgu.full_name || ""} ${lgu.middle_name || ""} ${lgu.last_name || ""}`;
-        return fullName.toLowerCase().includes(lguFilter.toLowerCase());
-    });
+    // FIXED: Added safe access with optional chaining and default values
+    const filteredLgus = Array.isArray(isLgu)
+        ? isLgu.filter((lgu) => {
+              const firstName = lgu?.first_name || "";
+              const middleName = lgu?.middle_name || "";
+              const lastName = lgu?.last_name || "";
+              const fullName = `${firstName} ${middleName} ${lastName}`.trim();
+              const filterText = lguFilter || "";
+              return fullName.toLowerCase().includes(filterText.toLowerCase());
+          })
+        : [];
 
     const debounceRef = useRef(null);
 
@@ -372,7 +388,7 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData, bgtheme, FontC
                                         <span className={formData.lguId ? "text-gray-900" : "text-gray-500"}>
                                             {formData.lguId
                                                 ? (() => {
-                                                      const selectedLgu = isLgu.find((l) => l._id === formData.lguId);
+                                                      const selectedLgu = isLgu?.find((l) => l._id === formData.lguId);
                                                       if (!selectedLgu) return "Selected LGU";
                                                       const nameParts = [
                                                           selectedLgu.first_name,
@@ -408,7 +424,7 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData, bgtheme, FontC
                                     >
                                         <span className={formData.proposalId ? "text-gray-900" : "text-gray-500"}>
                                             {formData.proposalId
-                                                ? isDropdownProposal.find((p) => p._id === formData.proposalId)?.title || "Selected proposal"
+                                                ? isDropdownProposal?.find((p) => p._id === formData.proposalId)?.title || "Selected proposal"
                                                 : "Select a proposal..."}
                                         </span>
                                         <ChevronDown
@@ -581,7 +597,7 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData, bgtheme, FontC
                                 />
                             </div>
                             <div className="mt-2 text-xs text-gray-500">
-                                {filteredLgus.length} of {isLgu.length} LGUs
+                                {filteredLgus.length} of {isLgu?.length || 0} LGUs
                             </div>
                         </div>
                         <div className="max-h-60 overflow-y-auto">
@@ -634,7 +650,7 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData, bgtheme, FontC
                                 />
                             </div>
                             <div className="mt-2 text-xs text-gray-500">
-                                {filteredProposals.length} of {isDropdownProposal.length} proposals
+                                {filteredProposals.length} of {isDropdownProposal?.length || 0} proposals
                             </div>
                             <label className="mt-2 flex items-center space-x-2">
                                 <input
@@ -694,7 +710,7 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData, bgtheme, FontC
                                 />
                             </div>
                             <div className="mt-2 text-xs text-gray-500">
-                                {filteredResources.length} of {isResourcesDropdown.length} resources
+                                {filteredResources.length} of {isResourcesDropdown?.length || 0} resources
                             </div>
                             <label className="flex items-center space-x-2">
                                 <input

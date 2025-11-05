@@ -267,7 +267,8 @@ exports.DisplayProposal = AsyncErrorHandler(async (req, res) => {
 
 exports.UpdateProposal = async (req, res) => {
   try {
-    const { status, submitted_by, linkId } = req.body;
+    const userId = req.user?.linkId;
+    const { status, submitted_by} = req.body;
     const proposalId = req.params.id;
 
     // Kunin muna ang old data bago i-update
@@ -323,7 +324,7 @@ exports.UpdateProposal = async (req, res) => {
     // Audit log (after successful update)
     await LogActionAudit.create({
       action_type: "UPDATE",
-      performed_by: linkId,
+      performed_by: userId,
       module: "Proposal",
       reference_id: updatedProposal._id,
       description: `Updated proposal titled "${updatedProposal.title}" (status: ${status})`,

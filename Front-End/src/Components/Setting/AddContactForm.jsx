@@ -16,14 +16,25 @@ export default function AddContactForm({ AddContact, bgtheme, FontColor }) {
         ],
     });
 
+    const [errors, setErrors] = useState({});
+
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+        // Clear error when user starts typing
+        if (errors[e.target.name]) {
+            setErrors({ ...errors, [e.target.name]: "" });
+        }
     };
 
     const handleArrayChange = (index, e, field) => {
         const updated = [...formData[field]];
         updated[index] = e.target.value;
         setFormData({ ...formData, [field]: updated });
+        
+        // Clear error when user starts typing in email field
+        if (field === "emails" && errors.emails) {
+            setErrors({ ...errors, emails: "" });
+        }
     };
 
     const addArrayField = (field) => {
@@ -36,9 +47,45 @@ export default function AddContactForm({ AddContact, bgtheme, FontColor }) {
         setFormData({ ...formData, officeHours: updated });
     };
 
+    const validateForm = () => {
+        const newErrors = {};
+
+        // Required field validation
+        if (!formData.officeName.trim()) {
+            newErrors.officeName = "Office name is required";
+        }
+
+        if (!formData.city.trim()) {
+            newErrors.city = "City is required";
+        }
+
+        if (!formData.postalCode.trim()) {
+            newErrors.postalCode = "Postal code is required";
+        }
+
+        // Email validation - at least one email is required
+        const validEmails = formData.emails.filter(email => email.trim() !== "");
+        if (validEmails.length === 0) {
+            newErrors.emails = "At least one email is required";
+        } else {
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            for (let email of validEmails) {
+                if (!emailRegex.test(email)) {
+                    newErrors.emails = "Please enter valid email addresses";
+                    break;
+                }
+            }
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        try {
+        
+        if (validateForm()) {
             await AddContact(formData);
             setFormData({
                 officeName: "",
@@ -54,8 +101,7 @@ export default function AddContactForm({ AddContact, bgtheme, FontColor }) {
                     { day: "Sun", open: "", close: "" },
                 ],
             });
-        } catch (error) {
-            console.error("Frontend caught error:", error.message);
+            setErrors({});
         }
     };
 
@@ -71,38 +117,68 @@ export default function AddContactForm({ AddContact, bgtheme, FontColor }) {
                 <div className="space-y-4 sm:space-y-5">
                     {/* Office Name */}
                     <div>
-                        <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Office Name</label>
+                        <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                            Our Office <span className="text-red-500">*</span>
+                        </label>
                         <input
                             type="text"
                             name="officeName"
                             value={formData.officeName}
                             onChange={handleChange}
-                            className="w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:placeholder-slate-500 sm:px-3 sm:py-2"
-                            placeholder="Municipal Hall Building"
+                            className={`w-full rounded border bg-white px-2.5 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 dark:placeholder-slate-500 sm:px-3 sm:py-2 ${
+                                errors.officeName 
+                                ? "border-red-500 dark:border-red-400" 
+                                : "border-slate-300 dark:border-slate-600"
+                            }`}
+                            placeholder="P.Inocentes St.Brgy. P.I Garcia, Naval, Philippines"
+                            required
                         />
+                        {errors.officeName && (
+                            <p className="mt-1 text-xs text-red-500 dark:text-red-400">{errors.officeName}</p>
+                        )}
                     </div>
 
                     {/* City & Postal Code */}
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                         <div>
-                            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">City</label>
+                            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                City <span className="text-red-500">*</span>
+                            </label>
                             <input
                                 type="text"
                                 name="city"
                                 value={formData.city}
                                 onChange={handleChange}
-                                className="w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:placeholder-slate-500 sm:px-3 sm:py-2"
+                                className={`w-full rounded border bg-white px-2.5 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 dark:placeholder-slate-500 sm:px-3 sm:py-2 ${
+                                    errors.city 
+                                    ? "border-red-500 dark:border-red-400" 
+                                    : "border-slate-300 dark:border-slate-600"
+                                }`}
+                                required
                             />
+                            {errors.city && (
+                                <p className="mt-1 text-xs text-red-500 dark:text-red-400">{errors.city}</p>
+                            )}
                         </div>
                         <div>
-                            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Postal Code</label>
+                            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                Postal Code <span className="text-red-500">*</span>
+                            </label>
                             <input
                                 type="text"
                                 name="postalCode"
                                 value={formData.postalCode}
                                 onChange={handleChange}
-                                className="w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:placeholder-slate-500 sm:px-3 sm:py-2"
+                                className={`w-full rounded border bg-white px-2.5 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 dark:placeholder-slate-500 sm:px-3 sm:py-2 ${
+                                    errors.postalCode 
+                                    ? "border-red-500 dark:border-red-400" 
+                                    : "border-slate-300 dark:border-slate-600"
+                                }`}
+                                required
                             />
+                            {errors.postalCode && (
+                                <p className="mt-1 text-xs text-red-500 dark:text-red-400">{errors.postalCode}</p>
+                            )}
                         </div>
                     </div>
 
@@ -148,7 +224,6 @@ export default function AddContactForm({ AddContact, bgtheme, FontColor }) {
                         <button
                             type="button"
                             onClick={() => addArrayField("hotlines")}
-                        
                             className="mt-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 sm:text-sm"
                         >
                             + Add Hotline
@@ -160,7 +235,9 @@ export default function AddContactForm({ AddContact, bgtheme, FontColor }) {
                 <div className="space-y-4 sm:space-y-5">
                     {/* Emails */}
                     <div>
-                        <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Emails</label>
+                        <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                            Emails <span className="text-red-500">*</span>
+                        </label>
                         <div className="space-y-2">
                             {formData.emails.map((email, i) => (
                                 <input
@@ -168,11 +245,18 @@ export default function AddContactForm({ AddContact, bgtheme, FontColor }) {
                                     type="email"
                                     value={email}
                                     onChange={(e) => handleArrayChange(i, e, "emails")}
-                                    className="w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 dark:placeholder-slate-500 sm:px-3 sm:py-2"
+                                    className={`w-full rounded border bg-white px-2.5 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 dark:placeholder-slate-500 sm:px-3 sm:py-2 ${
+                                        errors.emails 
+                                        ? "border-red-500 dark:border-red-400" 
+                                        : "border-slate-300 dark:border-slate-600"
+                                    }`}
                                     placeholder="info@lgu-san-jose.gov.ph"
                                 />
                             ))}
                         </div>
+                        {errors.emails && (
+                            <p className="mt-1 text-xs text-red-500 dark:text-red-400">{errors.emails}</p>
+                        )}
                         <button
                             type="button"
                             onClick={() => addArrayField("emails")}
@@ -222,7 +306,7 @@ export default function AddContactForm({ AddContact, bgtheme, FontColor }) {
                 <button
                     type="submit"
                     style={{background:bgtheme,color:FontColor}}
-                    className="rounded  px-4 py-1.5 text-sm font-medium transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-offset-slate-800 sm:px-6 sm:py-2 sm:text-base"
+                    className="rounded px-4 py-1.5 text-sm font-medium transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-offset-slate-800 sm:px-6 sm:py-2 sm:text-base"
                 >
                     Save Contact Info
                 </button>

@@ -44,6 +44,8 @@ export const Sidebar = forwardRef(({ collapsed, bgtheme, FontColor }, ref) => {
             "/dashboard/Calendar",
             "/dashboard/participants",
             "/dashboard/settings",
+            "/dashboard/lgu-response",
+            "/dashboard/Feedback",
         ],
         lgu: ["/", "/dashboard/Calendar", "/dashboard/notification", "/dashboard/lgu-response", "/dashboard/settings"],
         admin: [
@@ -60,6 +62,7 @@ export const Sidebar = forwardRef(({ collapsed, bgtheme, FontColor }, ref) => {
             "/dashboard/lgu-response",
             "/dashboard/participants",
             "/dashboard/settings",
+            "/dashboard/Feedback",
         ],
     };
 

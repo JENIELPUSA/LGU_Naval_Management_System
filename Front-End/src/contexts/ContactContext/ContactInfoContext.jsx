@@ -32,41 +32,36 @@ export const ContactDisplayProvider = ({ children }) => {
     }, [customError]);
 
     const AddContact = async (formData) => {
-        console.log("formData", formData);
         if (!authToken) return;
 
-        // Frontend validation
-        if (!formData.officeName.trim()) {
-            throw new Error("Please provide office name.");
-        }
-        if (!formData.city.trim()) {
-            throw new Error("Please provide city.");
-        }
+        // 🔹 Basic validation
+        if (!formData.officeName?.trim()) throw new Error("Please provide office name.");
+        if (!formData.city?.trim()) throw new Error("Please provide city.");
         if (!formData.emails || formData.emails.length === 0 || !formData.emails.some((email) => email.trim() !== "")) {
             throw new Error("Please provide at least one email address.");
         }
 
         setIsLoading(true);
         try {
-            const res = await axios.post(
-                `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/ContactInfo`,
-                formData, // Hindi na kailangang i-stringify kung ang axios ang magha-handle, pero kung may problema, gamitin ang JSON.stringify
-                {
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${authToken}`,
-                    },
-                    withCredentials: true,
+            const res = await axios.post(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/ContactInfo`, formData, {
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${authToken}`,
                 },
-            );
+                withCredentials: true,
+            });
 
-            if (res.data.status === "success") {
+            // ✅ Simplified response handling
+            if (res.data.success === "success") {
                 setContacts((prev) => [...prev, res.data.data]);
                 setModalStatus("success");
                 setShowModal(true);
-                return res.data.data;
+                console.log("✅ Contact information added successfully.");
+                return { success: true };
             } else {
-                throw new Error(res.data.message || "Adding contact failed.");
+                setModalStatus("failed");
+                setShowModal(true);
+                return { success: false, error: "Unexpected response from server." };
             }
         } catch (error) {
             const message = error.response?.data?.message || error.response?.data?.error || error.message || "Something went wrong.";
@@ -74,9 +69,9 @@ export const ContactDisplayProvider = ({ children }) => {
             setModalStatus("failed");
             setShowModal(true);
             setCustomError(message);
+            console.error("❌ AddContact error:", message);
 
-            console.error("AddContact error:", message);
-            throw new Error(message);
+            return { success: false, error: message };
         } finally {
             setIsLoading(false);
         }

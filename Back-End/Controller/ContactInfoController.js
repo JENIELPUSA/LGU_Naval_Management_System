@@ -41,7 +41,7 @@ exports.addContactInfo = AsyncErrorHandler(async (req, res) => {
     });
 
     return res.status(201).json({
-      success: true,
+      success: "success",
       message: "Contact information added successfully.",
       data: newContact,
     });

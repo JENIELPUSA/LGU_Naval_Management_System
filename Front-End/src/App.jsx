@@ -25,6 +25,7 @@ import Participant from "./Components/AdminDashboard/Participant/ParticipantTabl
 import Report from "./Components/Reportsandcomments/reportscomment"
 import ReportTable from "./Components/Reportsandcomments/ReportTable"
 import Setting from "./Components/Setting/SettingLayout"
+import Feedback from "./Components/Reportsandcomments/ReportTable"
 function App() {
     const router = createBrowserRouter([
         {
@@ -130,6 +131,10 @@ function App() {
                          {
                             path: "/dashboard/settings",
                             element: <Setting/>,
+                        },
+                        {
+                            path: "/dashboard/Feedback",
+                            element: <Feedback/>,
                         },
             
                     ],

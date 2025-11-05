@@ -8,7 +8,7 @@ import AboutSection from "./AboutSection";
 import Footer from "./Footer";
 import RegistrationModal from "./RegistrationModal";
 import LoadingOverlay from "../../ReusableFolder/LoadingOverlay";
-import { ArrowUp, Map } from "lucide-react";
+import { ArrowUp, Map, MessageCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import TravelBanner from "./TravelBanner";
 import ParticipantDashboard from "./ParticipantDashboard";
@@ -18,6 +18,7 @@ import { PersonilContext } from "../../contexts/PersonelContext/PersonelContext"
 import { useSpeechRecognition } from "../../hooks/useSpeechRecognition";
 import VoiceController from "./VoiceController";
 import VenueMap from "../Venue/VenueMap";
+import UserFeedbackModal from "./userFeedBack";
 
 const HomeDashboard = () => {
     const { profile, bgtheme, FontColor } = useContext(PersonilContext);
@@ -27,7 +28,9 @@ const HomeDashboard = () => {
     const [showMainSections, setShowMainSections] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [showVenueMap, setShowVenueMap] = useState(false);
+    const [showFeedbackModal, setShowFeedbackModal] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState(null);
+
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
@@ -68,6 +71,21 @@ const HomeDashboard = () => {
     const handleCloseVenueMap = useCallback(() => {
         setShowVenueMap(false);
         accessibility.speakText("Map closed");
+    }, [accessibility]);
+
+    const handleOpenFeedbackModal = useCallback(() => {
+        setShowFeedbackModal(true);
+        setIsNavigating(true);
+        setNavigationDestination("feedback modal");
+        setTimeout(() => {
+            setIsNavigating(false);
+            accessibility.speakText("Opening community feedback");
+        }, 200);
+    }, [accessibility]);
+
+    const handleCloseFeedbackModal = useCallback(() => {
+        setShowFeedbackModal(false);
+        accessibility.speakText("Feedback modal closed");
     }, [accessibility]);
 
     useEffect(() => {
@@ -342,6 +360,20 @@ const HomeDashboard = () => {
                         setIsNavigating(false);
                     }
                 },
+                showFeedback: () => {
+                    handleOpenFeedbackModal();
+                },
+                closeFeedback: () => {
+                    if (showFeedbackModal) {
+                        setShowFeedbackModal(false);
+                        setTimeout(() => {
+                            setIsNavigating(false);
+                            accessibility.speakText("Feedback modal closed");
+                        }, 200);
+                    } else {
+                        setIsNavigating(false);
+                    }
+                },
                 showEvents: () => {
                     if (showMainSections) {
                         scrollToSection(eventsRef, "events");
@@ -423,6 +455,10 @@ const HomeDashboard = () => {
                 executeCommand(commandActions.showMap, "map");
             } else if (commandLower.includes("close map") || commandLower.includes("isara ang mapa")) {
                 executeCommand(commandActions.closeMap, "close map");
+            } else if (commandLower.includes("feedback") || commandLower.includes("comments") || commandLower.includes("reviews") || commandLower.includes("mga komento")) {
+                executeCommand(commandActions.showFeedback, "feedback");
+            } else if (commandLower.includes("close feedback") || commandLower.includes("isara ang feedback")) {
+                executeCommand(commandActions.closeFeedback, "close feedback");
             } else if (commandLower.includes("event") || commandLower.includes("mga event")) {
                 executeCommand(commandActions.showEvents, "events");
             } else if (commandLower.includes("contact") || commandLower.includes("ugnayan")) {
@@ -472,6 +508,7 @@ const HomeDashboard = () => {
     }, [
         showModal,
         showVenueMap,
+        showFeedbackModal,
         isEventUpcoming,
         accessibility,
         showMainSections,
@@ -487,6 +524,7 @@ const HomeDashboard = () => {
         scrollToBottom,
         handleOpenVenueMap,
         handleCloseVenueMap,
+        handleOpenFeedbackModal,
     ]);
 
     useEffect(() => {
@@ -523,6 +561,10 @@ const HomeDashboard = () => {
             onResetRegistration: resetRegistrationFlow,
         }),
         [
+            FetchUpcomingEvent,
+            UpcomingTotalPages,
+            UpcomingCurrentPage,
+            setUpcomingCurrentPage,
             showModal,
             selectedEvent,
             formData,
@@ -535,14 +577,13 @@ const HomeDashboard = () => {
         ],
     );
 
-    //  FIXED: Correct object syntax and dependencies
     const venueMapProps = useMemo(
         () => ({
             isOpen: showVenueMap,
-            isEventUpcoming, //  Proper shorthand (was: isEventUpcoming={isEventUpcoming})
+            isEventUpcoming,
             onClose: handleCloseVenueMap,
         }),
-        [showVenueMap, isEventUpcoming, handleCloseVenueMap], //  Added missing dependency
+        [showVenueMap, isEventUpcoming, handleCloseVenueMap],
     );
 
     const mainDashboardContent = useMemo(
@@ -607,6 +648,18 @@ const HomeDashboard = () => {
     const floatingButtons = useMemo(
         () => (
             <div className="fixed bottom-6 right-6 z-[10000] space-y-3">
+                {/* Feedback Button */}
+                <motion.button
+                    onClick={handleOpenFeedbackModal}
+                    className="rounded-xl border border-white/10 bg-black/40 p-3 text-white shadow-xl backdrop-blur-lg transition-all duration-300 hover:bg-black/60 hover:text-blue-400"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                    aria-label="View community feedback"
+                >
+                    <MessageCircle size={22} />
+                </motion.button>
+
+                {/* Map Button */}
                 <motion.button
                     onClick={handleOpenVenueMap}
                     className="rounded-xl border border-white/10 bg-black/40 p-3 text-white shadow-xl backdrop-blur-lg transition-all duration-300 hover:bg-black/60 hover:text-green-400"
@@ -617,6 +670,7 @@ const HomeDashboard = () => {
                     <Map size={22} />
                 </motion.button>
 
+                {/* Scroll to Top Button */}
                 {showUpButton && (
                     <motion.button
                         onClick={() => {
@@ -641,16 +695,11 @@ const HomeDashboard = () => {
             </div>
         ),
         [
-            isListening,
-            showMainSections,
-            isShowPersonel,
             showUpButton,
-            handleSectionChange,
-            scrollToSection,
-            accessibility,
-            scrollToTop,
-            toggleListening,
+            handleOpenFeedbackModal,
             handleOpenVenueMap,
+            scrollToTop,
+            accessibility,
         ],
     );
 
@@ -757,6 +806,10 @@ const HomeDashboard = () => {
 
             <RegistrationModal {...registrationModalProps} />
             <VenueMap {...venueMapProps} />
+            <UserFeedbackModal 
+                isOpen={showFeedbackModal} 
+                onClose={handleCloseFeedbackModal} 
+            />
 
             {floatingButtons}
 
@@ -770,6 +823,7 @@ const HomeDashboard = () => {
                     <div>LAST: {lastCommandTime ? `${Date.now() - lastCommandTime}ms ago` : "Never"}</div>
                     <div>DEST: {navigationDestination || "None"}</div>
                     <div>MAP: {showVenueMap ? "OPEN" : "CLOSED"}</div>
+                    <div>FEEDBACK: {showFeedbackModal ? "OPEN" : "CLOSED"}</div>
                 </div>
             )}
         </div>

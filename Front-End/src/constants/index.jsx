@@ -1,8 +1,4 @@
-import { CalendarDays, Home, FileText, Package, CalendarCheck, Settings, Wrench, UserCheck, UserPlus, Users, Bell } from "lucide-react";
-
-import ProfileImage from "@/assets/profile-image.jpg";
-import ProductImage from "@/assets/product-image.jpg";
-
+import { CalendarDays, Home, FileText, MessageCircleMore, CalendarCheck, Settings, Wrench, UserCheck, UserPlus, Users, Bell } from "lucide-react";
 export const navbarLinks = [
     {
         title: "Dashboard",
@@ -87,7 +83,12 @@ export const navbarLinks = [
                 label: "LGU Response",
                 icon: UserCheck,
                 path: "/dashboard/lgu-response",
-            },  
+            },
+            {
+                label: "Feedback",
+                icon: MessageCircleMore,
+                path: "/dashboard/Feedback",
+            },
         ],
     },
 
