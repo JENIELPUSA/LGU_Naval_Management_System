@@ -4,6 +4,10 @@ const sendEmail = require("./../Utils/email");
 const PDFDocument = require("pdfkit");
 const QRCode = require("qrcode");
 const mongoose = require("mongoose");
+const Types = mongoose.Types;
+const path = require("path");
+const fs = require('fs');
+
 
 exports.participantCreate = AsyncErrorHandler(async (req, res) => {
   const inserted = await ParticipantModel.create(req.body);
@@ -370,6 +374,7 @@ exports.UpdateParticipantStatus = AsyncErrorHandler(async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
+    // Input validation
     if (!["Pending", "Accept", "Reject"].includes(status)) {
       return res.status(400).json({
         status: "fail",
@@ -377,240 +382,90 @@ exports.UpdateParticipantStatus = AsyncErrorHandler(async (req, res) => {
       });
     }
 
-    const participant = await ParticipantModel.findById(id);
+    if (!Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Invalid participant ID format",
+      });
+    }
 
-    if (!participant) {
+    // Fetch participant data
+    const participant = await ParticipantModel.aggregate([
+      { $match: { _id: new Types.ObjectId(id) } },
+      {
+        $lookup: {
+          from: "events",
+          localField: "event_id",
+          foreignField: "_id",
+          as: "event",
+        },
+      },
+      { $unwind: { path: "$event", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "proposals",
+          localField: "event.proposalId",
+          foreignField: "_id",
+          as: "proposalInfo",
+        },
+      },
+      { $unwind: { path: "$proposalInfo", preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 1, avatar: 1, first_name: 1, middle_name: 1, last_name: 1,
+          gender: 1, contact_number: 1, extention: 1, created_at: 1, email: 1,
+          "event._id": 1, "event.event_name": 1, "event.venue": 1, 
+          "event.description": 1, "event.status": 1, "proposalInfo.title": 1,
+        },
+      },
+    ]);
+
+    if (!participant || participant.length === 0) {
       return res.status(404).json({ status: "fail", message: "Participant not found" });
     }
 
-    participant.status = status;
-    await participant.save();
-    // PDF generation at email sending ONLY for "Accept" status
+    const participantData = participant[0];
+    await ParticipantModel.findByIdAndUpdate(id, { status });
+
+    // Generate PDF and send email only for accepted participants
     if (status === "Accept") {
-      const qrData = `${participant._id}`;
+      const qrData = `${participantData._id}`;
       const qrImage = await QRCode.toDataURL(qrData, {
-        errorCorrectionLevel: "M",
-        type: "image/png",
-        quality: 0.92,
-        margin: 1,
-        color: { dark: "#2563eb", light: "#ffffff" },
-        width: 200,
+        errorCorrectionLevel: "M", type: "image/png", quality: 0.92, margin: 1,
+        color: { dark: "#2563eb", light: "#ffffff" }, width: 200,
       });
 
-      const pdfBuffer = await new Promise((resolve, reject) => {
-        const doc = new PDFDocument({
-          size: "A4",
-          margins: { top: 60, bottom: 60, left: 60, right: 60 },
-        });
-        const buffers = [];
+      const qrBuffer = Buffer.from(qrImage.split(",")[1], "base64");
+      if (!qrBuffer || qrBuffer.length === 0) {
+        throw new Error("Failed to generate valid QR code buffer");
+      }
 
-        doc.on("data", (chunk) => buffers.push(chunk));
-        doc.on("end", () => resolve(Buffer.concat(buffers)));
-        doc.on("error", reject);
+      // Generate PDF
+      const pdfBuffer = await generateRegistrationPDF(participantData, qrBuffer);
+      console.log("✅ PDF generated. Size:", pdfBuffer.length, "bytes");
 
-        const primaryColor = "#2563eb";
-        const secondaryColor = "#1e40af";
-        const textColor = "#374151";
-        const lightGray = "#f3f4f6";
-
-        // Header
-        doc.rect(0, 0, doc.page.width, 120).fill(primaryColor);
-        doc.circle(80, 60, 25).fill("#ffffff");
-        doc.fontSize(12).fillColor(primaryColor).text("LOGO", 68, 55);
-        doc
-          .fontSize(28)
-          .fillColor("#ffffff")
-          .font("Helvetica-Bold")
-          .text("EVENT REGISTRATION PASS", 120, 40);
-        doc
-          .fontSize(14)
-          .fillColor("#e5e7eb")
-          .text("Official Participant Certificate", 120, 75);
-
-        doc.y = 160;
-
-        // Event Info
-        doc
-          .fontSize(18)
-          .fillColor(secondaryColor)
-          .font("Helvetica-Bold")
-          .text("EVENT DETAILS");
-        doc.moveDown(0.5);
-        doc.fontSize(12).fillColor(textColor);
-        doc
-          .font("Helvetica-Bold")
-          .fontSize(16)
-          .fillColor(primaryColor)
-          .text(participant.event?.event_name || "Event Name Not Available");
-        doc.moveDown(0.3);
-        doc
-          .font("Helvetica-Bold")
-          .text("Venue: ", { continued: true })
-          .font("Helvetica")
-          .text(participant.event?.venue || "Venue TBA");
-        if (participant.proposalInfo?.title) {
-          doc.moveDown(0.3);
-          doc
-            .font("Helvetica-Bold")
-            .text("Program: ", { continued: true })
-            .font("Helvetica")
-            .text(participant.proposalInfo.title);
-        }
-        doc.moveDown(0.3);
-        doc
-          .font("Helvetica-Bold")
-          .text("Registration Date: ", { continued: true })
-          .font("Helvetica")
-          .text(
-            new Date(participant.created_at).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })
-          );
-
-        doc.moveDown(1.5);
-
-        // Participant Info
-        doc
-          .fontSize(18)
-          .fillColor(secondaryColor)
-          .font("Helvetica-Bold")
-          .text("PARTICIPANT INFORMATION");
-        doc.moveDown(0.5);
-
-        const infoBoxY = doc.y;
-        doc
-          .rect(50, infoBoxY - 10, doc.page.width - 120, 120)
-          .fillAndStroke(lightGray, "#d1d5db");
-
-        doc.y = infoBoxY;
-
-        const participantName = `${participant.first_name} ${
-          participant.middle_name || ""
-        } ${participant.last_name}`.trim();
-
-        doc
-          .font("Helvetica-Bold")
-          .fontSize(16)
-          .fillColor(primaryColor)
-          .text(participantName, 70, doc.y + 10);
-        doc.y += 25;
-        doc
-          .font("Helvetica-Bold")
-          .text("Email: ", { continued: true })
-          .font("Helvetica")
-          .text(participant.email);
-        doc.y += 15;
-        doc
-          .font("Helvetica-Bold")
-          .text("Contact: ", { continued: true })
-          .font("Helvetica")
-          .text(
-            `${participant.contact_number}${
-              participant.extention ? ` ext. ${participant.extention}` : ""
-            }`
-          );
-        doc.y += 15;
-        doc
-          .font("Helvetica-Bold")
-          .text("Gender: ", { continued: true })
-          .font("Helvetica")
-          .text(participant.gender || "Not specified");
-        doc.y += 15;
-        doc
-          .font("Helvetica-Bold")
-          .text("Participant ID: ", { continued: true })
-          .font("Helvetica")
-          .text(participant._id.toString());
-
-        // QR Code
-        doc.y = infoBoxY + 140;
-        doc
-          .fontSize(16)
-          .fillColor(secondaryColor)
-          .font("Helvetica-Bold")
-          .text("VERIFICATION QR CODE", { align: "center" });
-        doc.moveDown(0.5);
-        const qrBuffer = Buffer.from(qrImage.split(",")[1], "base64");
-        const qrX = (doc.page.width - 160) / 2;
-        const qrY = doc.y;
-        doc
-          .rect(qrX - 10, qrY - 10, 180, 180)
-          .fillAndStroke("#ffffff", primaryColor);
-        doc.image(qrBuffer, qrX, qrY, { fit: [160, 160] });
-        doc.y = qrY + 190;
-        doc
-          .fontSize(10)
-          .fillColor(textColor)
-          .text("Scan this QR code for event check-in verification", {
-            align: "center",
-          });
-
-        // Footer
-        doc.y = doc.page.height - 120;
-        doc
-          .moveTo(50, doc.y)
-          .lineTo(doc.page.width - 50, doc.y)
-          .stroke(primaryColor);
-        doc.moveDown(0.5);
-        doc
-          .fontSize(10)
-          .fillColor("#6b7280")
-          .text(
-            "This is an official event registration pass. Please present this document at the event entrance.",
-            { align: "center" }
-          );
-        doc.text("For inquiries, please contact the event organizers.", {
-          align: "center",
-        });
-        doc.fontSize(8).text(`Generated on: ${new Date().toLocaleString()}`, {
-          align: "center",
-        });
-
-        doc.end();
-      });
-
-      console.log("participant", participant);
-
+      // Send email with PDF attachment
       await sendEmail({
-        email: participant.email,
+        email: participantData.email,
         subject: "Event Registration Confirmation",
-        text: `
-      Dear ${participant.first_name},
-
-      Thank you for registering for the event "${
-        participant.proposalInfo?.title || "Unnamed Event"
-      }".
-      Your registration has been ACCEPTED!
-      
-      Please find your official registration pass attached as a PDF file.
-      
-      We look forward to seeing you at the venue:
-      ${participant.event?.venue || "TBA"}.
-
-      Best regards,
-      LGU Event Management Team
-    `,
-        attachments: [
-          {
-            filename: `Event_Pass_${participant._id}.pdf`,
-            content: pdfBuffer,
-            contentType: "application/pdf",
-          },
-        ],
+        text: `Dear ${participantData.first_name},\n\nYour registration for "${participantData.proposalInfo?.title || "Unnamed Event"}" has been ACCEPTED!\n\nPlease find your official registration pass attached.\n\nVenue: ${participantData.event?.venue || "TBA"}\n\nBest regards,\nLGU Event Management Team`,
+        attachments: [{
+          filename: `Event_Pass_${participantData._id}.pdf`,
+          content: pdfBuffer,
+          contentType: "application/pdf",
+        }],
       });
-
       console.log("✅ PDF generated and email sent for accepted participant");
     }
 
     res.status(200).json({
       status: "success",
       message: `Participant status updated to ${status}`,
-      data: participant,
+      data: participantData,
     });
+
   } catch (error) {
-    console.error("❌ Error updating participant:", error.message);
+    console.error("❌ Error updating participant:", error);
     res.status(500).json({
       status: "error",
       message: "An error occurred while updating the status",
@@ -618,6 +473,210 @@ exports.UpdateParticipantStatus = AsyncErrorHandler(async (req, res) => {
     });
   }
 });
+
+async function generateRegistrationPDF(participantData, qrBuffer) {
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({
+        size: "A4",
+        margins: { top: 0, bottom: 0, left: 0, right: 0 },
+      });
+
+      const buffers = [];
+      doc.on("data", buffers.push.bind(buffers));
+      doc.on("end", () => resolve(Buffer.concat(buffers)));
+      doc.on("error", reject);
+
+      const pageWidth = doc.page.width;
+      const pageHeight = doc.page.height;
+
+      // Modern gradient header
+      const gradient = doc.linearGradient(0, 0, pageWidth, 200);
+      gradient.stop(0, "#3b82f6").stop(1, "#1d4ed8");
+      doc.rect(0, 0, pageWidth, 220).fill(gradient);
+
+      // Decorative wave pattern
+      doc.save();
+      doc.opacity(0.15);
+      doc.moveTo(0, 180)
+         .bezierCurveTo(pageWidth / 4, 160, pageWidth / 2, 200, pageWidth, 180)
+         .lineTo(pageWidth, 220)
+         .lineTo(0, 220)
+         .fill("#ffffff");
+      doc.restore();
+
+      // Event title section
+      doc.fontSize(28)
+         .fillColor("#ffffff")
+         .font("Helvetica-Bold")
+         .text("EVENT REGISTRATION", 50, 60, { align: "left" });
+
+      doc.fontSize(32)
+         .fillColor("#fbbf24")
+         .font("Helvetica-Bold")
+         .text("CONFIRMED", 50, 95, { align: "left" });
+
+      // Event name with modern styling
+      const eventTitle = participantData.proposalInfo?.title || "Unnamed Event";
+      doc.fontSize(14)
+         .fillColor("#e0e7ff")
+         .font("Helvetica")
+         .text(eventTitle.toUpperCase(), 50, 145, {
+           width: pageWidth - 100,
+           align: "left",
+         });
+
+      // Main content area with card design
+      const cardY = 260;
+      const cardPadding = 40;
+
+      // Participant info card
+      doc.roundedRect(40, cardY, pageWidth - 80, 200, 12)
+         .fillAndStroke("#f8fafc", "#e2e8f0");
+
+      // Participant name - prominent
+      const fullName = `${participantData.first_name} ${
+        participantData.middle_name || ""
+      } ${participantData.last_name}${participantData.extention || ""}`.trim();
+
+      doc.fontSize(26)
+         .fillColor("#1e293b")
+         .font("Helvetica-Bold")
+         .text(fullName, cardPadding + 40, cardY + 30, {
+           width: pageWidth - 160,
+           align: "left",
+         });
+
+      // Participant details in modern layout
+      let detailY = cardY + 80;
+
+      const details = [
+        { icon: "📧", label: "Email", value: participantData.email },
+        { icon: "📱", label: "Contact", value: participantData.contact_number },
+        { icon: "⚧", label: "Gender", value: participantData.gender },
+      ];
+
+      details.forEach((detail, index) => {
+        const xPos = cardPadding + 40;
+        const yPos = detailY + index * 35;
+
+        doc.fontSize(11)
+           .fillColor("#64748b")
+           .font("Helvetica")
+           .text(detail.label, xPos, yPos);
+
+        doc.fontSize(13)
+           .fillColor("#334155")
+           .font("Helvetica-Bold")
+           .text(detail.value, xPos + 80, yPos);
+      });
+
+      // Event details card
+      const eventCardY = 500;
+      doc.roundedRect(40, eventCardY, pageWidth - 280, 140, 12)
+         .fillAndStroke("#fef3c7", "#fbbf24");
+
+      doc.fontSize(12)
+         .fillColor("#92400e")
+         .font("Helvetica-Bold")
+         .text("EVENT DETAILS", 60, eventCardY + 20);
+
+      doc.fontSize(10)
+         .fillColor("#78350f")
+         .font("Helvetica")
+         .text("Venue:", 60, eventCardY + 50);
+
+      doc.fontSize(11)
+         .fillColor("#451a03")
+         .font("Helvetica-Bold")
+         .text(
+           participantData.event?.venue || "To be announced",
+           60,
+           eventCardY + 70,
+           { width: pageWidth - 340, align: "left" }
+         );
+
+      // QR Code card with modern styling
+      const qrCardX = pageWidth - 220;
+      doc.roundedRect(qrCardX, eventCardY, 180, 180, 12)
+         .fillAndStroke("#ffffff", "#cbd5e1");
+
+      // QR code shadow effect
+      doc.save();
+      doc.opacity(0.1);
+      doc.roundedRect(qrCardX + 3, eventCardY + 3, 180, 180, 12).fill("#000000");
+      doc.restore();
+
+      // QR code placement
+      doc.image(qrBuffer, qrCardX + 15, eventCardY + 15, {
+        width: 150,
+        height: 150,
+      });
+
+      doc.fontSize(9)
+         .fillColor("#64748b")
+         .font("Helvetica")
+         .text("SCAN TO VERIFY", qrCardX, eventCardY + 175, {
+           width: 180,
+           align: "center",
+         });
+
+      // Instructions section
+      const instructY = 670;
+      doc.fontSize(11)
+         .fillColor("#475569")
+         .font("Helvetica-Bold")
+         .text("IMPORTANT INSTRUCTIONS", 40, instructY);
+
+      const instructions = [
+        "Present this pass at the event venue entrance",
+        "QR code must be clearly visible for scanning",
+        "Keep this document safe until event completion",
+        "Arrive 15 minutes before the scheduled time",
+      ];
+
+      doc.fontSize(9)
+         .fillColor("#64748b")
+         .font("Helvetica");
+
+      instructions.forEach((instruction, index) => {
+        doc.circle(50, instructY + 35 + index * 20, 2.5).fill("#3b82f6");
+        doc.text(instruction, 65, instructY + 30 + index * 20, {
+          width: pageWidth - 100,
+        });
+      });
+
+      // Modern footer
+      doc.rect(0, pageHeight - 60, pageWidth, 60).fill("#1e293b");
+
+      doc.fontSize(8)
+         .fillColor("#94a3b8")
+         .font("Helvetica")
+         .text(
+           "LGU Event Management System | Generated on " +
+             new Date().toLocaleDateString("en-US", {
+               year: "numeric",
+               month: "long",
+               day: "numeric",
+             }),
+           0,
+           pageHeight - 35,
+           { width: pageWidth, align: "center" }
+         );
+
+      // Decorative corner elements
+      doc.save();
+      doc.opacity(0.6);
+      doc.circle(pageWidth - 30, pageHeight - 30, 20).fill("#3b82f6");
+      doc.circle(30, pageHeight - 30, 15).fill("#fbbf24");
+      doc.restore();
+
+      doc.end();
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
 
 exports.UpdateParticipant = AsyncErrorHandler(async (req, res) => {
   console.log(req.body);
