@@ -300,7 +300,7 @@ export const ParticipantDisplayProvider = ({ children }) => {
             if (response.data?.status === "success") {
                 setModalStatus("success");
                 setShowModal(true);
-                FetchPersonel();
+                FetchParticipant();
             } else {
                 return { success: false, error: "Unexpected response from server." };
             }

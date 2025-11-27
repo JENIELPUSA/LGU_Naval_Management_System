@@ -234,7 +234,6 @@ exports.ParticipantDisplay = AsyncErrorHandler(async (req, res) => {
   }
 });
 
-
 exports.ParticipantArchived = AsyncErrorHandler(async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -366,15 +365,10 @@ exports.ParticipantArchived = AsyncErrorHandler(async (req, res) => {
   }
 });
 
-
-
-
 exports.UpdateParticipantStatus = AsyncErrorHandler(async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-
-    console.log("req.body", req.body);
 
     if (!["Pending", "Accept", "Reject"].includes(status)) {
       return res.status(400).json({
@@ -391,8 +385,7 @@ exports.UpdateParticipantStatus = AsyncErrorHandler(async (req, res) => {
 
     participant.status = status;
     await participant.save();
-
-    // ✅ PDF generation at email sending ONLY for "Accept" status
+    // PDF generation at email sending ONLY for "Accept" status
     if (status === "Accept") {
       const qrData = `${participant._id}`;
       const qrImage = await QRCode.toDataURL(qrData, {
@@ -621,6 +614,44 @@ exports.UpdateParticipantStatus = AsyncErrorHandler(async (req, res) => {
     res.status(500).json({
       status: "error",
       message: "An error occurred while updating the status",
+      error: error.message,
+    });
+  }
+});
+
+exports.UpdateParticipant = AsyncErrorHandler(async (req, res) => {
+  console.log(req.body);
+  try {
+    const participant = await ParticipantModel.findById(req.params.id);
+
+    if (!participant) {
+      return res
+        .status(404)
+        .json({ status: "fail", message: "Participant not found" });
+    }
+
+    participant.attendance_status = req.body.attendance_status;
+
+    await participant.save();
+
+    const newAttendance = {
+      participantId: participant._id,
+      name: `${participant.first_name} ${participant.last_name}`,
+      action: participant.attendance_status
+    };
+    const io = req.app.get("io");
+    io.emit("newAttendance", newAttendance);
+
+    res.status(200).json({
+      status: "success",
+      message: `Participant ${participant.attendance_status}`,
+      data: participant,
+    });
+  } catch (error) {
+    console.error("❌ Error updating participant:", error);
+    res.status(500).json({
+      status: "error",
+      message: "An error occurred while updating the participant",
       error: error.message,
     });
   }
