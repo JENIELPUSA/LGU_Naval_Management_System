@@ -34,7 +34,7 @@ export const navbarLinks = [
         title: "Manage User",
         links: [
             {
-                label: "Admin",
+                label: "User",
                 icon: UserPlus,
                 path: "/dashboard/admin",
             },
@@ -42,6 +42,11 @@ export const navbarLinks = [
                 label: "Organizer",
                 icon: UserPlus,
                 path: "/dashboard/organizer",
+            },
+            {
+                label: "Participants",
+                icon: UserPlus,
+                path: "/dashboard/participants",
             },
             {
                 label: "LGU",
@@ -59,11 +64,7 @@ export const navbarLinks = [
                 icon: FileText,
                 path: "/dashboard/proposal",
             },
-            {
-                label: "Participants",
-                icon: UserPlus,
-                path: "/dashboard/participants",
-            },
+
             {
                 label: "Events",
                 icon: CalendarCheck,
@@ -80,7 +81,7 @@ export const navbarLinks = [
                 path: "/dashboard/manage-team",
             },
             {
-                label: "LGU Response",
+                label: "Responses",
                 icon: UserCheck,
                 path: "/dashboard/lgu-response",
             },

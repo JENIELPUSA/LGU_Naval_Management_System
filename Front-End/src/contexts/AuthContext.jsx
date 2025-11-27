@@ -89,7 +89,7 @@ export const AuthProvider = ({ children }) => {
         setDesignatedzone(null);
         delete axios.defaults.headers.common["Authorization"];
 
-        window.location.href = "/login";
+        window.location.href = "/";
     };
 
     return (

@@ -108,8 +108,6 @@ const LogsAndAudit = () => {
     const startEntry = isTotalLogs > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0;
     const endEntry = Math.min(currentPage * itemsPerPage, isTotalLogs || 0);
 
-    const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
-
     return (
         <div className="card border border-slate-300/50 bg-gradient-to-br from-slate-50/30 to-slate-100/30 dark:border-slate-700/50 dark:from-slate-900/20 dark:to-slate-800/20">
             <div className="card-header p-3 sm:p-4">
@@ -247,57 +245,58 @@ const LogsAndAudit = () => {
 
                             {/* Desktop: Table */}
                             <div className="hidden sm:block">
-                                <div className="min-w-full overflow-x-auto">
-                                    <table className="table w-full min-w-[700px]">
-                                        <thead className="table-header bg-gradient-to-r from-slate-200/50 to-slate-300/50 dark:from-slate-700/30 dark:to-slate-600/30">
-                                            <tr className="table-row">
-                                                <th className="table-head px-3 py-2.5 text-xs font-semibold text-slate-800 dark:text-slate-100">Action</th>
-                                                <th className="table-head px-3 py-2.5 text-xs font-semibold text-slate-800 dark:text-slate-100">Module</th>
-                                                <th className="table-head px-3 py-2.5 text-xs font-semibold text-slate-800 dark:text-slate-100">Description</th>
-                                                <th className="table-head px-3 py-2.5 text-xs font-semibold text-slate-800 dark:text-slate-100">By</th>
-                                                <th className="table-head px-3 py-2.5 text-xs font-semibold text-slate-800 dark:text-slate-100">Role</th>
-                                                <th className="table-head px-3 py-2.5 text-xs font-semibold text-slate-800 dark:text-slate-100">Time</th>
+                                <div className="w-full overflow-x-visible">
+                                    <table className="w-full">
+                                        <thead className="bg-gradient-to-r from-slate-200/50 to-slate-300/50 dark:from-slate-700/30 dark:to-slate-600/30">
+                                            <tr>
+                                                <th className="px-3 py-2.5 text-xs font-semibold text-slate-800 dark:text-slate-100 w-24">Action</th>
+                                                <th className="px-3 py-2.5 text-xs font-semibold text-slate-800 dark:text-slate-100 w-40">Module</th>
+                                                <th className="px-3 py-2.5 text-xs font-semibold text-slate-800 dark:text-slate-100 min-w-0 flex-1">Description</th>
+                                                <th className="px-3 py-2.5 text-xs font-semibold text-slate-800 dark:text-slate-100 w-32">By</th>
+                                                <th className="px-3 py-2.5 text-xs font-semibold text-slate-800 dark:text-slate-100 w-28">Role</th>
+                                                <th className="px-3 py-2.5 text-xs font-semibold text-slate-800 dark:text-slate-100 w-40">Time</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="table-body">
+                                        <tbody>
                                             {isLogs.map((log) => (
                                                 <React.Fragment key={log._id}>
                                                     <tr
-                                                        className="table-row cursor-pointer border-b border-slate-200/30 hover:bg-slate-100/20 dark:border-slate-600/30 dark:hover:bg-slate-700/10"
+                                                        className="cursor-pointer border-b border-slate-200/30 hover:bg-slate-100/20 dark:border-slate-600/30 dark:hover:bg-slate-700/10"
                                                         onClick={() => toggleExpand(log)}
                                                     >
-                                                        <td className="table-cell px-3 py-3">
+                                                        <td className="px-3 py-3">
                                                             <span className={getActionBadgeClass(log.action_type)}>
                                                                 {log.action_type}
                                                             </span>
                                                         </td>
-                                                        <td className="table-cell px-3 py-3">
+                                                        <td className="px-3 py-3">
                                                             <div className="flex items-center gap-2">
                                                                 <div className="flex size-8 items-center justify-center rounded bg-slate-100 dark:bg-slate-700/40">
                                                                     <FileText size={14} className="text-slate-700 dark:text-slate-300" />
                                                                 </div>
-                                                                <span className="font-medium text-slate-800 dark:text-slate-100">
+                                                                <span className="font-medium text-slate-800 dark:text-slate-100 truncate">
                                                                     {log.module}
                                                                 </span>
                                                             </div>
                                                         </td>
-                                                        <td className="table-cell px-3 py-3 text-sm text-slate-700 dark:text-slate-300">
-                                                            <p className="line-clamp-2">{log.description}</p>
+                                                        <td className="px-3 py-3 text-sm text-slate-700 dark:text-slate-300 min-w-0">
+                                                            {/* DITO NAGLAGAY NG LINE-CLAMP */}
+                                                            <p className="line-clamp-2 break-words leading-tight">{log.description}</p>
                                                         </td>
-                                                        <td className="table-cell px-3 py-3 text-sm text-slate-800 dark:text-slate-200">
+                                                        <td className="px-3 py-3 text-sm text-slate-800 dark:text-slate-200 truncate">
                                                             {log.performed_by_name || "N/A"}
                                                         </td>
-                                                        <td className="table-cell px-3 py-3 text-sm text-slate-800 dark:text-slate-200">
+                                                        <td className="px-3 py-3 text-sm text-slate-800 dark:text-slate-200 truncate">
                                                             {log.role || "N/A"}
                                                         </td>
-                                                        <td className="table-cell px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
+                                                        <td className="px-3 py-3 text-sm text-slate-600 dark:text-slate-300">
                                                             {formatTimestamp(log.timestamp)}
                                                         </td>
                                                     </tr>
                                                     {expandedLog && expandedLog._id === log._id && (
                                                         <tr className="bg-slate-50/30 dark:bg-slate-700/10">
                                                             <td colSpan="6" className="px-4 py-3 text-xs text-slate-800 dark:text-slate-300">
-                                                                <div className="grid grid-cols-2 gap-4">
+                                                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                                                     <div>
                                                                         <p className="mb-2 font-semibold text-slate-800 dark:text-slate-200">Old Data:</p>
                                                                         <div className="rounded bg-slate-100 p-3 dark:bg-slate-700/20">

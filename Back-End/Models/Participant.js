@@ -8,8 +8,18 @@ const participantSchema = new mongoose.Schema(
     address: { type: String },
     contact_number: String,
     email: String,
+    status: {
+      type: String,
+      enum: ["Pending", "Accept", "Reject"],
+      default: "Pending",
+    },
+
     check_in: { type: Date, default: null },
     check_out: { type: Date, default: null },
+    archived: {
+      type: Boolean,
+      default: false, 
+    },
     attendance_status: {
       type: String,
       enum: ["Not Checked In", "Check-In", "Check-Out"],
@@ -27,10 +37,13 @@ const participantSchema = new mongoose.Schema(
   }
 );
 
-// ✅ Middleware with try/catch + consistent logic
+// Middleware for Auto Check-In / Check-Out
 participantSchema.pre("save", function (next) {
   try {
-    console.log("🔁 Participant Middleware Triggered | Status:", this.attendance_status);
+    console.log(
+      "🔁 Participant Middleware Triggered | Status:",
+      this.attendance_status
+    );
 
     // Case 1: Check-In
     if (this.attendance_status === "Check-In" && !this.check_in) {
@@ -41,14 +54,12 @@ participantSchema.pre("save", function (next) {
 
     // Case 2: Check-Out
     if (this.attendance_status === "Check-Out") {
-      // If no check-in yet, auto add one first
       if (!this.check_in) {
         this.check_in = new Date();
         this.attendance_log.push({ action: "Check-In" });
         console.log("⚠️ No Check-In found — Auto Check-In added");
       }
 
-      // Then set Check-Out if not yet recorded
       if (!this.check_out) {
         this.check_out = new Date();
         this.attendance_log.push({ action: "Check-Out" });
@@ -59,7 +70,7 @@ participantSchema.pre("save", function (next) {
     next();
   } catch (error) {
     console.error("❌ Error in participantSchema pre-save middleware:", error);
-    next(error); // Pass error to Mongoose error handler
+    next(error);
   }
 });
 

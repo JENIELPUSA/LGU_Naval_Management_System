@@ -212,7 +212,6 @@ const RegistrationModal = ({
             lastCommandTimeRef.current = now;
             const cmdLow = cmd.toLowerCase().trim();
             setVoiceCommandLog(`Voice: "${cmd}"`);
-
             if (!showModal) return;
 
             // Pagination
@@ -540,6 +539,17 @@ const RegistrationModal = ({
                                         </div>
                                         <p className="mt-1 text-[10px] font-medium text-gray-600">{formatEventDate(event.eventDate)}</p>
                                         <p className="mt-1 line-clamp-2 text-[10px] text-gray-500">{event.proposal?.description}</p>
+
+                                        {/* === REMAINING SLOTS === */}
+                                        {event.remainingSlots !== undefined && (
+                                            <p className="mt-1 text-[10px] font-medium">
+                                                {event.remainingSlots > 0 ? (
+                                                    <span className="text-green-600">Slots left: {event.remainingSlots}</span>
+                                                ) : (
+                                                    <span className="text-red-600">Fully booked</span>
+                                                )}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             </motion.div>
@@ -650,7 +660,6 @@ const RegistrationModal = ({
                                             </button>
                                         )}
                                     </div>
-
                                     <div className="rounded border border-blue-200 bg-blue-50 p-2">
                                         <p className="text-center text-[12px] text-blue-700">
                                             <strong>Voice:</strong> "select [name]", "search [kw]", "next", "clear"
@@ -659,7 +668,6 @@ const RegistrationModal = ({
                                             <span className="font-semibold text-green-600">Green</span> = voice match
                                         </p>
                                     </div>
-
                                     {eventList}
                                 </div>
                             ) : (
@@ -669,6 +677,17 @@ const RegistrationModal = ({
                                             <h3 className="text-[14px] font-bold text-blue-900">{selectedEvent.proposal?.title}</h3>
                                             <p className="mt-0.5 text-[12px] text-blue-600">{formatEventDate(selectedEvent.eventDate)}</p>
                                             <p className="mt-2 text-[12px] text-gray-700">{selectedEvent.proposal?.description}</p>
+
+                                            {/* === REMAINING SLOTS === */}
+                                            {selectedEvent.remainingSlots !== undefined && (
+                                                <p className="mt-2 text-[12px] font-medium">
+                                                    {selectedEvent.remainingSlots > 0 ? (
+                                                        <span className="text-green-700">Available slots: {selectedEvent.remainingSlots}</span>
+                                                    ) : (
+                                                        <span className="text-red-600">No slots available</span>
+                                                    )}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="flex flex-col md:w-2/3">

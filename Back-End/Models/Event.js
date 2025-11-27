@@ -9,8 +9,8 @@ const eventSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-
   venue: { type: String, required: true },
+  capacity: { type: Number, required: true },
   created_by: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Organizer",

@@ -5,6 +5,8 @@ import AddContactForm from "./AddContactForm";
 import { ContactContext } from "../../contexts/ContactContext/ContactInfoContext";
 import AccountSetting from "../../Components/Setting/AccountSettings";
 import { AuthContext } from "../../contexts/AuthContext";
+import LogsAndAudit from "../LogsAndAudit/LogsAndAudit";
+import UnArchived from "../AdminDashboard/Participant/UnArchived"
 
 const AccountSettings = () => {
     const { AddContact } = useContext(ContactContext);
@@ -57,6 +59,9 @@ const AccountSettings = () => {
                             bgtheme={bgtheme}
                             FontColor={FontColor}
                         />
+                        <LogsAndAudit/>
+
+                        <UnArchived/>
                     </>
                 )}
             </div>

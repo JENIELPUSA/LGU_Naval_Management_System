@@ -85,7 +85,7 @@ const LoadingOverlay = ({ message = "Loading..." }) => {
                 </div>
             </div>
 
-            <style jsx>{`
+            <style>{`
                 .particle {
                     position: absolute;
                     background: rgba(255, 255, 255, 0.1);

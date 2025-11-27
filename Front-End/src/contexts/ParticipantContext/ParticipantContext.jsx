@@ -22,13 +22,15 @@ export const ParticipantDisplayProvider = ({ children }) => {
     const [dateFrom, setDateFrom] = useState("");
     const [dateTo, setDateTo] = useState("");
     const [IncomingEvent, setIncomingEvent] = useState("");
-    const [TotalUpcoming,setTotalUpcoming]=useState(0)
+    const [TotalUpcoming, setTotalUpcoming] = useState(0);
+    const [ArchivedParticipant, setArchivedParticipant] = useState([]);
     const limit = 5;
 
     useEffect(() => {
         if (!authToken) return;
         FetchParticipant(1, search, dateFrom, dateTo);
         FetchIncomingEvent(1, search, dateFrom, dateTo);
+        FetchArchivedParticipant(1, search, dateFrom, dateTo);
     }, [authToken, search, dateFrom, dateTo]);
     useEffect(() => {
         if (customError) {
@@ -62,10 +64,15 @@ export const ParticipantDisplayProvider = ({ children }) => {
                 setShowModal(true);
                 return res.data;
             } else {
-                throw new Error(res.data.message || "Registration failed.");
+                // **Hindi na throw**, diretso handle ang error
+                const message = res.data.message || "Registration failed.";
+                setCustomError(message);
+                setModalStatus("failed");
+                return null; // or throw if gusto mo pa rin
             }
         } catch (error) {
             let message = "Something went wrong.";
+
             if (error.response?.data) {
                 const errorData = error.response.data;
                 message = typeof errorData === "string" ? errorData : errorData.message || errorData.error || "Registration failed.";
@@ -75,12 +82,15 @@ export const ParticipantDisplayProvider = ({ children }) => {
                 message = error.message || "Unexpected error.";
             }
 
-            throw new Error(message);
+            // **Update state instead of throwing**
+            setCustomError(message);
+            setModalStatus("failed");
+            setShowModal(true);
+            return null;
         }
     };
 
     const Attendance = async (values) => {
-        console.log("values", values);
         try {
             const response = await axios.patch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/Participant/${values.code}`, values, {
                 headers: { "Content-Type": "application/json" },
@@ -169,6 +179,51 @@ export const ParticipantDisplayProvider = ({ children }) => {
         }
     };
 
+    const FetchArchivedParticipant = async (page = 1, limit, searchTerm = "", fromDate = "", toDate = "", event_id = "") => {
+        if (!authToken) return;
+
+        try {
+            setIsLoading(true);
+
+            const params = {
+                page,
+                limit,
+                event_id,
+            };
+
+            if (searchTerm && searchTerm.trim() !== "") {
+                params.search = searchTerm.trim();
+            }
+
+            if (fromDate && fromDate.trim() !== "") {
+                params.dateFrom = fromDate.trim();
+            }
+
+            if (toDate && toDate.trim() !== "") {
+                params.dateTo = toDate.trim();
+            }
+
+            const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/Participant/Archived`, {
+                params,
+                withCredentials: true,
+                headers: {
+                    Authorization: `Bearer ${authToken}`,
+                    "Cache-Control": "no-cache",
+                },
+            });
+
+            const { data, totalPages, currentPage, totalCount } = res.data;
+            setArchivedParticipant(data || []);
+            setTotalParticipant(totalCount || 0);
+            setTotalPages(totalPages || 1);
+            setCurrentPage(currentPage || page);
+        } catch (error) {
+            console.error("Error fetching admin data:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const DeleteParticipant = async (participantID) => {
         try {
             const response = await axios.delete(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/Participant/${participantID}`, {
@@ -220,13 +275,76 @@ export const ParticipantDisplayProvider = ({ children }) => {
             });
 
             const payload = res.data;
-            console.log("payload", payload);
             setIncomingEvent(payload.data || []);
             setTotalUpcoming(res.data.totalUpcoming);
         } catch (error) {
             console.error("Error fetching admin data:", error);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const UpdateParticipantStatus = async (dataID, status) => {
+        try {
+            const response = await axios.patch(
+                `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/Participant/UpdateParticipantStatus/${dataID}`,
+                { status },
+                {
+                    headers: {
+                        Authorization: `Bearer ${authToken}`,
+                        "Content-Type": "application/json",
+                    },
+                },
+            );
+
+            if (response.data?.status === "success") {
+                setModalStatus("success");
+                setShowModal(true);
+                FetchPersonel();
+            } else {
+                return { success: false, error: "Unexpected response from server." };
+            }
+        } catch (error) {
+            const message = error.response?.data?.message || error.response?.data?.error || error.message || "Something went wrong.";
+
+            setCustomError(message);
+            setModalStatus("failed");
+            setShowModal(true);
+
+            return { success: false, error: message };
+        }
+    };
+
+    const MoveToArchived = async (dataID, isArchived) => {
+        try {
+            const response = await axios.patch(
+                `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/Participant/UpdateParticipantArchive/${dataID}`,
+                { archived: isArchived },
+                {
+                    headers: {
+                        Authorization: `Bearer ${authToken}`,
+                        "Content-Type": "application/json",
+                    },
+                },
+            );
+
+            if (response.data?.status === "success") {
+                FetchParticipant();
+                FetchArchivedParticipant();
+                setModalStatus("success");
+                setShowModal(true);
+            } else {
+                const message = response.data?.message || "Failed to update archive status.";
+                setCustomError(message);
+                setModalStatus("failed");
+                setShowModal(true);
+            }
+        } catch (error) {
+            const message = error.response?.data?.message || error.response?.data?.error || error.message || "Something went wrong.";
+            setCustomError(message);
+            setModalStatus("failed");
+            setShowModal(true);
+            return { success: false, error: message };
         }
     };
 
@@ -253,7 +371,12 @@ export const ParticipantDisplayProvider = ({ children }) => {
                 FetchParticipant,
                 DeleteParticipant,
                 isTotalParticipant,
-                IncomingEvent,TotalUpcoming
+                IncomingEvent,
+                TotalUpcoming,
+                UpdateParticipantStatus,
+                MoveToArchived,
+                ArchivedParticipant,
+                FetchArchivedParticipant,
             }}
         >
             {children}

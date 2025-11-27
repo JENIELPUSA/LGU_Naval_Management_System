@@ -42,6 +42,7 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData, bgtheme, FontC
         startTime: "",
         venue: "",
         city: "",
+        capacity: "", // ADDED: Capacity field
         proposalId: "",
         lguId: "",
         resources: [],
@@ -86,6 +87,7 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData, bgtheme, FontC
                 startTime: editingData.startTime || "",
                 venue: editingData.venue || "",
                 city: editingData.city || "",
+                capacity: editingData.capacity || "", // ADDED: Capacity field
                 proposalId: editingData.proposalId || "",
                 lguId: editingData.lguId || "",
                 resources: editingData.resources || [],
@@ -102,6 +104,7 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData, bgtheme, FontC
                 startTime: "",
                 venue: "",
                 city: "",
+                capacity: "", // ADDED: Capacity field
                 proposalId: "",
                 lguId: "",
                 resources: [],
@@ -476,7 +479,22 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData, bgtheme, FontC
                                     </select>
                                 </div>
 
-                                <div className="mt-3">
+                                {/* ADDED: Capacity Input Field */}
+                                <div>
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">Capacity</label>
+                                    <input
+                                        type="number"
+                                        name="capacity"
+                                        value={formData.capacity}
+                                        onChange={handleChange}
+                                        placeholder="Enter capacity"
+                                        min="1"
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 placeholder-gray-400 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <div>
                                     <label className="mb-2 block text-sm font-medium text-gray-700">City</label>
                                     <input
                                         type="text"
@@ -487,37 +505,37 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData, bgtheme, FontC
                                         className="w-full rounded-xl border border-gray-300 px-4 py-3 placeholder-gray-400 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                                     />
                                 </div>
+                                <div>
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">Venue</label>
+                                    <input
+                                        type="text"
+                                        name="venue"
+                                        value={formData.venue}
+                                        onChange={handleChange}
+                                        placeholder="Enter venue location"
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 placeholder-gray-400 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                                        required
+                                        disabled={!formData.city.trim()}
+                                        title={!formData.city.trim() ? "Please enter a city first" : ""}
+                                    />
+                                </div>
                             </div>
-                            <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700">Venue</label>
-                                <input
-                                    type="text"
-                                    name="venue"
-                                    value={formData.venue}
-                                    onChange={handleChange}
-                                    placeholder="Enter venue location"
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 placeholder-gray-400 transition-all duration-200 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                                    required
-                                    disabled={!formData.city.trim()}
-                                    title={!formData.city.trim() ? "Please enter a city first" : ""}
-                                />
-                                {isSearching && <div className="mt-1 text-xs text-gray-500">Searching...</div>}
-                                {suggestions.length > 0 && (
-                                    <ul className="z-50 mt-2 max-h-48 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-sm">
-                                        {suggestions.map((sug, idx) => (
-                                            <li
-                                                key={idx}
-                                                className="cursor-pointer px-3 py-2 hover:bg-blue-50"
-                                                onMouseDown={(e) => e.preventDefault()}
-                                                onClick={() => handleSelectSuggestion(sug)}
-                                            >
-                                                <div className="line-clamp-1 text-sm font-medium text-gray-900">{sug.display_name.split(",")[0]}</div>
-                                                <div className="line-clamp-1 text-xs text-gray-500">{sug.display_name}</div>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
-                            </div>
+                            {isSearching && <div className="mt-1 text-xs text-gray-500">Searching...</div>}
+                            {suggestions.length > 0 && (
+                                <ul className="z-50 mt-2 max-h-48 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-sm">
+                                    {suggestions.map((sug, idx) => (
+                                        <li
+                                            key={idx}
+                                            className="cursor-pointer px-3 py-2 hover:bg-blue-50"
+                                            onMouseDown={(e) => e.preventDefault()}
+                                            onClick={() => handleSelectSuggestion(sug)}
+                                        >
+                                            <div className="line-clamp-1 text-sm font-medium text-gray-900">{sug.display_name.split(",")[0]}</div>
+                                            <div className="line-clamp-1 text-xs text-gray-500">{sug.display_name}</div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
                         </div>
 
                         {/* Action Buttons */}
@@ -568,6 +586,7 @@ const AddEventModal = ({ isOpen, onClose, isEditing, editingData, bgtheme, FontC
                                 <Popup>
                                     <div className="text-sm font-medium">{formData.venue || "Venue"}</div>
                                     <div className="text-xs text-gray-600">{formData.city}</div>
+                                    {formData.capacity && <div className="text-xs text-gray-600">Capacity: {formData.capacity}</div>}
                                 </Popup>
                             </Marker>
                         )}

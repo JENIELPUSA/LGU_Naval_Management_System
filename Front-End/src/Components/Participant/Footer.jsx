@@ -29,11 +29,11 @@ const Footer = ({ FontColor, bgtheme }) => {
         const translations = {
             en: {
                 emergencyHotlines: "Emergency Hotlines",
-                fireDepartment: "BFP (Fire Department)",
-                police: "PNP (Police)",
-                municipalHealthOffice: "Municipal Health Office",
-                disasterResponse: "MDRRMO (Disaster Response)",
-                lguNaval: "LGU Naval",
+                provincialGovernorOffice: "Provincial Governor’s Office (PGO)",
+                biliranProvincialCapitol: "Biliran Provincial Capitol",
+                pdrrmo: "PDRRMO (Provincial Disaster Office)",
+                navalMayorsOffice: "Naval Mayor’s Office",
+                navalMdrrmo: "Naval MDRRMO",
                 transparencySeal: "Transparency Seal",
                 republicOfPhilippines: "Republic of the Philippines",
                 dilg: "Department of Interior and Local Government",
@@ -64,11 +64,11 @@ const Footer = ({ FontColor, bgtheme }) => {
             },
             tl: {
                 emergencyHotlines: "Mga Emergency Hotline",
-                fireDepartment: "BFP (Kaugnay ng Sunog)",
-                police: "PNP (Pulisya)",
-                municipalHealthOffice: "Opisina ng Kalusugan ng Bayan",
-                disasterResponse: "MDRRMO (Tugon sa Sakuna)",
-                lguNaval: "LGU Naval",
+                provincialGovernorOffice: "Opisina ng Punong Lalawigan (PGO)",
+                biliranProvincialCapitol: "Punong Tanggapan ng Lalawigan ng Biliran",
+                pdrrmo: "PDRRMO (Opisina ng Sakuna ng Lalawigan)",
+                navalMayorsOffice: "Opisina ng Punong Bayan ng Naval",
+                navalMdrrmo: "Naval MDRRMO",
                 transparencySeal: "Selyo ng Transparency",
                 republicOfPhilippines: "Republika ng Pilipinas",
                 dilg: "Kagawaran ng Interyor at Pamahalaang Lokal",
@@ -101,13 +101,13 @@ const Footer = ({ FontColor, bgtheme }) => {
         return translations[accessibility.language]?.[key] || translations.en[key] || key;
     };
 
-    // Emergency hotlines data
+    // Emergency hotlines data (UPDATED)
     const emergencyHotlines = [
-        { name: t('fireDepartment'), number: "0917-123-4567" },
-        { name: t('police'), number: "0998-765-4321" },
-        { name: t('municipalHealthOffice'), number: "0935-112-2233" },
-        { name: t('disasterResponse'), number: "0917-556-7788" },
-        { name: t('lguNaval'), number: "0997-992-6806" }
+        { name: t('provincialGovernorOffice'), number: "(053) 500-9081" },
+        { name: t('biliranProvincialCapitol'), number: "(053) 500-9623 / (053) 500-9807" },
+        { name: t('pdrrmo'), number: "(053) 507-9053" },
+        { name: t('navalMayorsOffice'), number: "(053) 500-9043" },
+        { name: t('navalMdrrmo'), number: "0917-304-6781" }
     ];
 
     // Government links data

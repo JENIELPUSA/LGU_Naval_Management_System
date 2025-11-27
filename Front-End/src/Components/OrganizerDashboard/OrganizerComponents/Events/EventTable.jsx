@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from "react";
-import { CircleX, Clock8, PencilLine, Trash, Plus, Database, Calendar, MapPin, User, Mail, Phone, FileText, Copy } from "lucide-react";
+import { CircleX, Clock, PencilLine, Trash, Plus, Database, Calendar, MapPin, User, Mail, Phone, FileText, ChevronLeft, ChevronRight, Grid, List, Search, ChevronDown, ChevronUp } from "lucide-react";
 import { EventDisplayContext } from "../../../../contexts/EventContext/EventContext";
 import LoadingOverlay from "../../../../ReusableFolder/LoadingOverlay";
 import SuccessFailed from "../../../../ReusableFolder/SuccessandField";
@@ -9,7 +9,7 @@ import AddFormModal from "./EventAddForm";
 import { AuthContext } from "../../../../contexts/AuthContext";
 import { PersonilContext } from "../../../../contexts/PersonelContext/PersonelContext";
 
-const EvenTable = () => {
+const CalendarEventView = () => {
     const {
         isEvent,
         DeleteEvent,
@@ -52,20 +52,22 @@ const EvenTable = () => {
         date: "",
     });
 
-    const [copiedEventId, setCopiedEventId] = useState(null);
+    const [viewMode, setViewMode] = useState("month");
+    const [currentDate, setCurrentDate] = useState(new Date());
+    const [selectedEvent, setSelectedEvent] = useState(null);
+    const [showEventDetails, setShowEventDetails] = useState(false);
+    const [expandedSections, setExpandedSections] = useState({
+        description: true,
+        organizer: true,
+        resources: true
+    });
 
-    const handleCopy = (eventId, url) => {
-        if (url) {
-            navigator.clipboard.writeText(url);
-            setCopiedEventId(eventId);
-            setTimeout(() => setCopiedEventId(null), 2000);
-        }
+    const toggleSection = (section) => {
+        setExpandedSections(prev => ({
+            ...prev,
+            [section]: !prev[section]
+        }));
     };
-
-    const showingStart = (currentPage - 1) * limit + 1;
-    const showingEnd = Math.min(currentPage * limit, isTotalEvent);
-
-    const pageSizeOptions = [5, 10, 20, 50];
 
     useEffect(() => {
         FetchProposalDisplay(currentPage, limit, searchTerm, dateFrom, dateTo);
@@ -74,12 +76,6 @@ const EvenTable = () => {
     const handleSearch = () => {
         setSearchTerm(tempSearchTerm);
         setCurrentPage(1);
-    };
-
-    const handleKeyDown = (e) => {
-        if (e.key === "Enter") {
-            handleSearch();
-        }
     };
 
     const closeFormModal = () => {
@@ -146,45 +142,9 @@ const EvenTable = () => {
         setIsFormModalOpen(true);
     };
 
-    const renderPageNumbers = () => {
-        if (totalPages <= 1) return null;
-
-        const maxPagesToShow = window.innerWidth < 640 ? 3 : 5;
-        let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
-        let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
-
-        if (endPage - startPage + 1 < maxPagesToShow) {
-            startPage = Math.max(1, endPage - maxPagesToShow + 1);
-        }
-
-        return Array.from({ length: endPage - startPage + 1 }, (_, i) => {
-            const pageNum = startPage + i;
-            return (
-                <button
-                    key={pageNum}
-                    onClick={() => goToPage(pageNum)}
-                    aria-label={`Go to page ${pageNum}`}
-                    className={`mx-1 h-8 min-w-[35px] rounded-lg px-2 py-1.5 text-sm font-medium transition-all sm:h-10 sm:min-w-[40px] sm:px-3 sm:py-2 sm:text-sm ${
-                        currentPage === pageNum
-                            ? "bg-blue-600 text-white shadow-lg shadow-blue-200 dark:bg-blue-500 dark:shadow-blue-800"
-                            : "border border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-                    }`}
-                >
-                    {pageNum}
-                </button>
-            );
-        });
-    };
-
     const handleCloseModal = () => {
         setVerification(false);
         setDeleteID(null);
-    };
-    const handleRefresh = () => {
-        setSearchTerm("");
-        setTempSearchTerm("");
-        setCurrentPage(1);
-        FetchProposalDisplay(1, limit, "", dateFrom, dateTo);
     };
 
     const handleDeleteEvent = (id) => {
@@ -202,6 +162,7 @@ const EvenTable = () => {
                 setModalStatus("success");
                 setDeleteID(null);
                 setVerification(false);
+                setShowEventDetails(false);
                 FetchProposalDisplay(currentPage, limit, searchTerm, dateFrom, dateTo);
             } else {
                 setModalStatus("failed");
@@ -210,88 +171,268 @@ const EvenTable = () => {
         }
     };
 
-    const goToPage = (page) => {
-        if (page < 1 || page > totalPages) return;
-        setCurrentPage(page);
-    };
-
     const getStatusConfig = (status) => {
         switch (status?.toLowerCase()) {
             case "approved":
                 return {
-                    bg: "bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800",
-                    text: "text-emerald-700 dark:text-emerald-300",
-                    badge: "bg-emerald-500 text-white",
-                    icon: "text-emerald-500",
+                    bg: "bg-blue-500",
+                    text: "text-blue-700",
+                    lightBg: "bg-blue-50 border-blue-200",
+                    darkBg: "dark:bg-blue-900/20 dark:border-blue-800"
                 };
             case "pending":
                 return {
-                    bg: "bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800",
-                    text: "text-amber-700 dark:text-amber-300",
-                    badge: "bg-amber-500 text-white",
-                    icon: "text-amber-500",
+                    bg: "bg-amber-500",
+                    text: "text-amber-700",
+                    lightBg: "bg-amber-50 border-amber-200",
+                    darkBg: "dark:bg-amber-900/20 dark:border-amber-800"
                 };
             case "rejected":
                 return {
-                    bg: "bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800",
-                    text: "text-red-700 dark:text-red-300",
-                    badge: "bg-red-500 text-white",
-                    icon: "text-red-500",
+                    bg: "bg-red-500",
+                    text: "text-red-700",
+                    lightBg: "bg-red-50 border-red-200",
+                    darkBg: "dark:bg-red-900/20 dark:border-red-800"
                 };
             default:
                 return {
-                    bg: "bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-700",
-                    text: "text-gray-700 dark:text-gray-300",
-                    badge: "bg-gray-500 text-white",
-                    icon: "text-gray-500",
+                    bg: "bg-gray-500",
+                    text: "text-gray-700",
+                    lightBg: "bg-gray-50 border-gray-200",
+                    darkBg: "dark:bg-gray-800 dark:border-gray-700"
                 };
         }
+    };
+
+    const getDaysInMonth = (date) => {
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        const startingDayOfWeek = firstDay.getDay();
+        
+        return { daysInMonth, startingDayOfWeek, firstDay, lastDay };
+    };
+
+    const getEventsForDate = (date) => {
+        if (!isEvent || isEvent.length === 0) return [];
+        
+        return isEvent.filter(event => {
+            const eventDate = new Date(event.eventDate);
+            return eventDate.toDateString() === date.toDateString();
+        });
+    };
+
+    const navigateMonth = (direction) => {
+        const newDate = new Date(currentDate);
+        newDate.setMonth(newDate.getMonth() + direction);
+        setCurrentDate(newDate);
+    };
+
+    const handleEventClick = (event) => {
+        setSelectedEvent(event);
+        setShowEventDetails(true);
+    };
+
+    const renderMonthView = () => {
+        const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentDate);
+        const days = [];
+        const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+        for (let i = 0; i < startingDayOfWeek; i++) {
+            days.push(<div key={`empty-${i}`} className="min-h-24 border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50"></div>);
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+            const dayEvents = getEventsForDate(date);
+            const isToday = date.toDateString() === new Date().toDateString();
+
+            days.push(
+                <div
+                    key={day}
+                    className={`min-h-24 border border-gray-200 bg-white p-2 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800 ${
+                        isToday ? 'ring-2 ring-blue-500' : ''
+                    }`}
+                >
+                    <div className={`mb-1 text-sm font-semibold ${isToday ? 'flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-white' : 'text-gray-700 dark:text-gray-300'}`}>
+                        {day}
+                    </div>
+                    <div className="space-y-1">
+                        {dayEvents.slice(0, 2).map(event => {
+                            const config = getStatusConfig(event.status);
+                            return (
+                                <div
+                                    key={event._id}
+                                    onClick={() => handleEventClick(event)}
+                                    className={`cursor-pointer rounded px-2 py-1 text-xs font-medium text-white transition-transform hover:scale-105 ${config.bg}`}
+                                >
+                                    <div className="truncate">{event.proposal?.title || "Untitled Event"}</div>
+                                    <div className="truncate text-[10px] opacity-90">{event.startTime || "TBD"}</div>
+                                </div>
+                            );
+                        })}
+                        {dayEvents.length > 2 && (
+                            <div className="text-xs text-gray-500 dark:text-gray-400">+{dayEvents.length - 2} more</div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                <div className="grid grid-cols-7 bg-gray-50 dark:bg-gray-800">
+                    {weekDays.map(day => (
+                        <div key={day} className="border-b border-gray-200 p-3 text-center text-sm font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+                            {day}
+                        </div>
+                    ))}
+                </div>
+                <div className="grid grid-cols-7">
+                    {days}
+                </div>
+            </div>
+        );
+    };
+
+    const renderAgendaView = () => {
+        if (!isEvent || isEvent.length === 0) {
+            return (
+                <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                    <div className="flex flex-col items-center justify-center py-12 sm:py-20">
+                        <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700">
+                            <Database className="h-8 w-8 text-gray-400" />
+                        </div>
+                        <h3 className="mb-3 text-lg font-medium text-gray-900 dark:text-white sm:text-xl">No events found</h3>
+                        <p className="max-w-md px-4 text-center text-xs text-gray-500 dark:text-gray-400 sm:text-base">
+                            There are no events matching your current filters. Try adjusting your search criteria or add a new event.
+                        </p>
+                        <button
+                            onClick={openAddModal}
+                            style={{ background: bgtheme, color: FontColor }}
+                            className="mt-6 inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors sm:gap-2 sm:px-5 sm:py-2.5 sm:text-sm"
+                        >
+                            <Plus size={16} className="sm:size-4" />
+                            Add First Event
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        const filteredEvents = isEvent.filter(event => {
+            return true; // Show all events
+        });
+
+        if (filteredEvents.length === 0) {
+            return (
+                <div className="rounded-xl border border-gray-200 bg-white p-12 text-center dark:border-gray-700 dark:bg-gray-800">
+                    <p className="text-gray-500 dark:text-gray-400">No events match your filters</p>
+                </div>
+            );
+        }
+
+        return (
+            <div className="space-y-4">
+                {filteredEvents.map(event => {
+                    const config = getStatusConfig(event.status);
+                    return (
+                        <div
+                            key={event._id}
+                            onClick={() => handleEventClick(event)}
+                            className={`cursor-pointer overflow-hidden rounded-xl border bg-white shadow-sm transition-all hover:shadow-md ${config.lightBg} ${config.darkBg}`}
+                        >
+                            <div className={`h-1 ${config.bg}`}></div>
+                            <div className="p-4">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                            {event.proposal?.title || "Untitled Event"}
+                                        </h3>
+                                        <div className="mt-2 flex flex-wrap gap-3 text-sm text-gray-600 dark:text-gray-400">
+                                            <div className="flex items-center gap-1.5">
+                                                <Calendar size={16} />
+                                                {new Date(event.eventDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                                            </div>
+                                            <div className="flex items-center gap-1.5">
+                                                <Clock size={16} />
+                                                {event.startTime || "TBD"} - {event.endTime || "TBD"}
+                                            </div>
+                                            <div className="flex items-center gap-1.5">
+                                                <MapPin size={16} />
+                                                {event.venue || "TBD"}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold text-white ${config.bg}`}>
+                                        {event.status ? event.status.charAt(0).toUpperCase() + event.status.slice(1) : "N/A"}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        );
     };
 
     return (
         <>
             {isLoading && <LoadingOverlay />}
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
-                {/* Header Section - Mobile: denser, Desktop: unchanged */}
-                <div className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/80">
-                    <div className="p-3 sm:p-5 lg:p-6">
-                        {" "}
-                        {/* p-3 only on mobile */}
-                        <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
-                            <div className="text-center lg:text-left">
-                                <h1 className="text-lg font-bold text-gray-900 dark:text-white sm:text-2xl">Event Management</h1>
-                                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400 sm:text-base">
-                                    Manage and organize your events efficiently
-                                </p>
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+                {/* Header */}
+                <div className="border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+                    <div className="p-4">
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                            <div className="flex items-center gap-4">
+                                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                                    {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                                </h1>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => navigateMonth(-1)}
+                                        className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                    >
+                                        <ChevronLeft size={20} />
+                                    </button>
+                                    <button
+                                        onClick={() => setCurrentDate(new Date())}
+                                        className="rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700"
+                                    >
+                                        Today
+                                    </button>
+                                    <button
+                                        onClick={() => navigateMonth(1)}
+                                        className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                    >
+                                        <ChevronRight size={20} />
+                                    </button>
+                                </div>
                             </div>
 
-                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-                                {/* Date Filters - Mobile: smaller padding */}
-                                <div className="flex gap-1.5">
-                                    <input
-                                        type="date"
-                                        value={dateFrom}
-                                        onChange={(e) => setDateFrom(e.target.value)}
-                                        className="flex-1 rounded-xl border border-gray-200 bg-white px-2.5 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:px-3 sm:py-2.5 sm:text-sm"
-                                    />
-                                    <input
-                                        type="date"
-                                        value={dateTo}
-                                        onChange={(e) => setDateTo(e.target.value)}
-                                        className="flex-1 rounded-xl border border-gray-200 bg-white px-2.5 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:px-3 sm:py-2.5 sm:text-sm"
-                                    />
+                            <div className="flex items-center gap-3">
+                                <div className="flex rounded-lg border border-gray-300 dark:border-gray-600">
+                                    <button
+                                        onClick={() => setViewMode("month")}
+                                        className={`px-4 py-2 text-sm font-medium ${viewMode === "month" ? "bg-blue-500 text-white" : "bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300"}`}
+                                    >
+                                        <Grid size={18} />
+                                    </button>
+                                    <button
+                                        onClick={() => setViewMode("agenda")}
+                                        className={`px-4 py-2 text-sm font-medium ${viewMode === "agenda" ? "bg-blue-500 text-white" : "bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300"}`}
+                                    >
+                                        <List size={18} />
+                                    </button>
                                 </div>
 
-                                {/* Add Button - Mobile: smaller */}
-                                <button
+                                <button 
                                     onClick={openAddModal}
                                     style={{ background: bgtheme, color: FontColor }}
-                                    className="inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium shadow-lg transition-all hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
-                                >
-                                    <Plus
-                                        size={16}
-                                        className="sm:size-4"
-                                    />
+                                    className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium shadow-lg transition-all hover:shadow-xl">
+                                    <Plus size={18} />
                                     Add Event
                                 </button>
                             </div>
@@ -299,293 +440,239 @@ const EvenTable = () => {
                     </div>
                 </div>
 
-                {/* Content Section - Mobile: tighter cards */}
-                <div className="p-3 sm:p-5 lg:p-6">
-                    {isEvent && isEvent.length > 0 ? (
-                        <div className="grid gap-3 sm:gap-5 lg:gap-6">
-                            {isEvent.map((event) => {
-                                const statusConfig = getStatusConfig(event.status);
-
-                                return (
-                                    <div
-                                        key={event._id}
-                                        className={`overflow-hidden rounded-xl border bg-white shadow-sm transition-all duration-300 hover:shadow-lg ${statusConfig.bg} dark:bg-gray-800`}
-                                    >
-                                        {/* Card Header - Mobile: less padding */}
-                                        <div className="p-3 sm:p-5 lg:p-6 lg:pb-4">
-                                            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
-                                                <div className="min-w-0 flex-1">
-                                                    <h3 className="mb-2 line-clamp-2 text-base font-semibold text-gray-900 dark:text-white sm:text-xl">
-                                                        {event.proposal?.title || "Untitled Event"}
-                                                    </h3>
-                                                    <div className="flex flex-col gap-1.5 text-xs text-gray-600 dark:text-gray-400 sm:flex-row sm:items-center sm:gap-4">
-                                                        <div className="flex items-center gap-1.5">
-                                                            <Calendar
-                                                                size={14}
-                                                                className="sm:size-4"
-                                                            />
-                                                            <span>
-                                                                {new Date(event.eventDate).toLocaleDateString("en-US", {
-                                                                    weekday: "short",
-                                                                    year: "numeric",
-                                                                    month: "short",
-                                                                    day: "numeric",
-                                                                })}
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5">
-                                                            <MapPin
-                                                                size={14}
-                                                                className="sm:size-4"
-                                                            />
-                                                            <span className="truncate">{event.venue || "TBD"}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5">
-                                                            <Clock8
-                                                                size={14}
-                                                                className="sm:size-4"
-                                                            />
-                                                            <span className="truncate">{event.startTime || "TBD"}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {event.status && (
-                                                    <div
-                                                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:py-1.5 sm:text-sm ${statusConfig.badge}`}
-                                                    >
-                                                        {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* Card Content - Mobile: tighter */}
-                                        <div className="px-3 pb-3 sm:px-5 lg:px-6 lg:pb-4">
-                                            <div className="grid gap-3 sm:gap-5 lg:grid-cols-2 lg:gap-6">
-                                                <div className="space-y-2.5 sm:space-y-4">
-                                                    <div>
-                                                        <div className="mb-2 flex items-center gap-1.5">
-                                                            <FileText
-                                                                size={16}
-                                                                className="text-blue-500 sm:size-4"
-                                                            />
-                                                            <h4 className="text-sm font-medium text-gray-900 dark:text-white sm:text-lg">
-                                                                Event Description
-                                                            </h4>
-                                                        </div>
-                                                        <p className="line-clamp-3 pl-6 text-xs text-gray-600 dark:text-gray-300 sm:pl-7 sm:text-base">
-                                                            {event.proposal?.description || "No description available"}
-                                                        </p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="grid grid-cols-1 gap-3 sm:gap-5 lg:grid-cols-2">
-                                                    {event.organizer && (
-                                                        <div className="space-y-2.5 sm:space-y-4">
-                                                            <div>
-                                                                <div className="mb-2 flex items-center gap-1.5">
-                                                                    <User
-                                                                        size={16}
-                                                                        className="text-purple-500 sm:size-4"
-                                                                    />
-                                                                    <h4 className="text-sm font-medium text-gray-900 dark:text-white sm:text-lg">
-                                                                        Organizer
-                                                                    </h4>
-                                                                </div>
-                                                                <div className="space-y-1.5 pl-6 sm:pl-7">
-                                                                    <p className="text-xs font-medium text-gray-900 dark:text-white sm:text-base">
-                                                                        {`${event.organizer.first_name || ""} ${event.organizer.middle_name || ""} ${event.organizer.last_name || ""}`.trim()}
-                                                                    </p>
-                                                                    <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 sm:text-base">
-                                                                        <Phone
-                                                                            size={14}
-                                                                            className="sm:size-4"
-                                                                        />
-                                                                        <span>{event.organizer.contact_number || "N/A"}</span>
-                                                                    </div>
-                                                                    <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 sm:text-base">
-                                                                        <Mail
-                                                                            size={14}
-                                                                            className="sm:size-4"
-                                                                        />
-                                                                        <span className="break-all">{event.organizer.email || "N/A"}</span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    )}
-
-                                                    {event.resources && event.resources.length > 0 && (
-                                                        <div className="space-y-2.5 sm:space-y-4">
-                                                            <div>
-                                                                <div className="mb-2 flex items-center gap-1.5">
-                                                                    <Database
-                                                                        size={16}
-                                                                        className="text-green-500 sm:size-4"
-                                                                    />
-                                                                    <h4 className="text-sm font-medium text-gray-900 dark:text-white sm:text-lg">
-                                                                        Resources
-                                                                    </h4>
-                                                                </div>
-                                                                <div className="pl-6 sm:pl-7">
-                                                                    <div className="max-h-32 overflow-y-auto pr-1 sm:max-h-40 sm:pr-2">
-                                                                        {event.resources.map((resource, idx) => (
-                                                                            <div
-                                                                                key={idx}
-                                                                                className="mb-2 text-xs text-gray-600 last:mb-0 dark:text-gray-300 sm:text-base"
-                                                                            >
-                                                                                <div className="font-medium text-gray-900 dark:text-white">
-                                                                                    {resource.resource_name}
-                                                                                </div>
-                                                                                <div className="mt-1 flex items-center gap-1.5">
-                                                                                    <span
-                                                                                        className={`inline-block h-1.5 w-1.5 rounded-full ${resource.availability ? "bg-green-500" : "bg-red-500"}`}
-                                                                                    ></span>
-                                                                                    <span className="text-[10px] sm:text-xs">
-                                                                                        {resource.resource_type} •{" "}
-                                                                                        {resource.availability ? "Available" : "Unavailable"}
-                                                                                    </span>
-                                                                                </div>
-                                                                                {resource.description && (
-                                                                                    <div className="mt-1 text-[10px] text-gray-500 dark:text-gray-400 sm:text-sm">
-                                                                                        {resource.description}
-                                                                                    </div>
-                                                                                )}
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Card Actions - Mobile: smaller buttons */}
-                                        <div className="border-t border-gray-100 bg-gray-50/50 px-3 py-2.5 dark:border-gray-700 dark:bg-gray-800/50 sm:px-5 sm:py-4 lg:px-6">
-                                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
-                                                <button
-                                                    onClick={() => openEditModal(event)}
-                                                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
-                                                    title="Edit Event"
-                                                >
-                                                    <PencilLine
-                                                        size={16}
-                                                        className="sm:size-4"
-                                                    />
-                                                </button>
-                                                {role === "admin" && (
-                                                    <button
-                                                        onClick={() => handleDeleteEvent(event._id)}
-                                                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-red-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
-                                                        title="Delete Event"
-                                                    >
-                                                        <Trash
-                                                            size={16}
-                                                            className="sm:size-4"
-                                                        />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                            <div className="flex flex-col items-center justify-center py-12 sm:py-20">
-                                <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700">
-                                    <Database className="h-8 w-8 text-gray-400" />
-                                </div>
-                                <h3 className="mb-3 text-lg font-medium text-gray-900 dark:text-white sm:text-xl">No events found</h3>
-                                <p className="max-w-md px-4 text-center text-xs text-gray-500 dark:text-gray-400 sm:text-base">
-                                    There are no events matching your current filters. Try adjusting your search criteria or add a new event.
-                                </p>
-                                <button
-                                    onClick={openAddModal}
-                                    className="mt-6 inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-700 sm:gap-2 sm:px-5 sm:py-2.5 sm:text-sm"
-                                >
-                                    <Plus
-                                        size={16}
-                                        className="sm:size-4"
-                                    />
-                                    Add First Event
-                                </button>
-                            </div>
-                        </div>
-                    )}
+                {/* Content */}
+                <div className="p-6">
+                    {viewMode === "month" ? renderMonthView() : renderAgendaView()}
                 </div>
 
-                {/* Pagination - Mobile: tighter */}
-                {totalPages > 1 && (
-                    <div className="border-t border-gray-200 bg-white/80 px-3 py-3 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/80 sm:px-5 lg:px-6">
-                        <div className="flex flex-col items-center justify-between gap-3 sm:flex-row sm:gap-4">
-                            <div className="text-xs text-gray-700 dark:text-gray-300 sm:text-base">
-                                Showing <span className="font-semibold">{showingStart}</span> to <span className="font-semibold">{showingEnd}</span>{" "}
-                                of <span className="font-semibold">{isTotalEvent}</span> results
+                {/* Event Details Modal - Google Calendar Style with Collapse */}
+                {showEventDetails && selectedEvent && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowEventDetails(false)}>
+                        <div className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+                            {/* Header with colored bar */}
+                            <div className={`h-2 shrink-0 ${getStatusConfig(selectedEvent.status).bg}`}></div>
+                            
+                            {/* Scrollable Content */}
+                            <div className="overflow-y-auto">
+                                <div className="p-6">
+                                    {/* Close Button */}
+                                    <div className="mb-4 flex items-start justify-between">
+                                        <h2 className="flex-1 pr-4 text-2xl font-semibold text-gray-900 dark:text-white">
+                                            {selectedEvent.proposal?.title || "Untitled Event"}
+                                        </h2>
+                                        <button
+                                            onClick={() => setShowEventDetails(false)}
+                                            className="rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                        >
+                                            <CircleX size={20} className="text-gray-500" />
+                                        </button>
+                                    </div>
+
+                                    {/* Date & Time - Always Visible */}
+                                    <div className="mb-6 space-y-3">
+                                        <div className="flex items-start gap-4">
+                                            <Clock size={20} className="mt-0.5 text-gray-500 dark:text-gray-400" />
+                                            <div className="flex-1">
+                                                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                                    {new Date(selectedEvent.eventDate).toLocaleDateString('en-US', { 
+                                                        weekday: 'long', 
+                                                        month: 'long', 
+                                                        day: 'numeric',
+                                                        year: 'numeric'
+                                                    })}
+                                                </p>
+                                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                    {selectedEvent.startTime || "TBD"} – {selectedEvent.endTime || "TBD"}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Location */}
+                                        <div className="flex items-start gap-4">
+                                            <MapPin size={20} className="mt-0.5 text-gray-500 dark:text-gray-400" />
+                                            <p className="flex-1 text-sm text-gray-900 dark:text-white">
+                                                {selectedEvent.venue || "TBD"}
+                                            </p>
+                                        </div>
+
+                                        {/* Status Badge */}
+                                        <div className="flex items-start gap-4">
+                                            <div className="w-5"></div>
+                                            <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold text-white ${getStatusConfig(selectedEvent.status).bg}`}>
+                                                {selectedEvent.status ? selectedEvent.status.charAt(0).toUpperCase() + selectedEvent.status.slice(1) : "N/A"}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Description - Collapsible */}
+                                    {selectedEvent.proposal?.description && (
+                                        <div className="mb-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+                                            <button
+                                                onClick={() => toggleSection('description')}
+                                                className="flex w-full items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg p-2 -ml-2"
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <FileText size={20} className="text-gray-500 dark:text-gray-400" />
+                                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Description</h3>
+                                                </div>
+                                                {expandedSections.description ? (
+                                                    <ChevronUp size={20} className="text-gray-500" />
+                                                ) : (
+                                                    <ChevronDown size={20} className="text-gray-500" />
+                                                )}
+                                            </button>
+                                            {expandedSections.description && (
+                                                <div className="ml-11 mt-2">
+                                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                        {selectedEvent.proposal.description}
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Organizer - Collapsible */}
+                                    {selectedEvent.organizer && (
+                                        <div className="mb-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+                                            <button
+                                                onClick={() => toggleSection('organizer')}
+                                                className="flex w-full items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg p-2 -ml-2"
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <User size={20} className="text-gray-500 dark:text-gray-400" />
+                                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Organizer</h3>
+                                                </div>
+                                                {expandedSections.organizer ? (
+                                                    <ChevronUp size={20} className="text-gray-500" />
+                                                ) : (
+                                                    <ChevronDown size={20} className="text-gray-500" />
+                                                )}
+                                            </button>
+                                            {expandedSections.organizer && (
+                                                <div className="ml-11 mt-2 space-y-1.5">
+                                                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {`${selectedEvent.organizer.first_name || ""} ${selectedEvent.organizer.middle_name || ""} ${selectedEvent.organizer.last_name || ""}`.trim() || "N/A"}
+                                                    </p>
+                                                    {selectedEvent.organizer.email && (
+                                                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                            {selectedEvent.organizer.email}
+                                                        </p>
+                                                    )}
+                                                    {selectedEvent.organizer.contact_number && (
+                                                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                            {selectedEvent.organizer.contact_number}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Resources - Collapsible */}
+                                    {selectedEvent.resources && selectedEvent.resources.length > 0 && (
+                                        <div className="mb-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+                                            <button
+                                                onClick={() => toggleSection('resources')}
+                                                className="flex w-full items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg p-2 -ml-2"
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <Database size={20} className="text-gray-500 dark:text-gray-400" />
+                                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                        Resources ({selectedEvent.resources.length})
+                                                    </h3>
+                                                </div>
+                                                {expandedSections.resources ? (
+                                                    <ChevronUp size={20} className="text-gray-500" />
+                                                ) : (
+                                                    <ChevronDown size={20} className="text-gray-500" />
+                                                )}
+                                            </button>
+                                            {expandedSections.resources && (
+                                                <div className="ml-11 mt-2 space-y-2">
+                                                    {selectedEvent.resources.map((resource, idx) => (
+                                                        <div key={idx} className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900">
+                                                            <div className="flex items-start justify-between">
+                                                                <div className="flex-1">
+                                                                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                                                        {resource.resource_name}
+                                                                    </p>
+                                                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                                        {resource.resource_type}
+                                                                    </p>
+                                                                    {resource.description && (
+                                                                        <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                                                                            {resource.description}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                                <span className={`ml-3 shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${resource.availability ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
+                                                                    {resource.availability ? 'Available' : 'Unavailable'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
-                            <div className="flex items-center gap-1.5 sm:gap-2">
-                                <button
-                                    onClick={() => goToPage(currentPage - 1)}
-                                    disabled={currentPage === 1}
-                                    className="inline-flex items-center rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white sm:px-4 sm:py-2.5 sm:text-sm"
-                                >
-                                    Previous
-                                </button>
-
-                                <div className="flex sm:hidden">
-                                    <span className="mx-1.5 flex items-center text-xs text-gray-500">
-                                        Page {currentPage} of {totalPages}
-                                    </span>
+                            {/* Action Buttons - Fixed at bottom */}
+                            <div className="shrink-0 border-t border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                                <div className="flex gap-2">
+                                    <button 
+                                        onClick={() => {
+                                            openEditModal(selectedEvent);
+                                            setShowEventDetails(false);
+                                        }}
+                                        className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
+                                        <PencilLine size={16} />
+                                        Edit
+                                    </button>
+                                    {role === "admin" && (
+                                        <button 
+                                            onClick={() => handleDeleteEvent(selectedEvent._id)}
+                                            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:bg-gray-700 dark:text-red-400 dark:hover:bg-red-900/20">
+                                            <Trash size={16} />
+                                            Delete
+                                        </button>
+                                    )}
                                 </div>
-
-                                <div className="hidden sm:flex">{renderPageNumbers()}</div>
-
-                                <button
-                                    onClick={() => goToPage(currentPage + 1)}
-                                    disabled={currentPage === totalPages}
-                                    className="inline-flex items-center rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white sm:px-4 sm:py-2.5 sm:text-sm"
-                                >
-                                    Next
-                                </button>
                             </div>
                         </div>
                     </div>
                 )}
-
-                {/* Modals - no change needed */}
-                <AddFormModal
-                    isOpen={isFormModalOpen}
-                    onClose={closeFormModal}
-                    Resources={isResourcesDropdown}
-                    formData={formData}
-                    setFormData={setFormData}
-                    isEditing={isEditing}
-                    editingData={isEditing ? formData : null}
-                    bgtheme={bgtheme}
-                    FontColor={FontColor}
-                    linkId={linkId}
-                />
-
-                <SuccessFailed
-                    isOpen={showModal}
-                    onClose={() => setShowModal(false)}
-                    status={modalStatus}
-                    errorMessage={customError}
-                />
-
-                <StatusVerification
-                    isOpen={isVerification}
-                    onConfirmDelete={handleConfirmDelete}
-                    onClose={handleCloseModal}
-                />
             </div>
+
+            {/* Modals */}
+            <AddFormModal
+                isOpen={isFormModalOpen}
+                onClose={closeFormModal}
+                Resources={isResourcesDropdown}
+                formData={formData}
+                setFormData={setFormData}
+                isEditing={isEditing}
+                editingData={isEditing ? formData : null}
+                bgtheme={bgtheme}
+                FontColor={FontColor}
+                linkId={linkId}
+            />
+
+            <SuccessFailed
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                status={modalStatus}
+                errorMessage={customError}
+            />
+
+            <StatusVerification
+                isOpen={isVerification}
+                onConfirmDelete={handleConfirmDelete}
+                onClose={handleCloseModal}
+            />
         </>
     );
 };
 
-export default EvenTable;
+export default CalendarEventView;

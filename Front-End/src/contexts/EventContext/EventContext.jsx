@@ -92,11 +92,11 @@ const FetchUpcomingEvent = useCallback(async (page = 1, limit = 5, searchTerm = 
         });
 
         const { data, totalCount, totalPages, currentPage } = res.data;
-
+    console.log("selectedEvent",data)
         setEventUpcoming(data || []);
         setUpcomingTotalPages(totalPages);
         setUpcomingCurrentPage(currentPage);
-        setUpcomingTotalCount(totalCount); // Idagdag ito kung wala pa
+
 
     } catch (error) {
         console.error("Error fetching upcoming events:", error);
@@ -150,6 +150,7 @@ const FetchUpcomingEvent = useCallback(async (page = 1, limit = 5, searchTerm = 
                     eventDate: values.eventDate,
                     proposalId: values.proposalId,
                     resources: values.resources,
+                    capacity:values.capacity,
                     lgu: values.lguId,
                     startTime: values.startTime,
                     venue: values.venue,
@@ -203,6 +204,7 @@ const FetchUpcomingEvent = useCallback(async (page = 1, limit = 5, searchTerm = 
             const payload = {
                 eventDate: values.eventDate,
                 proposalId: values.proposalId,
+                capacity:values.capacity,
                 resources: values.resources,
                 startTime: values.startTime,
                 venue: values.venue,

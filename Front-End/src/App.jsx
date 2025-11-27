@@ -56,7 +56,7 @@ function App() {
                 },
                 {
                     path: "/",
-                    element: <Navigate to="/login" />,
+                    element: <PublicAccess/>,
                 },
             ],
         },

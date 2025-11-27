@@ -509,163 +509,147 @@ exports.deleteEvent = AsyncErrorHandler(async (req, res, next) => {
 });
 
 exports.DisplayUpcomingEvent = AsyncErrorHandler(async (req, res) => {
-  try {
-    const { search = "", page = 1 } = req.query;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+  const { search = "", page = 1 } = req.query;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
 
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
 
-    const endOfMonth = new Date(
-      now.getFullYear(),
-      now.getMonth() + 1,
-      0,
-      23,
-      59,
-      59,
-      999
-    );
+  const endOfMonth = new Date(
+    now.getFullYear(),
+    now.getMonth() + 1,
+    0,
+    23,
+    59,
+    59,
+    999
+  );
 
-    // 🔹 Sanitize and split search terms
-    const words = search
-      .trim()
-      .toLowerCase()
-      .split(/\s+/)
-      .filter((w) => w.length > 0)
-      .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")); // escape regex chars
+  const searchRegex = search.trim() ? new RegExp(search.trim(), "i") : null;
 
-    const pipeline = [
-      {
-        $lookup: {
-          from: "organizers",
-          localField: "created_by",
-          foreignField: "_id",
-          as: "organizerInfo",
-        },
+  const pipeline = [
+    { $match: { eventDate: { $gte: now } } },
+
+    // Lookup organizer
+    {
+      $lookup: {
+        from: "organizers",
+        localField: "created_by",
+        foreignField: "_id",
+        as: "organizerInfo",
       },
-      {
-        $lookup: {
-          from: "proposals",
-          localField: "proposalId",
-          foreignField: "_id",
-          as: "proposal",
-        },
+    },
+
+    // Lookup proposal
+    {
+      $lookup: {
+        from: "proposals",
+        localField: "proposalId",
+        foreignField: "_id",
+        as: "proposal",
       },
-      {
-        $lookup: {
-          from: "resources",
-          localField: "resources",
-          foreignField: "_id",
-          as: "resourcesInfo",
-        },
+    },
+
+    // Lookup resources
+    {
+      $lookup: {
+        from: "resources",
+        localField: "resources",
+        foreignField: "_id",
+        as: "resourcesInfo",
       },
-      { $unwind: { path: "$proposal", preserveNullAndEmptyArrays: true } },
-      { $unwind: { path: "$organizerInfo", preserveNullAndEmptyArrays: true } },
-      { $match: { eventDate: { $gte: now } } },
-    ];
+    },
 
-    // 🔹 If search terms exist, create scoring logic
-    if (words.length > 0) {
-      const regexConditions = words.map((word) => ({
-        "proposal.title": { $regex: word, $options: "i" },
-      }));
+    // Lookup participants to count total registered
+    {
+      $lookup: {
+        from: "participants",
+        localField: "_id",
+        foreignField: "event_id",
+        as: "participants",
+      },
+    },
 
-      // include if any word matches (OR condition)
-      pipeline.push({
-        $match: { $or: regexConditions },
-      });
+    { $unwind: { path: "$proposal", preserveNullAndEmptyArrays: true } },
+    { $unwind: { path: "$organizerInfo", preserveNullAndEmptyArrays: true } },
+  ];
 
-      // compute how many words matched
-      pipeline.push({
-        $addFields: {
-          matchCount: {
-            $size: {
-              $filter: {
-                input: words,
-                as: "word",
-                cond: {
-                  $regexMatch: {
-                    input: { $ifNull: ["$proposal.title", ""] },
-                    regex: "$$word",
-                    options: "i",
-                  },
-                },
-              },
-            },
-          },
-        },
-      });
-
-      // sort by highest match count first, then event date
-      pipeline.push({ $sort: { matchCount: -1, eventDate: 1 } });
-    } else {
-      pipeline.push({ $sort: { eventDate: 1 } });
-    }
-
-    // 🔹 Facet for pagination
+  // Apply search filter if exists
+  if (searchRegex) {
     pipeline.push({
-      $facet: {
-        metadata: [
-          { $count: "totalCount" },
-          {
-            $addFields: {
-              totalPages: { $ceil: { $divide: ["$totalCount", limit] } },
-            },
-          },
-        ],
-        data: [
-          { $skip: skip },
-          { $limit: limit },
-          {
-            $project: {
-              _id: 1,
-              eventDate: 1,
-              venue: 1,
-              description: 1,
-              startTime: 1,
-              status: 1,
-              registerUrl: 1,
-              created_at: 1,
-              "proposal.title": 1,
-              "proposal._id": 1,
-              "proposal.description": 1,
-              "organizer._id": "$organizerInfo._id",
-              "organizer.first_name": "$organizerInfo.first_name",
-              "organizer.last_name": "$organizerInfo.last_name",
-              "organizer.email": "$organizerInfo.email",
-              resources: "$resourcesInfo",
-              matchCount: 1,
-            },
-          },
-        ],
-        upcomingThisMonth: [
-          { $match: { eventDate: { $gte: now, $lte: endOfMonth } } },
-          { $count: "count" },
+      $match: {
+        $or: [
+          { event_name: searchRegex },
+          { "proposal.title": searchRegex },
         ],
       },
-    });
-
-    const result = await EventModel.aggregate(pipeline);
-
-    const events = result[0]?.data || [];
-    const metadata = result[0]?.metadata[0] || { totalCount: 0, totalPages: 1 };
-    const upcomingThisMonth = result[0]?.upcomingThisMonth[0]?.count || 0;
-
-    res.status(200).json({
-      status: "success",
-      totalCount: metadata.totalCount || 0,
-      totalPages: metadata.totalPages || 1,
-      currentPage: parseInt(page),
-      upcomingThisMonth,
-      results: events.length,
-      data: events,
-    });
-  } catch (err) {
-    console.error("Error in DisplayUpcomingEvent:", err);
-    res.status(500).json({
-      status: "error",
-      message: err.message || "Server error while fetching upcoming events.",
     });
   }
+
+  // Add participant count & remaining slots
+  pipeline.push({
+    $addFields: {
+      totalRegistered: { $size: "$participants" },
+      remainingSlots: { $subtract: ["$capacity", { $size: "$participants" }] },
+    },
+  });
+
+  // Sort by event date ascending
+  pipeline.push({ $sort: { eventDate: 1 } });
+
+  // Facet for pagination + upcoming events count
+  pipeline.push({
+    $facet: {
+      data: [
+        { $skip: skip },
+        { $limit: limit },
+        {
+          $project: {
+            _id: 1,
+            event_name: 1,
+            eventDate: 1,
+            venue: 1,
+            description: 1,
+            startTime: 1,
+            status: 1,
+            registerUrl: 1,
+            created_at: 1,
+            capacity: 1,
+            totalRegistered: 1,
+            remainingSlots: 1,
+            "proposal._id": "$proposal._id",
+            "proposal.title": "$proposal.title",
+            "organizer._id": "$organizerInfo._id",
+            "organizer.first_name": "$organizerInfo.first_name",
+            "organizer.last_name": "$organizerInfo.last_name",
+            "organizer.email": "$organizerInfo.email",
+            resources: "$resourcesInfo",
+          },
+        },
+      ],
+      totalCount: [{ $count: "count" }],
+      upcomingThisMonth: [
+        { $match: { eventDate: { $gte: now, $lte: endOfMonth } } },
+        { $count: "count" },
+      ],
+    },
+  });
+
+  const result = await EventModel.aggregate(pipeline);
+
+  const events = result[0]?.data || [];
+  const totalCount = result[0]?.totalCount[0]?.count || 0;
+  const upcomingThisMonth = result[0]?.upcomingThisMonth[0]?.count || 0;
+  const totalPages = Math.ceil(totalCount / limit);
+
+  res.status(200).json({
+    status: "success",
+    totalCount,
+    totalPages,
+    currentPage: parseInt(page),
+    upcomingThisMonth,
+    results: events.length,
+    data: events,
+  });
 });

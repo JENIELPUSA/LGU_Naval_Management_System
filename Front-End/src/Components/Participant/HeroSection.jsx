@@ -20,18 +20,21 @@ const HeroSection = ({ setShowModal, showModal, setShowPersonel, bgtheme, FontCo
     const [voiceCommandLog, setVoiceCommandLog] = useState("");
     const [performanceMetrics, setPerformanceMetrics] = useState({});
     const [showCalendar, setShowCalendar] = useState(false);
-    
+
     // OPTIMIZED: Preload images for faster switching
     const backgroundImages = useMemo(() => [heroBG1, heroBG3, heroBG2, heroBG4], []);
-    
+
     // ULTRA FAST: Optimized command patterns
-    const commandPatterns = useMemo(() => ({
-        mayor: ['mayor', 'meier', 'major', 'meyer'],
-        viceMayor: ['meet our vice', 'vice-mayor', 'vice meier', 'vice major'],
-        register: ['register', 'registration', 'rehistro', 'magparehistro'],
-        next: ['next', 'next image', 'next picture', 'next slide'],
-        previous: ['previous', 'previous image', 'previous picture', 'previous slide', 'back']
-    }), []);
+    const commandPatterns = useMemo(
+        () => ({
+            mayor: ["mayor", "meier", "major", "meyer"],
+            viceMayor: ["meet our vice", "vice-mayor", "vice meier", "vice major"],
+            register: ["register", "registration", "rehistro", "magparehistro"],
+            next: ["next", "next image", "next picture", "next slide"],
+            previous: ["previous", "previous image", "previous picture", "previous slide", "back"],
+        }),
+        [],
+    );
 
     const { scrollYProgress } = useScroll({
         target: heroRef,
@@ -54,7 +57,7 @@ const HeroSection = ({ setShowModal, showModal, setShowPersonel, bgtheme, FontCo
                 contextAvailable: !!personilContext,
                 accessibility: !!accessibility,
                 lastCommand: voiceCommandLog,
-                performance: performanceMetrics
+                performance: performanceMetrics,
             };
             setDebugInfo(JSON.stringify(debugData, null, 2));
         }
@@ -80,7 +83,7 @@ const HeroSection = ({ setShowModal, showModal, setShowPersonel, bgtheme, FontCo
     // Background rotation
     useEffect(() => {
         const interval = setInterval(() => {
-            setCurrentBgIndex(prev => (prev + 1) % backgroundImages.length);
+            setCurrentBgIndex((prev) => (prev + 1) % backgroundImages.length);
         }, 5000);
         return () => clearInterval(interval);
     }, [backgroundImages.length]);
@@ -102,36 +105,32 @@ const HeroSection = ({ setShowModal, showModal, setShowPersonel, bgtheme, FontCo
             // ULTRA FAST PATTERN MATCHING
             let matched = false;
             let actionExecuted = false;
-            
+
             // Direct string includes check (fastest method)
-            if (commandPatterns.mayor.some(pattern => commandLower.includes(pattern))) {
+            if (commandPatterns.mayor.some((pattern) => commandLower.includes(pattern))) {
                 console.log("🎯 FAST MAYOR COMMAND DETECTED");
                 handleMeetButtonClick("Mayor");
                 matched = true;
                 actionExecuted = true;
-            } 
-            else if (commandPatterns.viceMayor.some(pattern => commandLower.includes(pattern))) {
+            } else if (commandPatterns.viceMayor.some((pattern) => commandLower.includes(pattern))) {
                 console.log("🎯 FAST VICE MAYOR COMMAND DETECTED");
                 handleMeetButtonClick("Vice-Mayor");
                 matched = true;
                 actionExecuted = true;
-            }
-            else if (commandPatterns.register.some(pattern => commandLower.includes(pattern))) {
+            } else if (commandPatterns.register.some((pattern) => commandLower.includes(pattern))) {
                 console.log("🎯 FAST REGISTER COMMAND DETECTED");
                 handleRegisterEvent();
                 matched = true;
                 actionExecuted = true;
-            }
-            else if (commandPatterns.next.some(pattern => commandLower.includes(pattern))) {
+            } else if (commandPatterns.next.some((pattern) => commandLower.includes(pattern))) {
                 console.log("🎯 FAST NEXT COMMAND DETECTED");
-                setCurrentBgIndex(prev => (prev + 1) % backgroundImages.length);
+                setCurrentBgIndex((prev) => (prev + 1) % backgroundImages.length);
                 accessibility.speakText("Next image");
                 matched = true;
                 actionExecuted = true;
-            }
-            else if (commandPatterns.previous.some(pattern => commandLower.includes(pattern))) {
+            } else if (commandPatterns.previous.some((pattern) => commandLower.includes(pattern))) {
                 console.log("🎯 FAST PREVIOUS COMMAND DETECTED");
-                setCurrentBgIndex(prev => prev === 0 ? backgroundImages.length - 1 : prev - 1);
+                setCurrentBgIndex((prev) => (prev === 0 ? backgroundImages.length - 1 : prev - 1));
                 accessibility.speakText("Previous image");
                 matched = true;
                 actionExecuted = true;
@@ -139,14 +138,14 @@ const HeroSection = ({ setShowModal, showModal, setShowPersonel, bgtheme, FontCo
 
             const endTime = performance.now();
             const processingTime = endTime - startTime;
-            
-            setPerformanceMetrics(prev => ({
+
+            setPerformanceMetrics((prev) => ({
                 ...prev,
                 lastProcessingTime: `${processingTime.toFixed(2)}ms`,
                 lastCommand: commandLower,
                 matched: matched,
                 actionExecuted: actionExecuted,
-                timestamp: Date.now()
+                timestamp: Date.now(),
             }));
 
             if (!matched) {
@@ -155,11 +154,11 @@ const HeroSection = ({ setShowModal, showModal, setShowPersonel, bgtheme, FontCo
         };
 
         // HIGH PRIORITY event listener for continuous mode
-        window.addEventListener("voice-command", handleVoiceCommand, { 
+        window.addEventListener("voice-command", handleVoiceCommand, {
             capture: true,
-            passive: true 
+            passive: true,
         });
-        
+
         return () => window.removeEventListener("voice-command", handleVoiceCommand, { capture: true });
     }, [accessibility, backgroundImages.length, showModal, commandPatterns]);
 
@@ -172,29 +171,32 @@ const HeroSection = ({ setShowModal, showModal, setShowPersonel, bgtheme, FontCo
     }, [windowHeight]);
 
     // OPTIMIZED: Async function
-    const handleMeetButtonClick = useCallback(async (position) => {
-        const buttonLabel = position === "Mayor" ? "Meet the Mayor" : "Meet Our Vice Mayor";
-        setLoadingButton(buttonLabel);
+    const handleMeetButtonClick = useCallback(
+        async (position) => {
+            const buttonLabel = position === "Mayor" ? "Meet the Mayor" : "Meet Our Vice Mayor";
+            setLoadingButton(buttonLabel);
 
-        try {
-            if (fetchLatestProfileByPosition && typeof fetchLatestProfileByPosition === "function") {
-                await fetchLatestProfileByPosition(position);
-                
-                if (setShowPersonel && typeof setShowPersonel === "function") {
-                    setShowPersonel(true);
-                    accessibility.speakText(`Opening ${position} profile`);
+            try {
+                if (fetchLatestProfileByPosition && typeof fetchLatestProfileByPosition === "function") {
+                    await fetchLatestProfileByPosition(position);
+
+                    if (setShowPersonel && typeof setShowPersonel === "function") {
+                        setShowPersonel(true);
+                        accessibility.speakText(`Opening ${position} profile`);
+                    }
+                } else {
+                    console.error("fetchLatestProfileByPosition not available");
+                    accessibility.speakText("Error: Profile function not available");
                 }
-            } else {
-                console.error("fetchLatestProfileByPosition not available");
-                accessibility.speakText("Error: Profile function not available");
+            } catch (error) {
+                console.error(`Error fetching ${position} profile:`, error);
+                accessibility.speakText("Error opening profile");
+            } finally {
+                setLoadingButton(null);
             }
-        } catch (error) {
-            console.error(`Error fetching ${position} profile:`, error);
-            accessibility.speakText("Error opening profile");
-        } finally {
-            setLoadingButton(null);
-        }
-    }, [fetchLatestProfileByPosition, setShowPersonel, accessibility]);
+        },
+        [fetchLatestProfileByPosition, setShowPersonel, accessibility],
+    );
 
     // OPTIMIZED: Register function
     const handleRegisterEvent = useCallback(() => {
@@ -222,38 +224,43 @@ const HeroSection = ({ setShowModal, showModal, setShowPersonel, bgtheme, FontCo
     }, [handleMeetButtonClick]);
 
     // OPTIMIZED: Memoized components
-    const buttons = useMemo(() => [
-        {
-            label: "Meet the Mayor",
-            action: () => handleMeetButtonClick("Mayor"),
-            testCommand: "mayor",
-        },
-        {
-            label: "Meet Our Vice Mayor",
-            action: () => handleMeetButtonClick("Vice-Mayor"),
-            testCommand: "vice mayor",
-        },
-        {
-            label: "Register Event",
-            action: handleRegisterEvent,
-            testCommand: "register",
-        },
-    ], [handleMeetButtonClick, handleRegisterEvent]);
+    const buttons = useMemo(
+        () => [
+            {
+                label: "Meet the Mayor",
+                action: () => handleMeetButtonClick("Mayor"),
+                testCommand: "mayor",
+            },
+            {
+                label: "Meet Our Vice Mayor",
+                action: () => handleMeetButtonClick("Vice-Mayor"),
+                testCommand: "vice mayor",
+            },
+            {
+                label: "Register Event",
+                action: handleRegisterEvent,
+                testCommand: "register",
+            },
+        ],
+        [handleMeetButtonClick, handleRegisterEvent],
+    );
 
     // SIMPLIFIED: Plain calendar days without marks
-    const calendarDays = useMemo(() => 
-        Array.from({ length: 30 }, (_, i) => i + 1), []);
+    const calendarDays = useMemo(() => Array.from({ length: 30 }, (_, i) => i + 1), []);
 
-    const testButtonStyle = useCallback((color) => ({
-        background: color,
-        color: "white",
-        border: "none",
-        padding: "4px 8px",
-        borderRadius: "3px",
-        cursor: "pointer",
-        fontSize: "10px",
-        width: "100%",
-    }), []);
+    const testButtonStyle = useCallback(
+        (color) => ({
+            background: color,
+            color: "white",
+            border: "none",
+            padding: "4px 8px",
+            borderRadius: "3px",
+            cursor: "pointer",
+            fontSize: "10px",
+            width: "100%",
+        }),
+        [],
+    );
 
     // Mobile detection
     const isMobile = windowWidth < 1024;
@@ -307,7 +314,6 @@ const HeroSection = ({ setShowModal, showModal, setShowPersonel, bgtheme, FontCo
 
             {/* CONTENT SECTION - Stacked on mobile, sidebar on desktop */}
             <div className="relative z-10 flex w-full flex-col items-center justify-center gap-4 rounded-3xl bg-white/80 p-4 backdrop-blur-md lg:mt-0 lg:w-1/3 lg:gap-8 lg:p-8">
-                
                 {/* Calendar Section - Collapsible on mobile */}
                 <div className="w-full lg:max-w-xs">
                     {/* Mobile Calendar Header - Collapsible */}
@@ -325,7 +331,9 @@ const HeroSection = ({ setShowModal, showModal, setShowPersonel, bgtheme, FontCo
                     )}
 
                     {/* Calendar Content */}
-                    <div className={`${isMobile ? (showCalendar ? 'block' : 'hidden') : 'block'} rounded-xl border border-gray-200 bg-gray-50 p-4 shadow-sm lg:p-5`}>
+                    <div
+                        className={`${isMobile ? (showCalendar ? "block" : "hidden") : "block"} rounded-xl border border-gray-200 bg-gray-50 p-4 shadow-sm lg:p-5`}
+                    >
                         <div className="mb-3 flex items-center justify-between">
                             <h3 className="text-base font-bold text-gray-700 lg:text-lg">Calendar</h3>
                             {!isMobile && (
@@ -340,8 +348,8 @@ const HeroSection = ({ setShowModal, showModal, setShowPersonel, bgtheme, FontCo
                         </div>
 
                         <div className="mb-2 grid grid-cols-7 text-center text-xs font-medium text-gray-600">
-                            {["S", "M", "T", "W", "T", "F", "S"].map((d) => (
-                                <div key={d}>{d}</div>
+                            {["S", "M", "T", "W", "T", "F", "S"].map((d, index) => (
+                                <div key={`${d}-${index}`}>{d}</div>
                             ))}
                         </div>
 
@@ -405,9 +413,7 @@ const HeroSection = ({ setShowModal, showModal, setShowPersonel, bgtheme, FontCo
 
             {/* Mobile Layout Indicator (for debugging) */}
             {process.env.NODE_ENV === "development" && isMobile && (
-                <div className="fixed bottom-2 left-2 rounded bg-red-500 px-2 py-1 text-xs text-white">
-                    MOBILE VIEW: {windowWidth}px
-                </div>
+                <div className="fixed bottom-2 left-2 rounded bg-red-500 px-2 py-1 text-xs text-white">MOBILE VIEW: {windowWidth}px</div>
             )}
         </motion.section>
     );

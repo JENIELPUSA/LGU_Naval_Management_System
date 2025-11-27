@@ -41,7 +41,6 @@ export const Sidebar = forwardRef(({ collapsed, bgtheme, FontColor }, ref) => {
             "/dashboard/notification",
             "/dashboard/manage-team",
             "/dashboard/officer",
-            "/dashboard/Calendar",
             "/dashboard/participants",
             "/dashboard/settings",
             "/dashboard/lgu-response",

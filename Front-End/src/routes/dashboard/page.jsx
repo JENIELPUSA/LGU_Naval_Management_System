@@ -34,11 +34,6 @@ const DashboardPage = () => {
                             FontColor={FontColor}
                         />
                         <AnalyticsSection theme={theme} />
-                        <UpcomingEventsTable
-                            bgtheme={bgtheme}
-                            FontColor={FontColor}
-                        />
-                        <LogsAndAudit />
                     </>
                 ) : role === "organizer" ? (
                     <>

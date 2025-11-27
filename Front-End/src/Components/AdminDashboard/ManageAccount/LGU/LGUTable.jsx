@@ -260,7 +260,7 @@ const LguTable = () => {
                             size={14}
                             className="sm:size-18"
                         />
-                        <span>Add Form</span>
+                        <span>Add User</span>
                     </button>
                 </div>
 

@@ -15,6 +15,8 @@ import {
     ChevronDown,
     ChevronUp,
     StickyNote,
+    Filter,
+    Calendar,
 } from "lucide-react";
 import { ProposalDisplayContext } from "../../../contexts/ProposalContext/ProposalContext";
 import LoadingOverlay from "../../../ReusableFolder/LoadingOverlay";
@@ -45,8 +47,6 @@ const ProposalTable = () => {
     } = useContext(ProposalDisplayContext);
     const { bgtheme, FontColor } = useContext(PersonilContext);
 
-
-    console.log("isProposal",isProposal)
     const navigate = useNavigate();
     const { role, linkId } = useContext(AuthContext);
 
@@ -70,6 +70,11 @@ const ProposalTable = () => {
     const [rejectNotes, setRejectNotes] = useState("");
     const [notesError, setNotesError] = useState("");
     const [expandedRow, setExpandedRow] = useState(null);
+    
+    // New state for organizing proposals
+    const [statusFilter, setStatusFilter] = useState("all"); // all, pending, rejected, approved
+    const [dateSort, setDateSort] = useState("newest"); // newest, oldest
+    const [showFilters, setShowFilters] = useState(false);
 
     const showingStart = (currentPage - 1) * limit + 1;
     const showingEnd = Math.min(currentPage * limit, isTotalProposal);
@@ -77,6 +82,31 @@ const ProposalTable = () => {
     useEffect(() => {
         FetchProposalDisplay(currentPage, limit, searchTerm, dateFrom, dateTo);
     }, [currentPage, searchTerm, dateFrom, dateTo, limit]);
+
+    // Filter and sort proposals
+    const getFilteredAndSortedProposals = () => {
+        if (!isProposal) return [];
+
+        let filtered = [...isProposal];
+
+        // Apply status filter
+        if (statusFilter !== "all") {
+            filtered = filtered.filter(proposal => 
+                proposal.status?.toLowerCase() === statusFilter.toLowerCase()
+            );
+        }
+
+        // Apply date sorting
+        filtered.sort((a, b) => {
+            const dateA = new Date(a.created_at || 0);
+            const dateB = new Date(b.created_at || 0);
+            return dateSort === "newest" ? dateB - dateA : dateA - dateB;
+        });
+
+        return filtered;
+    };
+
+    const filteredProposals = getFilteredAndSortedProposals();
 
     const handleViewFile = (fileId, item) => {
         if (!fileId) return;
@@ -214,22 +244,34 @@ const ProposalTable = () => {
             case "approved":
                 return {
                     bg: "bg-emerald-50 dark:bg-emerald-900/20",
+                    border: "border-emerald-200 dark:border-emerald-800",
                     badge: "bg-emerald-500 text-white",
+                    icon: CircleCheckBig,
+                    count: filteredProposals.filter(p => p.status?.toLowerCase() === "approved").length
                 };
             case "pending":
                 return {
                     bg: "bg-amber-50 dark:bg-amber-900/20",
+                    border: "border-amber-200 dark:border-amber-800",
                     badge: "bg-amber-500 text-white",
+                    icon: Clock,
+                    count: filteredProposals.filter(p => p.status?.toLowerCase() === "pending").length
                 };
             case "rejected":
                 return {
                     bg: "bg-red-50 dark:bg-red-900/20",
+                    border: "border-red-200 dark:border-red-800",
                     badge: "bg-red-500 text-white",
+                    icon: CircleX,
+                    count: filteredProposals.filter(p => p.status?.toLowerCase() === "rejected").length
                 };
             default:
                 return {
                     bg: "bg-gray-50 dark:bg-gray-800",
+                    border: "border-gray-200 dark:border-gray-700",
                     badge: "bg-gray-500 text-white",
+                    icon: FileText,
+                    count: filteredProposals.length
                 };
         }
     };
@@ -251,6 +293,21 @@ const ProposalTable = () => {
         setExpandedRow(expandedRow === id ? null : id);
     };
 
+    const StatusFilterButton = ({ status, label, config }) => (
+        <button
+            onClick={() => setStatusFilter(status)}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all ${
+                statusFilter === status 
+                    ? `${config.badge} text-white border-transparent` 
+                    : `${config.bg} ${config.border} text-gray-700 dark:text-gray-300 hover:bg-opacity-80`
+            }`}
+        >
+            <config.icon size={16} />
+            <span className="font-medium">{label}</span>
+           
+        </button>
+    );
+
     if (isLoading) return <LoadingOverlay />;
 
     return (
@@ -261,46 +318,78 @@ const ProposalTable = () => {
                     <div className="px-3 py-3">
                         <div className="flex flex-col gap-2">
                             <h1 className="text-base font-bold text-gray-900 dark:text-white">Proposal Management</h1>
+                            
+                            {/* Status Filters - Mobile */}
+                            <div className="flex gap-1 overflow-x-auto pb-2">
+                                <StatusFilterButton status="all" label="All" config={getStatusConfig("all")} />
+                                <StatusFilterButton status="pending" label="Pending" config={getStatusConfig("pending")} />
+                                <StatusFilterButton status="approved" label="Approved" config={getStatusConfig("approved")} />
+                                <StatusFilterButton status="rejected" label="Rejected" config={getStatusConfig("rejected")} />
+                            </div>
+
                             <div className="flex flex-col gap-2">
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        placeholder="Search..."
-                                        className="w-full rounded border border-slate-300 bg-white px-3 py-1.5 text-[10px] pl-8 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
-                                        value={tempSearchTerm}
-                                        onChange={(e) => {
-                                            const value = e.target.value;
-                                            setTempSearchTerm(value);
-                                            if (value.trim() === "") {
-                                                setSearchTerm("");
-                                                setCurrentPage(1);
-                                            }
-                                        }}
-                                        onKeyDown={handleKeyDown}
-                                    />
+                                <div className="flex gap-2">
                                     <button
-                                        onClick={handleSearch}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400"
+                                        onClick={() => setShowFilters(!showFilters)}
+                                        className="flex items-center gap-1 rounded border border-gray-200 bg-white px-2 py-1.5 text-[10px] dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                                     >
-                                        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                        </svg>
+                                        <Filter size={10} />
+                                        Filters
                                     </button>
+                                    <select
+                                        value={dateSort}
+                                        onChange={(e) => setDateSort(e.target.value)}
+                                        className="rounded border border-gray-200 bg-white px-2 py-1.5 text-[10px] dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                    >
+                                        <option value="newest">Newest First</option>
+                                        <option value="oldest">Oldest First</option>
+                                    </select>
                                 </div>
-                                <div className="flex gap-1">
-                                    <input
-                                        type="date"
-                                        value={dateFrom}
-                                        onChange={(e) => setDateFrom(e.target.value)}
-                                        className="rounded border border-gray-200 bg-white px-2 py-1 text-[10px] dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                                    />
-                                    <input
-                                        type="date"
-                                        value={dateTo}
-                                        onChange={(e) => setDateTo(e.target.value)}
-                                        className="rounded border border-gray-200 bg-white px-2 py-1 text-[10px] dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                                    />
-                                </div>
+
+                                {showFilters && (
+                                    <div className="space-y-2">
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                placeholder="Search..."
+                                                className="w-full rounded border border-slate-300 bg-white px-3 py-1.5 text-[10px] pl-8 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                                                value={tempSearchTerm}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    setTempSearchTerm(value);
+                                                    if (value.trim() === "") {
+                                                        setSearchTerm("");
+                                                        setCurrentPage(1);
+                                                    }
+                                                }}
+                                                onKeyDown={handleKeyDown}
+                                            />
+                                            <button
+                                                onClick={handleSearch}
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400"
+                                            >
+                                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            <input
+                                                type="date"
+                                                value={dateFrom}
+                                                onChange={(e) => setDateFrom(e.target.value)}
+                                                className="rounded border border-gray-200 bg-white px-2 py-1 text-[10px] dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                            />
+                                            <input
+                                                type="date"
+                                                value={dateTo}
+                                                onChange={(e) => setDateTo(e.target.value)}
+                                                className="rounded border border-gray-200 bg-white px-2 py-1 text-[10px] dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
                                 <button
                                     onClick={openAddModal}
                                     style={{ background: bgtheme, color: FontColor }}
@@ -314,9 +403,9 @@ const ProposalTable = () => {
                 </div>
 
                 <div className="px-3 py-3">
-                    {isProposal && isProposal.length > 0 ? (
+                    {filteredProposals && filteredProposals.length > 0 ? (
                         <div className="space-y-3">
-                            {isProposal.map((proposal) => {
+                            {filteredProposals.map((proposal) => {
                                 const statusConfig = getStatusConfig(proposal.status);
                                 const organizerName = proposal.organizerInfo
                                     ? `${proposal.organizerInfo.first_name || ""} ${proposal.organizerInfo.middle_name || ""} ${proposal.organizerInfo.last_name || ""}`.trim()
@@ -327,7 +416,7 @@ const ProposalTable = () => {
                                 return (
                                     <div
                                         key={proposal._id}
-                                        className={`rounded-lg border ${statusConfig.bg} dark:border-gray-700`}
+                                        className={`rounded-lg border ${statusConfig.bg} ${statusConfig.border} dark:border-gray-700`}
                                     >
                                         <div className="p-3">
                                             <div className="flex flex-col gap-2">
@@ -341,7 +430,7 @@ const ProposalTable = () => {
                                                 </div>
                                                 <div className="text-[10px] text-gray-600 dark:text-gray-400">
                                                     <div className="flex items-center gap-1">
-                                                        <Clock size={10} />
+                                                        <Calendar size={10} />
                                                         <span>
                                                             {proposal.created_at
                                                                 ? new Date(proposal.created_at).toLocaleDateString("en-US", {
@@ -370,14 +459,6 @@ const ProposalTable = () => {
                                                     >
                                                         <PencilLine size={10} /> Edit
                                                     </button>
-                                                    {role === "admin" && (
-                                                        <button
-                                                            onClick={() => handleDeleteProposal(proposal._id)}
-                                                            className="flex items-center gap-1 rounded bg-red-50 px-1.5 py-0.5 text-[10px] text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400"
-                                                        >
-                                                            <Trash size={10} /> Delete
-                                                        </button>
-                                                    )}
                                                     <button
                                                         onClick={() => toggleRowExpansion(proposal._id)}
                                                         className="flex items-center gap-1 rounded bg-gray-50 px-1.5 py-0.5 text-[10px] text-gray-600 hover:bg-gray-100 dark:bg-gray-800/30 dark:text-gray-400"
@@ -415,7 +496,6 @@ const ProposalTable = () => {
                                                                 </p>
                                                             </div>
                                                         )}
-                                                        {/* Proposal Note Section - Mobile */}
                                                         {proposal.note && (
                                                             <div>
                                                                 <h4 className="text-[10px] font-medium text-gray-900 dark:text-white flex items-center gap-1">
@@ -438,7 +518,12 @@ const ProposalTable = () => {
                     ) : (
                         <div className="rounded-lg border border-gray-200 bg-white p-4 text-center dark:border-gray-700 dark:bg-gray-800">
                             <Database className="mx-auto h-6 w-6 text-purple-500" />
-                            <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">No proposals found</p>
+                            <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                                {statusFilter !== "all" 
+                                    ? `No ${statusFilter} proposals found` 
+                                    : "No proposals found"
+                                }
+                            </p>
                             <button
                                 onClick={openAddModal}
                                 className="mt-2 text-[10px] text-purple-600 underline"
@@ -454,6 +539,7 @@ const ProposalTable = () => {
                         <div className="flex flex-col items-center gap-2">
                             <p className="text-[10px] text-gray-600 dark:text-gray-400">
                                 Showing {showingStart}–{showingEnd} of {isTotalProposal}
+                                {statusFilter !== "all" && ` (${filteredProposals.length} ${statusFilter})`}
                             </p>
                             <div className="flex items-center gap-1">
                                 <button
@@ -539,6 +625,14 @@ const ProposalTable = () => {
                                         className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:px-3 sm:py-2.5 sm:text-sm"
                                     />
                                 </div>
+                                <select
+                                    value={dateSort}
+                                    onChange={(e) => setDateSort(e.target.value)}
+                                    className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:px-3 sm:py-2.5 sm:text-sm"
+                                >
+                                    <option value="newest">Newest First</option>
+                                    <option value="oldest">Oldest First</option>
+                                </select>
                                 <button
                                     onClick={openAddModal}
                                     style={{ background: bgtheme, color: FontColor }}
@@ -549,13 +643,21 @@ const ProposalTable = () => {
                                 </button>
                             </div>
                         </div>
+
+                        {/* Status Filters - Desktop */}
+                        <div className="mt-4 flex flex-wrap gap-2">
+                            <StatusFilterButton status="all" label="All Proposals" config={getStatusConfig("all")} />
+                            <StatusFilterButton status="pending" label="Pending" config={getStatusConfig("pending")} />
+                            <StatusFilterButton status="approved" label="Approved" config={getStatusConfig("approved")} />
+                            <StatusFilterButton status="rejected" label="Rejected" config={getStatusConfig("rejected")} />
+                        </div>
                     </div>
                 </div>
 
                 <div className="px-4 py-4 sm:p-6">
-                    {isProposal && isProposal.length > 0 ? (
+                    {filteredProposals && filteredProposals.length > 0 ? (
                         <div className="flex flex-col gap-3 sm:gap-4">
-                            {isProposal.map((proposal) => {
+                            {filteredProposals.map((proposal) => {
                                 const statusConfig = getStatusConfig(proposal.status);
                                 const organizerName = proposal.organizerInfo
                                     ? `${proposal.organizerInfo.first_name || ""} ${proposal.organizerInfo.middle_name || ""} ${proposal.organizerInfo.last_name || ""}`.trim()
@@ -565,7 +667,7 @@ const ProposalTable = () => {
                                 return (
                                     <div
                                         key={proposal._id}
-                                        className={`overflow-hidden rounded-xl border bg-white shadow-sm transition-all duration-300 hover:shadow-md ${statusConfig.bg} dark:bg-gray-800 sm:rounded-2xl`}
+                                        className={`overflow-hidden rounded-xl border bg-white shadow-sm transition-all duration-300 hover:shadow-md ${statusConfig.bg} ${statusConfig.border} dark:bg-gray-800 sm:rounded-2xl`}
                                     >
                                         <div className="p-4 pb-3 sm:p-6 sm:pb-4">
                                             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
@@ -575,7 +677,7 @@ const ProposalTable = () => {
                                                     </h3>
                                                     <div className="flex flex-col gap-1 text-xs text-gray-600 dark:text-gray-400 sm:flex-row sm:items-center sm:gap-3 sm:text-sm">
                                                         <div className="flex items-center gap-1">
-                                                            <Clock size={12} className="sm:size-4" />
+                                                            <Calendar size={12} className="sm:size-4" />
                                                             <span>
                                                                 Submitted{" "}
                                                                 {proposal.created_at
@@ -662,7 +764,6 @@ const ProposalTable = () => {
                                                     </div>
                                                 )}
 
-                                                {/* Proposal Note Section - Desktop */}
                                                 {proposal.note && (
                                                     <div>
                                                         <div className="mb-2 flex items-center gap-1.5 sm:gap-2">
@@ -726,9 +827,17 @@ const ProposalTable = () => {
                                 <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30 sm:mb-4 sm:h-16 sm:w-16">
                                     <Database className="h-6 w-6 text-purple-500 sm:h-8 sm:w-8" />
                                 </div>
-                                <h3 className="mb-1 text-base font-medium text-gray-900 dark:text-white sm:mb-2 sm:text-lg">No proposals found</h3>
+                                <h3 className="mb-1 text-base font-medium text-gray-900 dark:text-white sm:mb-2 sm:text-lg">
+                                    {statusFilter !== "all" 
+                                        ? `No ${statusFilter} proposals found` 
+                                        : "No proposals found"
+                                    }
+                                </h3>
                                 <p className="max-w-xs px-2 text-center text-xs text-gray-500 dark:text-gray-400 sm:max-w-sm sm:text-sm">
-                                    There are no proposals matching your current filters. Try adjusting your search criteria or add a new proposal.
+                                    {statusFilter !== "all" 
+                                        ? `There are no ${statusFilter} proposals matching your current filters.` 
+                                        : "There are no proposals matching your current filters. Try adjusting your search criteria or add a new proposal."
+                                    }
                                 </p>
                                 <button
                                     onClick={openAddModal}
@@ -748,6 +857,7 @@ const ProposalTable = () => {
                             <div className="text-xs text-gray-700 dark:text-gray-300 sm:text-sm">
                                 Showing <span className="font-semibold">{showingStart}</span> to <span className="font-semibold">{showingEnd}</span>{" "}
                                 of <span className="font-semibold">{isTotalProposal}</span> results
+                                {statusFilter !== "all" && ` (${filteredProposals.length} ${statusFilter})`}
                             </div>
                             <div className="flex items-center gap-1.5 sm:gap-2">
                                 <button

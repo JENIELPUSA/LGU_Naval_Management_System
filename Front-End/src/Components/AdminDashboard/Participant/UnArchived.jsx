@@ -8,12 +8,11 @@ import { AuthContext } from "../../../contexts/AuthContext";
 import { EventDisplayContext } from "../../../contexts/EventContext/EventContext";
 import { PersonilContext } from "../../../contexts/PersonelContext/PersonelContext";
 
-const ParticipantTable = () => {
+const ArchivedTable = () => {
     const {
-        FetchParticipant,
-        isParticipant,
+        ArchivedParticipant,
         DeleteParticipant,
-        UpdateParticipantStatus, 
+        UpdateParticipantStatus,
         isLoading,
         setIsLoading,
         totalPages,
@@ -23,13 +22,13 @@ const ParticipantTable = () => {
         isTotalParticipant,
         customError,
         MoveToArchived,
+        FetchArchivedParticipant,
     } = useContext(ParticipantDisplayContext);
+
     const { bgtheme, FontColor } = useContext(PersonilContext);
     const { isEvent } = useContext(EventDisplayContext);
     const { role } = useContext(AuthContext);
-
     const [isDeleteID, setDeleteID] = useState(null);
-    const [tempSearchTerm, setTempSearchTerm] = useState("");
     const [searchTerm, setSearchTerm] = useState("");
     const [dateFrom, setDateFrom] = useState("");
     const [dateTo, setDateTo] = useState("");
@@ -37,56 +36,82 @@ const ParticipantTable = () => {
     const [showModal, setShowModal] = useState(false);
     const [modalStatus, setModalStatus] = useState("success");
     const [isVerification, setVerification] = useState(false);
-    const [isUpdating, setIsUpdating] = useState(false); // For Accept/Reject loading state
-
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [hasFetched, setHasFetched] = useState(false);
     useEffect(() => {
-        FetchParticipant(currentPage, limit, searchTerm, dateFrom, dateTo, selectedEvent);
+        console.log("Fetching archived participants with params:", {
+            currentPage,
+            limit,
+            searchTerm,
+            dateFrom,
+            dateTo,
+            selectedEvent,
+        });
+
+        const fetchData = async () => {
+            try {
+                await FetchArchivedParticipant(currentPage, limit, searchTerm, dateFrom, dateTo, selectedEvent);
+                setHasFetched(true);
+            } catch (error) {
+                console.error("Error fetching archived participants:", error);
+                setHasFetched(true);
+            }
+        };
+
+        fetchData();
     }, [currentPage, searchTerm, dateFrom, dateTo, selectedEvent, limit]);
 
+    // Enhanced loading and error states
+    if (isLoading && !hasFetched) {
+        return <LoadingOverlay />;
+    }
 
-    const handleDeleteParticipant = async(id) => {
-      await MoveToArchived(id,true)
+    if (!ArchivedParticipant) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-900">
+                <div className="text-center">
+                    <Database className="mx-auto h-12 w-12 text-gray-400" />
+                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Loading archived participants...</p>
+                </div>
+            </div>
+        );
+    }
+
+    const handleDeleteParticipant = async (id) => {
+        await MoveToArchived(id, false);
     };
 
     const handleConfirmDelete = async () => {
-        if (isDeleteID) {
-            setIsLoading(true);
-            const result = await DeleteParticipant(isDeleteID);
-            setIsLoading(false);
+        if (!isDeleteID) return;
+        setIsLoading(true);
+            const result = await handleDeleteParticipant(isDeleteID);
 
             if (result?.success) {
                 setModalStatus("success");
                 setDeleteID(null);
                 setVerification(false);
-                FetchParticipant(currentPage, limit, searchTerm, dateFrom, dateTo, selectedEvent);
-            } else {
-                setModalStatus("failed");
+                FetchArchivedParticipant(currentPage, limit, searchTerm, dateFrom, dateTo, selectedEvent);
             }
-            setShowModal(true);
-        }
     };
 
-    //Accept/Reject Handlers
-    const handleAccept = async (id) => {
-        await UpdateParticipantStatus(id, "Accept");
+    const formatFullName = (admin) => {
+        if (!admin) return "Unknown Participant";
+        return `${admin.first_name || ""} ${admin.middle_name || ""} ${admin.last_name || ""} ${admin.extention || ""}`.trim().replace(/\s+/g, " ");
     };
-
-
-
-    const handleReject = async (id) => {
-        await UpdateParticipantStatus(id, "Reject");
-    };
-
-    const formatFullName = (admin) => `${admin.first_name} ${admin.middle_name || ""} ${admin.last_name} ${admin.extention || ""}`.trim();
 
     const formatDate = (dateString) => {
         if (!dateString) return "N/A";
-        return new Date(dateString).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        });
+        try {
+            return new Date(dateString).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+            });
+        } catch (error) {
+            console.error("Error formatting date:", error);
+            return "Invalid Date";
+        }
     };
 
     const goToPage = (page) => {
@@ -133,7 +158,12 @@ const ParticipantTable = () => {
                     <div className="px-2 py-3 sm:px-4 sm:py-4">
                         <div className="flex flex-col gap-2">
                             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                <h1 className="text-base font-bold text-gray-900 dark:text-white sm:text-lg">Participant Management</h1>
+                                <h1 className="text-base font-bold text-gray-900 dark:text-white sm:text-lg">
+                                    Archived Participant
+                                    {ArchivedParticipant && (
+                                        <span className="ml-2 text-sm text-gray-500">({ArchivedParticipant.length} participants)</span>
+                                    )}
+                                </h1>
                             </div>
 
                             <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
@@ -179,11 +209,11 @@ const ParticipantTable = () => {
                 </div>
 
                 <div className="px-2 py-3 sm:px-4 sm:py-4">
-                    {isParticipant && isParticipant.length > 0 ? (
+                    {ArchivedParticipant && ArchivedParticipant.length > 0 ? (
                         <div className="space-y-2 sm:space-y-3">
-                            {isParticipant.map((participant, index) => (
+                            {ArchivedParticipant.map((participant, index) => (
                                 <div
-                                    key={participant._id}
+                                    key={participant._id || index}
                                     className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
                                 >
                                     <div className="p-2.5 sm:p-4">
@@ -205,14 +235,14 @@ const ParticipantTable = () => {
                                                 </span>
                                             </div>
 
-                                            {/* Optional: Show current status */}
+                                            {/* Show current status */}
                                             {participant.status && (
                                                 <div className="mt-1">
                                                     <span
                                                         className={`inline-block rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
-                                                            participant.status === "accepted"
+                                                            participant.status === "accepted" || participant.status === "Accept"
                                                                 ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
-                                                                : participant.status === "rejected"
+                                                                : participant.status === "rejected" || participant.status === "Reject"
                                                                   ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
                                                                   : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
                                                         }`}
@@ -260,48 +290,26 @@ const ParticipantTable = () => {
                                             {participant.event && (
                                                 <div className="flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400 sm:text-xs">
                                                     <span className="font-medium">Event:</span>
-                                                    <span className="truncate">{participant.event.proposal?.title || "Unknown Event"}</span>
+                                                    <span className="truncate">
+                                                        {participant.event.proposal?.title || participant.event.title || "Unknown Event"}
+                                                    </span>
                                                 </div>
                                             )}
 
                                             {role === "admin" && (
                                                 <div className="mt-2 flex flex-wrap justify-end gap-1">
-                                                    {participant.status === "Pending" && (
-                                                        <>
-                                                            <button
-                                                                onClick={() => handleAccept(participant._id)}
-                                                                disabled={isUpdating}
-                                                                className="flex items-center gap-1 rounded bg-green-50 px-1.5 py-0.5 text-[10px] text-green-700 hover:bg-green-100 disabled:opacity-60 dark:bg-green-900/20 dark:text-green-400 sm:gap-1.5 sm:px-2 sm:py-1 sm:text-xs"
-                                                            >
-                                                                <Check
-                                                                    size={10}
-                                                                    className="sm:size-3"
-                                                                />{" "}
-                                                                Accept
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleReject(participant._id)}
-                                                                disabled={isUpdating}
-                                                                className="flex items-center gap-1 rounded bg-red-50 px-1.5 py-0.5 text-[10px] text-red-700 hover:bg-red-100 disabled:opacity-60 dark:bg-red-900/20 dark:text-red-400 sm:gap-1.5 sm:px-2 sm:py-1 sm:text-xs"
-                                                            >
-                                                                <X
-                                                                    size={10}
-                                                                    className="sm:size-3"
-                                                                />{" "}
-                                                                Reject
-                                                            </button>
-                                                        </>
-                                                    )}
-
                                                     <button
-                                                        onClick={() => handleDeleteParticipant(participant._id)}
+                                                        onClick={() => {
+                                                            setDeleteID(participant._id);
+                                                            setVerification(true);
+                                                        }}
                                                         className="flex items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 sm:gap-1.5 sm:px-2 sm:py-1 sm:text-xs"
                                                     >
-                                                        <ArchiveX
+                                                        <ArchiveX 
                                                             size={10}
                                                             className="sm:size-3"
                                                         />{" "}
-                                                        Archive
+                                                        UnArchived
                                                     </button>
                                                 </div>
                                             )}
@@ -313,13 +321,24 @@ const ParticipantTable = () => {
                     ) : (
                         <div className="rounded-lg border border-gray-200 bg-white p-4 text-center dark:border-gray-700 dark:bg-gray-800">
                             <Database className="mx-auto h-6 w-6 text-purple-500" />
-                            <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">No participants found</p>
-                            <button
-                                style={{ background: bgtheme, color: FontColor }}
-                                className="mt-2 rounded px-2 py-1 text-[10px] font-medium sm:px-3 sm:py-1.5 sm:text-xs"
-                            >
-                                Add First Participant
-                            </button>
+                            <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                                {hasFetched ? "No archived participants found" : "Loading archived participants..."}
+                            </p>
+                            {hasFetched && (
+                                <button
+                                    style={{ background: bgtheme, color: FontColor }}
+                                    className="mt-2 rounded px-2 py-1 text-[10px] font-medium sm:px-3 sm:py-1.5 sm:text-xs"
+                                    onClick={() => {
+                                        setSearchTerm("");
+                                        setDateFrom("");
+                                        setDateTo("");
+                                        setSelectedEvent("");
+                                        setCurrentPage(1);
+                                    }}
+                                >
+                                    Clear Filters
+                                </button>
+                            )}
                         </div>
                     )}
                 </div>
@@ -367,4 +386,4 @@ const ParticipantTable = () => {
     );
 };
 
-export default ParticipantTable;
+export default ArchivedTable;
