@@ -60,6 +60,7 @@ const ForgotPassword = ({ show, onClose }) => {
         exit={{ opacity: 0 }}
       >
         <motion.div
+          onClick={(e) => e.stopPropagation()}
           className="relative w-full max-w-md overflow-hidden rounded-xl bg-gradient-to-br from-white to-blue-50 p-5 shadow-xl sm:p-6"
           initial={{ scale: 0.95, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
