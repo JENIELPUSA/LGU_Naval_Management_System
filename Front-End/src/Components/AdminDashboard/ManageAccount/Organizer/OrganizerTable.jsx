@@ -221,33 +221,6 @@ const OrganizerTable = ({ data, bgtheme, FontColor }) => {
                             </svg>
                         </button>
                     </div>
-
-                    <div className="flex w-full flex-wrap gap-2 sm:w-auto">
-                        <div className="relative">
-                            <input
-                                type="date"
-                                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 shadow-sm transition focus:border-pink-400 focus:outline-none focus:ring-1 focus:ring-pink-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:focus:border-pink-500 dark:focus:ring-pink-500 sm:px-4 sm:py-2 sm:text-sm"
-                                value={dateFrom}
-                                onChange={(e) => setDateFrom(e.target.value)}
-                            />
-                            <label className="absolute -top-1.5 left-2 bg-white px-1 text-[10px] text-slate-500 dark:bg-slate-800 dark:text-slate-400 sm:-top-2 sm:left-3 sm:text-xs">
-                                From
-                            </label>
-                        </div>
-
-                        <div className="relative">
-                            <input
-                                type="date"
-                                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 shadow-sm transition focus:border-pink-400 focus:outline-none focus:ring-1 focus:ring-pink-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:focus:border-pink-500 dark:focus:ring-pink-500 sm:px-4 sm:py-2 sm:text-sm"
-                                value={dateTo}
-                                onChange={(e) => setDateTo(e.target.value)}
-                            />
-                            <label className="absolute -top-1.5 left-2 bg-white px-1 text-[10px] text-slate-500 dark:bg-slate-800 dark:text-slate-400 sm:-top-2 sm:left-3 sm:text-xs">
-                                To
-                            </label>
-                        </div>
-                    </div>
-
                     <button
                         onClick={openAddModal}
                         style={{ background: bgtheme, color: FontColor }}

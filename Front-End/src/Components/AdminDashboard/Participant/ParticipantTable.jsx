@@ -264,7 +264,7 @@ const ParticipantTable = () => {
                                                 </div>
                                             )}
 
-                                            {role === "admin" && (
+                                            {(role === "admin" || role === "organizer") && (
                                                 <div className="mt-2 flex flex-wrap justify-end gap-1">
                                                     {participant.status === "Pending" && (
                                                         <>
